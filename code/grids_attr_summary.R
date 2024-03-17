@@ -4,6 +4,8 @@
 library(tidyverse)
 library(magrittr)
 library(vegan)
+library(geosphere)
+library(reshape2)
 
 setwd("GitHub/Small_Mammals_Microbiome")
 rm(list=ls())
@@ -14,7 +16,7 @@ rm(list=ls())
 habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
 
 habitat <- habitat.raw %>% 
-  filter(village == "Mandena") %>% 
+  filter(village == "Sarahandrano") %>% 
   mutate(grid_name = case_when(grid_name=="Primary forest" ~ "semi-intact_forest",
                                grid_name=="Degraded forest" ~ "semi-intact_forest",
                                grid_name=="Secondary forest" ~ "secondary_forest",
@@ -105,19 +107,33 @@ grid_sum <- plot_sum %>%
   mutate(grid_name = factor(grid_name))
 
 # adding grids elevation 
-grids_elevation <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
+grids_elevation <- read_csv("data/data_processed/small_mammals/small_mammals_attributes.csv") %>% 
+  filter(village=="Andatsakala" & host_species=="Rattus rattus") %>% 
+  group_by(grid) %>% 
+  summarise(elevation = mean(elevation.obs))
+  
+#grid_sum <- grid_sum %>% 
+  #left_join(grids_elevation, by=c("grid_name"="grid"))
 
+# transforming to matrix
 grid_sum_mat <- grid_sum %>% 
-  #filter(pitfall == "Grid") %>% 
-  #column_to_rownames("grid_name") %>%
+  column_to_rownames("grid_name") %>%
   ungroup() %>% 
-  select(-grid_name,-village) %>%
+  select(-village) %>%
   as.matrix()
 
-
-## dist matrix
+## calculating *dis-similarity* between grids
 distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray")) 
-distmat_pitfall <- 1-vegdist(sqrt(pitfall_sum_mat), method = "bray") 
+
+# long format
+# removing duplicated values
+distmat_grid2 <- distmat_grid
+distmat_grid2[upper.tri(distmat_grid2)] <- NA
+diag(distmat_grid2) <- NA
+grid_disimilarity <- melt(distmat_grid2) %>% 
+  rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
+  filter(!(is.na(grid_attr)))
+
 
 
 ## nmds
@@ -128,18 +144,30 @@ nms <- metaMDS(distmat_grid,
                wascores = T)
 ## plot ordination grids
 ordiplot(nms, type = "none")
-points(nms, display = "sites", bg = grid_sum$grid_name)
-text(nms, display = "sites", bg = grid_sum$grid_name)
+points(nms, display = "sites")
+text(nms, display = "sites")
 
 
+# calculating distance between grids
+plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv") %>% 
+  filter(village == "Sarahandrano") %>% 
+  arrange(grid)
 
+grid_dist <- geosphere::distm(plots_location[3:4], fun = distHaversine)
+
+# long format
+# removing duplicated values
+grid_dist2 <- grid_dist[-7,-7] # removing the village
+grid_dist2[upper.tri(grid_dist2)] <- NA
+diag(grid_dist2) <- NA
+grid_distance <- melt(grid_dist2) %>% 
+  rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
+  filter(!(is.na(grid_dist)))
 
 # mantel test
-mantel_grid_attr <- ecodist::mantel(distmat_grid ~ as.dist(grid_dist[-7,-7]))
+mantel_grid_attr <- ecodist::mantel(as.dist(distmat_grid) ~ as.dist(grid_dist[-7,-7]))
 mantel_grid_attr
-mantel_grid_attr <- ecodist::mantel(as.dist(grid_modules_dist[-7,-7]) ~ distmat_grid)
-mantel_grid_attr
-mantel_grid_attr <- ecodist::mantel(as.dist(grid_modules_dist) ~ as.dist(grid_dist))
-mantel_grid_attr
-mmm <- ecodist::MRM(as.dist(grid_modules_dist[-7,-7]) ~ as.dist(grid_dist[-7,-7]) + distmat_grid)
-mmm
+
+# correlation
+cor.test(grid_distance$grid_dist,grid_disimilarity$grid_attr)
+plot(grid_distance$grid_dist ~ grid_disimilarity$grid_attr)
