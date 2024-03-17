@@ -115,7 +115,7 @@ fun_nmi_calc <- function(dat, figure) {
 # core microbiome = the number of hosts the asv infects (asv's degree)
 
 # setting thresholds for core
-core_seq <- seq(1:10)
+core_seq <- seq(1:15)
 
 #####
 # observed network
@@ -134,7 +134,7 @@ nmi_summary_core <- NULL
 for (i in core_seq) {
   
   # filtering out ASVs with lower degree than the threshold
-  data_asv_filtered_core <- data_asv %>% filter(asv_degree > i)
+  data_asv_filtered_core <- data_asv %>% filter(asv_degree >= i)
   
   # modularity
   modules <- fun_modularity_analysis(data_asv_filtered_core)
@@ -147,4 +147,34 @@ for (i in core_seq) {
   nmi_summary_core <- rbind(nmi_summary_core, nmi_mid)
 }
 
+#####
+# running for non-core microbiome
 
+nmi_summary_noncore <- NULL
+for (j in core_seq) {
+  
+  # filtering out ASVs with lower degree than the threshold
+  data_asv_filtered_noncore <- data_asv %>% filter(asv_degree <= j)
+  
+  # modularity
+  modules <- fun_modularity_analysis(data_asv_filtered_noncore)
+  
+  # NMI
+  nmi_mid <- fun_nmi_calc(modules, FALSE)
+  nmi_mid <- nmi_mid[[1]] %>% 
+    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0))
+  
+  nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
+}
+
+#####
+# plotting the results
+
+nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
+
+nmi_summary %>% 
+  ggplot(aes(x=degree, y=nmi, color=type)) + 
+  geom_line() + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
+  labs(x="ASVs Degree", y="NMI")
