@@ -11,7 +11,7 @@ rm(list=ls())
 ############################################################################
 
 
-habitat.raw <- read_csv("data_raw/Trap_Plots.csv")
+habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
 
 habitat <- habitat.raw %>% 
   filter(village == "Mandena") %>% 
@@ -63,7 +63,10 @@ habitat <- habitat %>%
 
 ## make a trees df
 trees <- habitat %>% 
-  select(village, grid_name, pitfall, plot, square, tree_height, tree_dbh)
+  select(village, grid_name, pitfall, plot, square, tree_height, tree_dbh) %>% 
+  group_by(village, grid_name, plot, square) %>%
+  summarise(tree_height = mean(tree_height, na.rm=T),
+          tree_dbh = mean(tree_dbh, na.rm=T))
 
 ## create a new df individual tree measurements
 squares <- habitat %>% 
@@ -72,14 +75,18 @@ squares <- habitat %>%
   mutate(n_trees = sum(tree)) %>% 
   ungroup() %>% 
   select(-tree_height, -tree_dbh, -tree) %>% # remove tree info from habitat
-  distinct()
+  distinct() %>% 
+  left_join(trees, by=c("village","grid_name","plot","square"))
 
+# summarizing for plots
 plot_sum <- squares %>% 
-  mutate(across(c(n_trees, dead_logs, 
+  mutate(across(c(n_trees, tree_height, tree_dbh, dead_logs, 
                   liana_number, herbaceous_height, 
                   herbaceous_cover, canopy_cover))) %>% 
   group_by(pitfall, pitfall_line, village, grid_name, plot) %>% 
   summarise(n_trees = sum(n_trees, na.rm=T),
+            tree_height = mean(tree_height, na.rm=T),
+            tree_dbh = mean(tree_dbh, na.rm=T),
             n_logs = sum(dead_logs, na.rm=T),
             n_liana = sum(liana_number, na.rm=T),
             m_herb_ht = mean(herbaceous_height, na.rm=T),
@@ -88,16 +95,17 @@ plot_sum <- squares %>%
   ungroup() %>% 
   mutate(across(everything(), ~replace(. , is.nan(.), 0)))
 
-
+# summarizing for grids
 grid_sum <- plot_sum %>% 
   filter(pitfall == "Grid") %>% 
   group_by(grid_name, village) %>% 
-  summarise_at(vars(4:9), ~mean(., na.rm=TRUE)) %>% 
+  summarise_at(vars(4:11), ~mean(., na.rm=TRUE)) %>% 
   ungroup() %>% 
-  #add_row(grid_name="village",village="Mandena",n_trees=0,n_logs=0,n_liana=0,m_herb_ht=0,m_herb_cv=0,m_canopy_cv=0) %>% 
   arrange(grid_name) %>% 
   mutate(grid_name = factor(grid_name))
-#write_csv(grid_sum, "data_processed/grid_attr_summary.csv")
+
+# adding grids elevation 
+grids_elevation <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
 
 grid_sum_mat <- grid_sum %>% 
   #filter(pitfall == "Grid") %>% 
@@ -106,11 +114,6 @@ grid_sum_mat <- grid_sum %>%
   select(-grid_name,-village) %>%
   as.matrix()
 
-pitfall_sum_mat <- grid_sum %>% 
-  filter(pitfall == "Pitfall") %>% 
-  column_to_rownames("grid_name") %>%
-  select(-pitfall) %>%
-  as.matrix()
 
 ## dist matrix
 distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray")) 
