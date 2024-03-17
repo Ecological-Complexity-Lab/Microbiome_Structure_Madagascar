@@ -22,6 +22,13 @@ data_sm <- semi_join(data_mammals, data_asv, by="host_ID") %>%
   mutate(season = factor(season, levels = c("1","2","3"))) %>% 
   mutate(grid = factor(grid, levels = c("semi-intact_forest","secondary_forest","brushy_regrowth","agriculture","flooded_rice","agroforest","village")))
 
+# saving attributes only for relevant small mammals
+attr_SM <- data_sm %>% 
+  left_join(data_mammals %>% select(host_ID,latitude,longitude,elevation.obs,sex,mass,age_repro,age_dental), by="host_ID")
+# writing to a csv file
+write_csv(attr_SM, "data/data_processed/small_mammals/small_mammals_attributes.csv")
+
+
 # combining asv data and SM data
 data_asv_f <- data_asv %>% 
   dplyr::select(host_ID, unfiltered_reads, contains("ASV"))
@@ -51,4 +58,4 @@ data_asv_long_format <- dat_filtered_threshold %>%
   gather("asv_ID", "reads", starts_with("ASV")) %>% 
   filter(reads>0)
 
-write_csv(data_asv_long_format, "data_processed/three_villages/data_asv_rra0.01_th1000.csv")
+write_csv(data_asv_long_format, "data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
