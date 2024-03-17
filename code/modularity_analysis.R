@@ -41,7 +41,7 @@ fun_modularity_analysis <- function(dat) {
   # output: adding two columns to the input table: "asv_group" and "host_group"
   
   # transforming to matrix
-  data_asv_mat <- data_asv_s %>% 
+  data_asv_mat <- dat %>% select(-asv_degree) %>% 
     mutate(reads = 1) %>% 
     spread(asv_ID, reads, fill = 0) %>% 
     column_to_rownames("host_ID") %>% 
@@ -89,22 +89,23 @@ fun_nmi_calc <- function(dat, figure) {
   # calculating p value
   p <- length(nmi_shuff[nmi_shuff>nmi_obs]) / length(nmi_shuff)
   
+  # plotting
+  if(figure){
+    g <- as.data.frame(nmi_shuff) %>% 
+      ggplot(aes(nmi_shuff)) + 
+      geom_histogram() + 
+      theme_bw() +
+      geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
+      theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
+      labs(x="NMI", y="No. of Shuffled Networks")
+  } else {
+    g <- NULL
+  }
+  
   nmi_summary <- tibble(nmi = nmi_obs,
                         p = p)
   
-  # plotting
-  if(figure){
-  as.data.frame(nmi_shuff) %>% 
-    ggplot(aes(nmi_shuff)) + 
-    geom_histogram() + 
-    theme_bw() +
-    geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
-    labs(x="NMI", y="No. of Shuffled Networks")+
-    annotate("text", x=max(nmi_obs), y=100, label=paste('p-value =',p))
-  }
-  
-  return(nmi_summary)
+  return(list(nmi_summary, g))
 }
 
 
@@ -119,11 +120,12 @@ core_seq <- seq(1:10)
 #####
 # observed network
 # modularity
-modules_observed <- fun_modularity_analysis(data_asv_filtered_core)
+modules_observed <- fun_modularity_analysis(data_asv)
 
 # NMI
 nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
-
+nmi_observed[[1]]
+nmi_observed[[2]]
 
 #####
 # running for core microbiome
@@ -138,8 +140,9 @@ for (i in core_seq) {
   modules <- fun_modularity_analysis(data_asv_filtered_core)
   
   # NMI
-  nmi_mid <- fun_nmi_calc(modules, FALSE) %>% 
-    mutate(degree = i, type = "core")
+  nmi_mid <- fun_nmi_calc(modules, FALSE)
+  nmi_mid <- nmi_mid[[1]] %>% 
+    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0))
   
   nmi_summary_core <- rbind(nmi_summary_core, nmi_mid)
 }
