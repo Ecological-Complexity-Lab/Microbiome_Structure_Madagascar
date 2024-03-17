@@ -11,12 +11,14 @@ setwd("GitHub/Small_Mammals_Microbiome")
 rm(list=ls())
 
 ############################################################################
+# functions
 
+##### grid attributes #######################################################################
 
-habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
+fun_grid_attributes <- function(dat) {
+  
 
 habitat <- habitat.raw %>% 
-  filter(village == "Sarahandrano") %>% 
   mutate(grid_name = case_when(grid_name=="Primary forest" ~ "semi-intact_forest",
                                grid_name=="Degraded forest" ~ "semi-intact_forest",
                                grid_name=="Secondary forest" ~ "secondary_forest",
@@ -106,15 +108,6 @@ grid_sum <- plot_sum %>%
   arrange(grid_name) %>% 
   mutate(grid_name = factor(grid_name))
 
-# adding grids elevation 
-grids_elevation <- read_csv("data/data_processed/small_mammals/small_mammals_attributes.csv") %>% 
-  filter(village=="Andatsakala" & host_species=="Rattus rattus") %>% 
-  group_by(grid) %>% 
-  summarise(elevation = mean(elevation.obs))
-  
-#grid_sum <- grid_sum %>% 
-  #left_join(grids_elevation, by=c("grid_name"="grid"))
-
 # transforming to matrix
 grid_sum_mat <- grid_sum %>% 
   column_to_rownames("grid_name") %>%
@@ -133,6 +126,52 @@ diag(distmat_grid2) <- NA
 grid_disimilarity <- melt(distmat_grid2) %>% 
   rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
   filter(!(is.na(grid_attr)))
+
+return(distmat_grid2)
+}
+
+
+##### grid distance #######################################################################
+
+fun_grid_distance <- function(dat) {
+  
+  dat %<>% arrange(grid)
+  grid_dist <- geosphere::distm(dat[3:4], fun = distHaversine)
+    rownames(grid_dist) <- dat$grid
+    colnames(grid_dist) <- dat$grid
+  
+  # long format
+  # removing duplicated values
+  grid_dist2 <- grid_dist
+  grid_dist2[upper.tri(grid_dist2)] <- NA
+  diag(grid_dist2) <- NA
+  grid_distance <- melt(grid_dist2) %>% 
+    rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
+    filter(!(is.na(grid_dist)))
+  
+  return(grid_dist2)
+}
+
+
+
+############################################################################
+# main script
+
+# reading the raw data
+habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
+plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv")
+
+# for loop for three villages
+
+ # grid attributes
+ # grid distance
+ # grid community similarity
+ # combining all variables into one table
+    # adding village col
+
+# summary table of three villages together
+
+
 
 
 

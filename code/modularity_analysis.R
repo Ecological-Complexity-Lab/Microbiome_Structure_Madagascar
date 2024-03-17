@@ -17,7 +17,7 @@ rm(list=ls())
 
 # reading microbiome data
 data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
-  filter(host_species == "Rattus rattus" & village == "Mandena")
+  filter(host_species == "Rattus rattus" & village == "Andatsakala")
 
 
 ############################################################################
@@ -204,10 +204,10 @@ n_module_grid <- modules_observed %>%
 
 n_asv <- modules_observed %>% 
   #distinct(asv_ID, asv_degree, host_group) %>% 
-  left_join(n_module_grid, by = "host_group") %>% 
+  left_join(n_module_grid, by = c("asv_group"="host_group")) %>% 
   group_by(asv_ID, asv_degree) %>% summarise(n_grid = mean(n_grid)) %>% 
-  mutate(n = ifelse(asv_degree<2,"1-2", ifelse(asv_degree>=10,"10+", "3-9"))) %>% 
-  mutate(n = factor(n, levels = c("1-2","3-9","10+"))) 
+  mutate(n = ifelse(asv_degree<5,"1-4", ifelse(asv_degree>=10,"10+", "5-9"))) %>% 
+  mutate(n = factor(n, levels = c("1-4","5-9","10+"))) 
 
 n_asv %>% 
   ggplot(aes(x=n, y=n_grid, fill=n)) + 
