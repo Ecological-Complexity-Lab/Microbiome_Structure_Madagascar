@@ -171,7 +171,7 @@ for (j in core_seq) {
 #####
 # plotting the results
 
-nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
+#nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
 p1 <- nmi_summary_core %>% 
   ggplot(aes(x=degree, y=nmi)) + 
@@ -196,3 +196,24 @@ p2 <- nmi_summary_noncore %>%
   labs(title = "Non-Core Microbes", x="Maximum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
 cowplot::plot_grid(p1, p2)
+
+# number of modules as a function of asv degree
+n_module_grid <- modules_observed %>% 
+  group_by(host_group) %>% 
+  summarise(n_grid = n_distinct(grid))
+
+n_asv <- modules_observed %>% 
+  #distinct(asv_ID, asv_degree, host_group) %>% 
+  left_join(n_module_grid, by = "host_group") %>% 
+  group_by(asv_ID, asv_degree) %>% summarise(n_grid = mean(n_grid)) %>% 
+  mutate(n = ifelse(asv_degree<2,"1-2", ifelse(asv_degree>=10,"10+", "3-9"))) %>% 
+  mutate(n = factor(n, levels = c("1-2","3-9","10+"))) 
+
+n_asv %>% 
+  ggplot(aes(x=n, y=n_grid, fill=n)) + 
+  geom_boxplot() + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
+  labs(x="ASVs Degree", y="Modules' No. of Land Uses")
+
+
