@@ -257,13 +257,12 @@ grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
 # combining the variables
 final_data <- modules_similarity_three_villages %>% 
   left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
+  mutate(grid_dist = sqrt(grid_dist)) %>% 
   filter(grid1!="village") # removing the village grid
 
-# checking VIF
-# as a rule of thumb, VIF< 10 for a variable is fine
-library(car)
-M <- lm(module_similarity ~ grid_attr + grid_dist + sm_community, data = final_data)
-vif(M)
+# saving the results
+write_csv(final_data, "data/data_processed/final_modularity_data.csv")
+
 
 ##### plotting the regression
 # grid attributes
@@ -282,7 +281,7 @@ final_data %>%
   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Distance Between Grids [m]", y = "Modules Similarity [Bray-Curtis]")
+  labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
 
 # small mammals similarity
 final_data %>% 
@@ -295,8 +294,37 @@ final_data %>%
 
 
 ##### model selection
+library(MuMIn)
 
+# full model
+# adding the village as a random factor
 
+library(lme4)
+full_model <- lme4::lmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail)
+
+library(lme4)
+full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail)
+
+# checking VIF
+# as a rule of thumb, VIF< 10 for a variable is fine
+library(car)
+car::vif(full_model)
+
+qqPlot(final_data$grid_attr)
+shapiro.test(final_data$module_similarity)
+
+# AIC 
+dredge_modules_similarity <- MuMIn::dredge(full_model)
+# The best models: delta <= 10
+results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
+row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
+
+# Relative importance
+imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
+var_names <- rownames(imp)
+imp_values <- as.vector(imp[[1]])
+# Plotting
+barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1))
 
 ######################################################
 
