@@ -18,7 +18,7 @@ rm(list=ls())
 fun_grid_attributes <- function(dat) {
   
 
-habitat <- habitat.raw %>% 
+habitat <- dat %>% 
   mutate(grid_name = case_when(grid_name=="Primary forest" ~ "semi-intact_forest",
                                grid_name=="Degraded forest" ~ "semi-intact_forest",
                                grid_name=="Secondary forest" ~ "secondary_forest",
@@ -125,9 +125,10 @@ distmat_grid2[upper.tri(distmat_grid2)] <- NA
 diag(distmat_grid2) <- NA
 grid_disimilarity <- melt(distmat_grid2) %>% 
   rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
-  filter(!(is.na(grid_attr)))
+  filter(!(is.na(grid_attr))) %>% 
+  arrange(grid1, grid2)
 
-return(distmat_grid2)
+return(grid_disimilarity)
 }
 
 
@@ -147,9 +148,10 @@ fun_grid_distance <- function(dat) {
   diag(grid_dist2) <- NA
   grid_distance <- melt(grid_dist2) %>% 
     rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
-    filter(!(is.na(grid_dist)))
+    filter(!(is.na(grid_dist))) %>% 
+    arrange(grid1, grid2)
   
-  return(grid_dist2)
+  return(grid_distance)
 }
 
 
@@ -157,12 +159,32 @@ fun_grid_distance <- function(dat) {
 
 fun_grid_mammals <- function(dat) {
   
-  dat_mat <- small_mammals %>% 
-    select(host_species, grid) %>% 
-    count(grid, host_species)
-    spread(host_species, n, fill = 0)
-    
   
+  # counting the abundance of each host species in every land use and transforming to matrix
+  dat_mat <- dat %>% 
+    filter(grepl("TMR", animal_id)) %>% 
+    rename(host_species = field_identification, grid = habitat_type) %>% 
+    select(host_species, grid) %>% 
+    count(grid, host_species) %>% 
+    spread(host_species, n, fill = 0) %>% 
+    arrange(grid) %>% 
+    column_to_rownames("grid") %>% 
+    as.matrix()
+  
+  # calculating *dis-similarity* between grids
+  mammals_disimilarity <- as.matrix(vegdist(dat_mat, method = "bray"))
+    
+  # long format
+  # removing duplicated values
+  mammals_disimilarity2 <- mammals_disimilarity
+  mammals_disimilarity2[upper.tri(mammals_disimilarity2)] <- NA
+  diag(mammals_disimilarity2) <- NA
+  grid_mammals <- melt(mammals_disimilarity2) %>% 
+    rename(grid1=Var1, grid2=Var2, sm_community=value) %>% 
+    filter(!(is.na(sm_community))) %>% 
+    arrange(grid1, grid2)
+  
+  return(grid_mammals)
 }
 
 
@@ -173,17 +195,28 @@ fun_grid_mammals <- function(dat) {
 # reading the raw data
 habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
 plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv")
-small_mammals <- read_csv("data/data_processed/small_mammals/small_mammals_attributes.csv")
+small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
+
+village_names <- unique(plots_location$village)
+village_summary <- NULL
 
 # for loop for three villages
-
- # grid attributes
- # grid distance
- # grid community similarity
- # combining all variables into one table
-    # adding village col
-
-# summary table of three villages together
+for (v in village_names) {
+  
+  # grid attributes
+  grid_attributes <- fun_grid_attributes(habitat.raw %>% filter(village == v))
+  # grid distance
+  grid_distance <- fun_grid_distance(plots_location %>% filter(village == v))
+  # grid community similarity
+  grid_mammals <- fun_grid_mammals(small_mammals %>% filter(village == v))
+  # combining all variables into one table
+  grid_summary <- full_join(grid_attributes, grid_distance, by=c("grid1","grid2")) %>% 
+    full_join(grid_mammals, by=c("grid1","grid2")) %>% 
+    mutate(village = v) # adding village col
+  
+  # summary table of three villages together
+  village_summary <- rbind(village_summary, grid_summary)
+}
 
 
 
