@@ -264,6 +264,7 @@ final_data <- modules_similarity_three_villages %>%
 write_csv(final_data, "data/data_processed/final_modularity_data.csv")
 
 
+final_data <- read_csv("data/data_processed/final_modularity_data.csv")
 ##### plotting the regression
 # grid attributes
 final_data %>% 
@@ -272,7 +273,7 @@ final_data %>%
   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Grids Attributes Similarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+  labs(x = "Grids Attributes Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
 
 # grid distance
 final_data %>% 
@@ -290,41 +291,54 @@ final_data %>%
   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Small Mammals Similarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+  labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
 
 
 ##### model selection
-library(MuMIn)
 
 # full model
 # adding the village as a random factor
 
-library(lme4)
-full_model <- lme4::lmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail)
+#library(lme4)
+#full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
 
-library(lme4)
-full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail)
+library(nlme)
+full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
+
+#library(glmmTMB)
+#full_model <- glmmTMB::glmmTMB(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = beta_family())
 
 # checking VIF
 # as a rule of thumb, VIF< 10 for a variable is fine
 library(car)
 car::vif(full_model)
 
+#library(fitdistrplus)
+#a=fitdist(final_data$module_similarity, "norm")
+#b=fitdist(final_data$module_similarity, "beta")
+#a$aic
+#b$aic
+#plot(b)
 qqPlot(final_data$grid_attr)
 shapiro.test(final_data$module_similarity)
 
 # AIC 
+library(MuMIn)
 dredge_modules_similarity <- MuMIn::dredge(full_model)
 # The best models: delta <= 10
 results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
 row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
 
-# Relative importance
+# variables importance
 imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
 var_names <- rownames(imp)
 imp_values <- as.vector(imp[[1]])
 # Plotting
 barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1))
+
+
+
+
 
 ######################################################
 
