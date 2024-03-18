@@ -17,8 +17,8 @@ data_asv %<>% mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", Sample_Na
 
 # matching small-mammals (SM) IDs in the two data files and taking only SM with microbes data
 data_sm <- semi_join(data_mammals, data_asv, by="host_ID") %>% 
-  dplyr::select(host_ID, final_identification, village, habitat_type, season) %>%
-  dplyr::rename(host_species = final_identification, grid = habitat_type) %>% 
+  dplyr::select(host_ID, field_identification, village, habitat_type, season) %>%
+  dplyr::rename(host_species = field_identification, grid = habitat_type) %>% 
   mutate(season = factor(season, levels = c("1","2","3"))) %>% 
   mutate(grid = factor(grid, levels = c("semi-intact_forest","secondary_forest","brushy_regrowth","agriculture","flooded_rice","agroforest","village")))
 

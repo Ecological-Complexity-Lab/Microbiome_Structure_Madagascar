@@ -62,7 +62,7 @@ host_ID,host_species,village,grid,season,latitude,longitude,elevation.obs,sex,ma
 2075,Mus musculus,Mandena,agriculture,1,-14.4690699968487,49.8033439926803,125.770691,female,12,NA,NA
 2076,Mus musculus,Mandena,agriculture,1,-14.4696380384266,49.803391015157104,136.917831,male,9,NA,NA
 2077,Rattus rattus,Mandena,agriculture,1,-14.4691310171037,49.8030669707804,125.616005,male,36,1,1
-2080,Microgale prolixacaudata,Mandena,agriculture,1,-14.4704899750649,49.8039139620959,170.570053,male,5.5,NA,NA
+2080,Microgale longicaudata,Mandena,agriculture,1,-14.4704899750649,49.8039139620959,170.570053,male,5.5,NA,NA
 2081,Microgale brevicaudata,Mandena,agriculture,1,-14.469951018691,49.8034630157053,143.225403,female,6.7,NA,NA
 2082,Microgale brevicaudata,Mandena,agriculture,1,-14.4687160290777,49.8033109679818,118.628746,male,12,NA,NA
 2083,Microgale brevicaudata,Mandena,agriculture,1,-14.4687430188059,49.8037070129066,119.619148,male,10.5,NA,NA
@@ -630,7 +630,7 @@ host_ID,host_species,village,grid,season,latitude,longitude,elevation.obs,sex,ma
 2757,Rattus rattus,Mandena,agroforest,3,-14.4779519643634,49.8109809961169,96.379356,male,85,2,2
 2758,Rattus rattus,Mandena,agroforest,3,-14.477749960497,49.8110560141503,96.339279,female,114,2,2
 2759,Rattus rattus,Mandena,agroforest,3,-14.477647030726,49.810709003359,104.911781,female,110,2,2
-2760,Microgale prolixacaudata,Mandena,agroforest,3,-14.477470004931,49.8116930387914,88.6450349999999,female,4.5,NA,NA
+2760,Microgale cf. prolixacaudata,Mandena,agroforest,3,-14.477470004931,49.8116930387914,88.6450349999999,female,4.5,NA,NA
 2761,Microgale brevicaudata,Mandena,agroforest,3,-14.47718703188,49.8116480279713,89.973915,female,9.8,NA,NA
 2762,Rattus rattus,Mandena,village,3,-14.47962,49.81628,70,male,77,2,2
 2764,Rattus rattus,Mandena,village,3,-14.46983099,49.80275298,138.785965,male,21,2,2
@@ -750,43 +750,43 @@ host_ID,host_species,village,grid,season,latitude,longitude,elevation.obs,sex,ma
 2983,Mus musculus,Sarahandrano,flooded_rice,1,-14.60703,49.64457,488.8,male,11,NA,NA
 2984,Rattus rattus,Sarahandrano,village,1,-14.6077,49.64912,486.2,female,67,2,2
 2988,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.60248,49.65134,603.3,male,12.3,NA,NA
-2989,NA,Sarahandrano,brushy_regrowth,2,-14.60218,49.65219,584.4,female,90.5,3,NA
-2990,NA,Sarahandrano,brushy_regrowth,2,-14.60208,49.65179,595.8,male,119,2,NA
+2989,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60218,49.65219,584.4,female,90.5,3,NA
+2990,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60208,49.65179,595.8,male,119,2,NA
 2997,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.6022,49.65212,586.3,female,13.5,NA,NA
-3000,NA,Sarahandrano,brushy_regrowth,2,-14.60233,49.65179,589.8,male,112,2,NA
-3001,NA,Sarahandrano,brushy_regrowth,2,-14.60191,49.65166,604.8,male,102,2,NA
-3002,NA,Sarahandrano,brushy_regrowth,2,-14.60199,49.65169,595.8,male,103,2,NA
+3000,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60233,49.65179,589.8,male,112,2,NA
+3001,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60191,49.65166,604.8,male,102,2,NA
+3002,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60199,49.65169,595.8,male,103,2,NA
 3003,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.60186,49.6519,599,male,15,NA,NA
-3005,NA,Sarahandrano,brushy_regrowth,2,-14.60191,49.65166,604.8,male,150,2,NA
+3005,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60191,49.65166,604.8,male,150,2,NA
 3007,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.60196,49.65196,591.9,male,15.8,NA,NA
 3009,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.60228,49.65148,603.9,female,17.5,NA,NA
-3011,NA,Sarahandrano,brushy_regrowth,2,-14.60161,49.65194,602,female,68,2,NA
+3011,Rattus rattus,Sarahandrano,brushy_regrowth,2,-14.60161,49.65194,602,female,68,2,NA
 3015,Mus musculus,Sarahandrano,brushy_regrowth,2,-14.60204,49.65127,608.5,male,11.5,NA,NA
-3020,NA,Sarahandrano,agroforest,2,-14.5954,49.66234,735.9,female,86,2,NA
-3021,NA,Sarahandrano,agroforest,2,-14.59556,49.66228,734.9,female,128,2,NA
-3022,NA,Sarahandrano,agroforest,2,-14.59524,49.6623,734.9,male,142,2,NA
-3023,NA,Sarahandrano,agroforest,2,-14.59565,49.662350000000004,737.7,male,144,2,NA
-3024,NA,Sarahandrano,agroforest,2,-14.59526,49.66252,738.4,male,160,2,NA
+3020,Rattus rattus,Sarahandrano,agroforest,2,-14.5954,49.66234,735.9,female,86,2,NA
+3021,Rattus rattus,Sarahandrano,agroforest,2,-14.59556,49.66228,734.9,female,128,2,NA
+3022,Rattus rattus,Sarahandrano,agroforest,2,-14.59524,49.6623,734.9,male,142,2,NA
+3023,Rattus rattus,Sarahandrano,agroforest,2,-14.59565,49.662350000000004,737.7,male,144,2,NA
+3024,Rattus rattus,Sarahandrano,agroforest,2,-14.59526,49.66252,738.4,male,160,2,NA
 3028,Mus musculus,Sarahandrano,agroforest,2,-14.59518,49.66271,742.8,male,10.5,NA,NA
-3030,NA,Sarahandrano,agroforest,2,-14.59514,49.66221,733.4,male,176,2,NA
-3031,NA,Sarahandrano,agroforest,2,-14.59556,49.66228,734.9,female,148,2,NA
-3035,NA,Sarahandrano,agroforest,2,-14.5954,49.6625,734.7,male,158,2,NA
-3036,NA,Sarahandrano,agroforest,2,-14.59506,49.66263,744.7,male,150,2,NA
-3037,NA,Sarahandrano,agroforest,2,-14.59562,49.66266,734,female,122,2,NA
-3038,NA,Sarahandrano,agroforest,2,-14.59542,49.66203,728.2,male,138,2,NA
-3039,NA,Sarahandrano,agroforest,2,-14.59565,49.662350000000004,737.7,male,106,2,NA
-3040,NA,Sarahandrano,agroforest,2,-14.59488,49.66242,747.1,male,136,2,NA
-3041,NA,Sarahandrano,agroforest,2,-14.59504,49.66208,733.6,male,148,2,NA
-3042,NA,Sarahandrano,agroforest,2,-14.59524,49.66238,736.2,male,106,2,NA
-3043,NA,Sarahandrano,secondary_forest,2,-14.59928,49.66803,788.6,male,170,2,NA
-3044,NA,Sarahandrano,secondary_forest,2,-14.59897,49.66772,792.2,female,125,3,NA
-3045,NA,Sarahandrano,secondary_forest,2,-14.59965,49.66712,778.3,female,28,1,NA
-3051,NA,Sarahandrano,secondary_forest,2,-14.59984,49.66754,779.3,male,50.5,1,NA
-3052,NA,Sarahandrano,secondary_forest,2,-14.59972,49.6677,776.1,male,66,1,NA
-3058,NA,Sarahandrano,secondary_forest,2,-14.59921,49.66771,781.9,female,104,2,NA
-3064,NA,Sarahandrano,secondary_forest,2,-14.59934,49.66713,773.4,male,166,2,NA
+3030,Rattus rattus,Sarahandrano,agroforest,2,-14.59514,49.66221,733.4,male,176,2,NA
+3031,Rattus rattus,Sarahandrano,agroforest,2,-14.59556,49.66228,734.9,female,148,2,NA
+3035,Rattus rattus,Sarahandrano,agroforest,2,-14.5954,49.6625,734.7,male,158,2,NA
+3036,Rattus rattus,Sarahandrano,agroforest,2,-14.59506,49.66263,744.7,male,150,2,NA
+3037,Rattus rattus,Sarahandrano,agroforest,2,-14.59562,49.66266,734,female,122,2,NA
+3038,Rattus rattus,Sarahandrano,agroforest,2,-14.59542,49.66203,728.2,male,138,2,NA
+3039,Rattus rattus,Sarahandrano,agroforest,2,-14.59565,49.662350000000004,737.7,male,106,2,NA
+3040,Rattus rattus,Sarahandrano,agroforest,2,-14.59488,49.66242,747.1,male,136,2,NA
+3041,Rattus rattus,Sarahandrano,agroforest,2,-14.59504,49.66208,733.6,male,148,2,NA
+3042,Rattus rattus,Sarahandrano,agroforest,2,-14.59524,49.66238,736.2,male,106,2,NA
+3043,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59928,49.66803,788.6,male,170,2,NA
+3044,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59897,49.66772,792.2,female,125,3,NA
+3045,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59965,49.66712,778.3,female,28,1,NA
+3051,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59984,49.66754,779.3,male,50.5,1,NA
+3052,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59972,49.6677,776.1,male,66,1,NA
+3058,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59921,49.66771,781.9,female,104,2,NA
+3064,Rattus rattus,Sarahandrano,secondary_forest,2,-14.59934,49.66713,773.4,male,166,2,NA
 3078,Mus musculus,Sarahandrano,flooded_rice,2,-14.60743,49.64474,482.5,female,14.8,NA,NA
-3081,NA,Sarahandrano,flooded_rice,2,-14.60748,49.64413,485.2,male,138,2,NA
+3081,Rattus rattus,Sarahandrano,flooded_rice,2,-14.60748,49.64413,485.2,male,138,2,NA
 3082,Mus musculus,Sarahandrano,village,2,-14.60899,49.64851,490.2,male,11.5,NA,NA
 3083,Mus musculus,Sarahandrano,village,2,-14.60899,49.64851,490.2,female,10.5,NA,NA
 3084,Mus musculus,Sarahandrano,village,2,-14.60752,49.647,488.8,female,15,NA,NA
@@ -796,231 +796,231 @@ host_ID,host_species,village,grid,season,latitude,longitude,elevation.obs,sex,ma
 3091,Mus musculus,Sarahandrano,flooded_rice,2,-14.6069,49.64488,487.5,female,15.5,NA,NA
 3092,Mus musculus,Sarahandrano,flooded_rice,2,-14.60692,49.64471,486.1,male,12,NA,NA
 3093,Mus musculus,Sarahandrano,flooded_rice,2,-14.60682,49.6447,485.5,female,16,NA,NA
-3094,NA,Sarahandrano,flooded_rice,2,-14.60731,49.64405,485.8,female,146,2,NA
+3094,Rattus rattus,Sarahandrano,flooded_rice,2,-14.60731,49.64405,485.8,female,146,2,NA
 3095,Mus musculus,Sarahandrano,flooded_rice,2,-14.60726,49.64472,485.6,male,10.5,NA,NA
 3096,Mus musculus,Sarahandrano,flooded_rice,2,-14.60709,49.64479,486.7,male,8.7,NA,NA
 3097,Mus musculus,Sarahandrano,flooded_rice,2,-14.60682,49.6447,485.5,male,8.3,NA,NA
 3103,Mus musculus,Sarahandrano,village,2,-14.60793,49.64759,489.8,female,10,NA,NA
-3104,NA,Sarahandrano,village,2,-14.60889,49.64676,490.1,female,86,2,NA
-3105,NA,Sarahandrano,village,2,-14.60801,49.64719,487.2,female,93.3,2,NA
+3104,Rattus rattus,Sarahandrano,village,2,-14.60889,49.64676,490.1,female,86,2,NA
+3105,Rattus rattus,Sarahandrano,village,2,-14.60801,49.64719,487.2,female,93.3,2,NA
 3106,Mus musculus,Sarahandrano,flooded_rice,2,-14.60682,49.64479,485.2,male,8.4,NA,NA
 3109,Mus musculus,Sarahandrano,flooded_rice,2,-14.60682,49.64479,485.2,male,15.5,NA,NA
 3113,Mus musculus,Sarahandrano,village,2,-14.60798,49.64673,489.7,male,6.8,NA,NA
-3114,NA,Sarahandrano,village,2,-14.60889,49.64676,490.1,male,99,2,NA
-3115,NA,Sarahandrano,village,2,-14.60046,49.66498,723.8,female,152,2,NA
-3118,NA,Sarahandrano,flooded_rice,2,-14.60735,49.64465,485.1,female,50.5,2,NA
-3119,NA,Sarahandrano,village,2,-14.60801,49.64719,487.2,male,82,2,NA
-3120,NA,Sarahandrano,village,2,-14.60787,49.6487,489.2,male,78,2,NA
-3121,NA,Sarahandrano,village,2,-14.60823,49.64933,492.6,male,80,2,NA
-3127,NA,Sarahandrano,agriculture,2,-14.60212,49.65582,587.6,female,106,2,NA
-3128,NA,Sarahandrano,agriculture,2,-14.6015,49.65572,611,female,118,2,NA
-3129,NA,Sarahandrano,agriculture,2,-14.60122,49.65584,625,female,106,2,NA
-3130,NA,Sarahandrano,agriculture,2,-14.60199,49.6562,596.9,male,160,2,NA
-3136,NA,Sarahandrano,agriculture,2,-14.60209,49.65574,583.7,male,152,2,NA
-3137,NA,Sarahandrano,agriculture,2,-14.60168,49.6562,609.1,male,158,2,NA
-3138,NA,Sarahandrano,agriculture,2,-14.60163,49.65585,604,male,154,2,NA
-3139,NA,Sarahandrano,agriculture,2,-14.60152,49.65558,611.7,female,112,2,NA
-3140,NA,Sarahandrano,agriculture,2,-14.60207,49.65589,591.1,female,76,2,NA
-3149,NA,Sarahandrano,agriculture,2,-14.60135,49.65616,623.5,male,138,2,NA
-3150,NA,Sarahandrano,agriculture,2,-14.60207,49.65589,591.1,female,66,2,NA
-3154,NA,Sarahandrano,agriculture,2,-14.60199,49.65571,587.2,male,61,1,NA
-3155,NA,Sarahandrano,agriculture,2,-14.6013,49.65596,625.4,male,118,2,NA
-3156,NA,Sarahandrano,agriculture,2,-14.60147,49.65547,608.1,male,160,2,NA
-3162,NA,Sarahandrano,brushy_regrowth,3,-14.60232,49.65193,580,female,12.5,NA,NA
-3165,NA,Sarahandrano,brushy_regrowth,3,-14.60219,49.65166,588.2,male,13,NA,NA
-3168,NA,Sarahandrano,brushy_regrowth,3,-14.60223,49.65129,602.6,female,8.1,NA,NA
-3172,NA,Sarahandrano,brushy_regrowth,3,-14.60231,49.65204,579.9,female,90,2,NA
-3173,NA,Sarahandrano,brushy_regrowth,3,-14.60221,49.65207,583.8,male,54,1,NA
-3174,NA,Sarahandrano,brushy_regrowth,3,-14.60226,49.65164,594.9,female,31,1,NA
-3175,NA,Sarahandrano,brushy_regrowth,3,-14.60186,49.6514,607.3,female,128,2,NA
-3176,NA,Sarahandrano,brushy_regrowth,3,-14.60179,49.65136,608.4,male,75,1,NA
-3177,NA,Sarahandrano,brushy_regrowth,3,-14.60192,49.65128,606.1,female,45,1,NA
-3178,NA,Sarahandrano,brushy_regrowth,3,-14.60163,49.65179,600.4,male,69,1,NA
-3179,NA,Sarahandrano,brushy_regrowth,3,-14.6023,49.65145,599.2,male,31.5,1,NA
-3180,NA,Sarahandrano,brushy_regrowth,3,-14.60188,49.65193,593,male,52.5,1,NA
-3181,NA,Sarahandrano,brushy_regrowth,3,-14.60195,49.65148,600.8,female,40.5,1,NA
-3182,NA,Sarahandrano,brushy_regrowth,3,-14.60177,49.65204,597.1,male,52.5,1,NA
-3183,NA,Sarahandrano,brushy_regrowth,3,-14.60255,49.65149,594.9,male,59,1,NA
-3184,NA,Sarahandrano,brushy_regrowth,3,-14.6023,49.65216,582.3,male,30.5,1,NA
-3185,NA,Sarahandrano,brushy_regrowth,3,-14.60213,49.65189,582.6,male,97,2,NA
-3186,NA,Sarahandrano,brushy_regrowth,3,-14.6021,49.65177,595.4,male,147,2,NA
-3187,NA,Sarahandrano,brushy_regrowth,3,-14.60179,49.65188,598.8,male,130,2,NA
-3188,NA,Sarahandrano,brushy_regrowth,3,-14.60204,49.65204,590.1,female,6.8,NA,NA
-3193,NA,Sarahandrano,brushy_regrowth,3,-14.60241,49.65202,583.6,male,15,NA,NA
-3195,NA,Sarahandrano,brushy_regrowth,3,-14.60243,49.65175,589.8,male,14.5,NA,NA
-3201,NA,Sarahandrano,brushy_regrowth,3,-14.60141,49.65179,610.3,male,5.2,NA,NA
-3205,NA,Sarahandrano,brushy_regrowth,3,-14.60185,49.65127,611.9,female,6.2,NA,NA
-3209,NA,Sarahandrano,brushy_regrowth,3,-14.60166,49.65162,601.4,male,11,NA,NA
-3213,NA,Sarahandrano,brushy_regrowth,3,-14.60195,49.65203,590.7,female,71,2,NA
-3214,NA,Sarahandrano,brushy_regrowth,3,-14.60203,49.65161,597.8,female,72,2,NA
-3216,NA,Sarahandrano,brushy_regrowth,3,-14.60255,49.65149,594.9,male,116,2,NA
-3217,NA,Sarahandrano,brushy_regrowth,3,-14.60249,49.65186,577.8,female,28.5,1,NA
-3218,NA,Sarahandrano,brushy_regrowth,3,-14.60245,49.65219,576.3,male,58,1,NA
-3219,NA,Sarahandrano,brushy_regrowth,3,-14.60238,49.65218,581.7,male,43.5,1,NA
-3220,NA,Sarahandrano,brushy_regrowth,3,-14.60206,49.65196,589.6,female,56,1,NA
-3223,NA,Sarahandrano,brushy_regrowth,3,-14.6023,49.65145,599.2,female,10,NA,NA
-3229,NA,Sarahandrano,brushy_regrowth,3,-14.60205,49.65137,605.7,male,12.5,NA,NA
-3232,NA,Sarahandrano,brushy_regrowth,3,-14.60249,49.65186,577.8,female,98,2,NA
-3233,NA,Sarahandrano,brushy_regrowth,3,-14.6021,49.65177,595.4,female,74,2,NA
-3237,NA,Sarahandrano,brushy_regrowth,3,-14.60195,49.65148,600.8,female,9.8,NA,NA
-3238,NA,Sarahandrano,brushy_regrowth,3,-14.60257,49.6514,596.8,female,57,2,NA
-3239,NA,Sarahandrano,brushy_regrowth,3,-14.6023,49.65216,582.3,female,84,2,NA
-3243,NA,Sarahandrano,agriculture,3,-14.60164,49.65626,605.6,female,44,1,NA
-3244,NA,Sarahandrano,agriculture,3,-14.60158,49.65623,609.3,male,39.5,1,NA
-3246,NA,Sarahandrano,agriculture,3,-14.60158,49.65599,610.6,female,65,2,NA
-3247,NA,Sarahandrano,agriculture,3,-14.60152,49.65576,612,female,118,2,NA
-3248,NA,Sarahandrano,agriculture,3,-14.60154,49.65555,605.3,male,39,1,NA
-3250,NA,Sarahandrano,agriculture,3,-14.60166,49.65597,600.2,female,75,2,NA
-3251,NA,Sarahandrano,agriculture,3,-14.60148,49.65549,605.3,male,102,2,NA
-3262,NA,Sarahandrano,agriculture,3,-14.60189,49.65607,589.9,male,90,2,NA
-3263,NA,Sarahandrano,agriculture,3,-14.60211,49.65574,581.3,female,88,2,NA
-3268,NA,Sarahandrano,agriculture,3,-14.60144,49.6559,614.5,male,44,1,NA
-3269,NA,Sarahandrano,agriculture,3,-14.60137,49.65574,623.3,female,65,2,NA
-3271,NA,Sarahandrano,agriculture,3,-14.60199,49.65602,584,male,123,2,NA
-3272,NA,Sarahandrano,agriculture,3,-14.60137,49.65587,619.5,female,52,1,NA
-3273,NA,Sarahandrano,agriculture,3,-14.60131,49.65582,624.6,male,138,2,NA
-3279,NA,Sarahandrano,agriculture,3,-14.60214,49.65582,581.1,male,91,2,NA
-3281,NA,Sarahandrano,agriculture,3,-14.60165,49.65568,600.6,male,126,2,NA
-3282,NA,Sarahandrano,agriculture,3,-14.60141,49.65596,619.7,female,15.5,1,NA
-3284,NA,Sarahandrano,agriculture,3,-14.6022,49.65587,577.8,male,92.5,1,NA
-3285,NA,Sarahandrano,agriculture,3,-14.60172,49.65643,599.7,male,41.5,1,NA
-3286,NA,Sarahandrano,agriculture,3,-14.60183,49.65628,596.5,male,16,1,NA
-3288,NA,Sarahandrano,agriculture,3,-14.60185,49.65594,593,female,120,2,NA
-3289,NA,Sarahandrano,agriculture,3,-14.60163,49.65618,609.1,male,92,2,NA
-3295,NA,Sarahandrano,agriculture,3,-14.60211,49.65574,581.3,female,112,2,NA
-3296,NA,Sarahandrano,agriculture,3,-14.60188,49.65588,590.7,male,63,1,NA
-3298,NA,Sarahandrano,agriculture,3,-14.60187,49.65559,588.9,male,150,2,NA
-3299,NA,Sarahandrano,agriculture,3,-14.60144,49.65602,614.1,female,108,2,NA
-3300,NA,Sarahandrano,agriculture,3,-14.6016,49.65575,603,female,51.5,1,NA
-3302,NA,Sarahandrano,agriculture,3,-14.60125,49.65605,631.4,male,56,1,NA
-3310,NA,Sarahandrano,agriculture,3,-14.60144,49.65556,610.5,male,52,1,NA
-3312,NA,Sarahandrano,agriculture,3,-14.6022,49.65587,577.8,male,128,2,NA
-3314,NA,Sarahandrano,agriculture,3,-14.60166,49.65597,600.2,male,132,2,NA
-3315,NA,Sarahandrano,agriculture,3,-14.60158,49.6555,603.3,male,184,2,NA
-3317,NA,Sarahandrano,secondary_forest,3,-14.59901,49.66737,784.9,female,69,2,NA
-3318,NA,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,164,2,NA
-3319,NA,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,female,90,2,NA
-3320,NA,Sarahandrano,secondary_forest,3,-14.59981,49.66764,779.9,male,60,2,NA
-3321,NA,Sarahandrano,secondary_forest,3,-14.59946,49.66734,780.5,male,79.5,1,NA
-3322,NA,Sarahandrano,secondary_forest,3,-14.59963,49.66772,780.5,female,90,2,NA
-3323,NA,Sarahandrano,secondary_forest,3,-14.5993,49.66742,778.9,male,160,2,NA
-3328,NA,Sarahandrano,secondary_forest,3,-14.59919,49.66743,784.6,female,120,2,NA
-3329,NA,Sarahandrano,secondary_forest,3,-14.59904,49.66744,786.5,male,138,2,NA
-3330,NA,Sarahandrano,secondary_forest,3,-14.59934,49.66773,786.7,male,112,2,NA
-3331,NA,Sarahandrano,secondary_forest,3,-14.59979,49.66749,778.2,female,114,2,NA
-3333,NA,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,male,102,2,NA
-3334,NA,Sarahandrano,secondary_forest,3,-14.59919,49.66743,784.6,male,164,2,NA
-3335,NA,Sarahandrano,secondary_forest,3,-14.59934,49.66773,786.7,female,116,2,NA
-3337,NA,Sarahandrano,secondary_forest,3,-14.59915,49.66781,791.1,female,148,2,NA
-3338,NA,Sarahandrano,secondary_forest,3,-14.5989,49.66751,791.4,male,140,2,NA
-3339,NA,Sarahandrano,secondary_forest,3,-14.59935,49.66803,790.1,male,148,2,NA
-3340,NA,Sarahandrano,secondary_forest,3,-14.59898,49.66774,793.5,male,67,1,NA
-3341,NA,Sarahandrano,secondary_forest,3,-14.59924,49.66804,792.3,male,106,2,NA
-3342,NA,Sarahandrano,secondary_forest,3,-14.59888,49.66778,794.8,male,98,2,NA
-3344,NA,Sarahandrano,secondary_forest,3,-14.59881,49.6678,800.5,female,108,2,NA
-3345,NA,Sarahandrano,secondary_forest,3,-14.59945,49.66717,778.8,male,52,1,NA
-3346,NA,Sarahandrano,secondary_forest,3,-14.59931,49.6672,779.5,male,63,1,NA
-3347,NA,Sarahandrano,secondary_forest,3,-14.5994,49.6682,784.1,male,98,2,NA
-3348,NA,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,88,2,NA
-3349,NA,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,male,57,1,NA
-3350,NA,Sarahandrano,secondary_forest,3,-14.59918,49.66719,778.4,male,94,1,NA
-3351,NA,Sarahandrano,secondary_forest,3,-14.59904,49.66744,786.5,male,132,2,NA
-3354,NA,Sarahandrano,secondary_forest,3,-14.59982,49.66776,777.2,male,124,2,NA
-3356,NA,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,84,1,NA
-3357,NA,Sarahandrano,secondary_forest,3,-14.59952,49.66809,787.7,male,130,2,NA
-3358,NA,Sarahandrano,secondary_forest,3,-14.59881,49.6678,800.5,male,172,2,NA
-3360,NA,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,104,2,NA
-3362,NA,Sarahandrano,secondary_forest,3,-14.59952,49.66809,787.7,male,64,1,NA
-3370,NA,Sarahandrano,agroforest,3,-14.59571,49.66232,734.4,female,10.2,NA,NA
-3371,NA,Sarahandrano,agroforest,3,-14.5951,49.6623,740.9,male,12.5,NA,NA
-3373,NA,Sarahandrano,agroforest,3,-14.59523,49.66207,729.4,male,58,1,NA
-3375,NA,Sarahandrano,agroforest,3,-14.59512,49.66256,746.8,male,65,1,NA
-3377,NA,Sarahandrano,agroforest,3,-14.5951,49.66271,749,male,41.5,1,NA
-3378,NA,Sarahandrano,agroforest,3,-14.59516,49.66273,743.1,male,72,1,NA
-3380,NA,Sarahandrano,agroforest,3,-14.5958,49.66213,719.5,male,102,2,NA
-3381,NA,Sarahandrano,agroforest,3,-14.59556,49.66215,730.3,male,128,2,NA
-3382,NA,Sarahandrano,agroforest,3,-14.59504,49.6621,731.7,female,98,2,NA
-3383,NA,Sarahandrano,agroforest,3,-14.59581,49.66227,728.7,female,126,2,NA
-3384,NA,Sarahandrano,agroforest,3,-14.59515,49.66233,740.6,male,106,2,NA
-3385,NA,Sarahandrano,agroforest,3,-14.59522,49.66242,734.8,male,118,2,NA
-3386,NA,Sarahandrano,agroforest,3,-14.59487,49.66248,747.3,male,116,2,NA
-3388,NA,Sarahandrano,agroforest,3,-14.59547,49.66246,737.9,male,10,NA,NA
-3389,NA,Sarahandrano,agroforest,3,-14.59489,49.66258,750.7,male,13.2,NA,NA
-3390,NA,Sarahandrano,agroforest,3,-14.59543,49.66203,727.9,male,86,1,NA
-3391,NA,Sarahandrano,agroforest,3,-14.5958,49.66213,719.5,female,69,2,NA
-3392,NA,Sarahandrano,agroforest,3,-14.59516,49.66224,737.1,male,57,1,NA
-3393,NA,Sarahandrano,agroforest,3,-14.59556,49.66231,734.6,male,70,1,NA
-3394,NA,Sarahandrano,agroforest,3,-14.59542,49.6628,742.4,female,49,1,NA
-3395,NA,Sarahandrano,agroforest,3,-14.59503,49.66278,754.4,male,128,2,NA
-3396,NA,Sarahandrano,agroforest,3,-14.59588,49.66213,718.4,male,136,2,NA
-3397,NA,Sarahandrano,agroforest,3,-14.59555,49.66248,740,female,50,1,NA
-3399,NA,Sarahandrano,agroforest,3,-14.59515,49.6628,750.8,female,76,2,NA
-3400,NA,Sarahandrano,agroforest,3,-14.59536,49.66287,747.7,female,60.5,2,NA
-3401,NA,Sarahandrano,agroforest,3,-14.59588,49.66213,718.4,female,7.6,NA,NA
-3402,NA,Sarahandrano,agroforest,3,-14.59555,49.66248,740,male,12,NA,NA
-3403,NA,Sarahandrano,agroforest,3,-14.59489,49.66242,744.2,male,10.2,NA,NA
-3404,NA,Sarahandrano,agroforest,3,-14.59489,49.66258,750.7,male,7.4,NA,NA
-3405,NA,Sarahandrano,agroforest,3,-14.59566,49.66209,726.5,female,25,1,NA
-3407,NA,Sarahandrano,agroforest,3,-14.59519,49.66214,731.5,female,52,2,NA
-3408,NA,Sarahandrano,agroforest,3,-14.59547,49.66246,737.9,female,32,1,NA
-3410,NA,Sarahandrano,agroforest,3,-14.59482,49.66258,750.9,female,77,2,NA
-3411,NA,Sarahandrano,agroforest,3,-14.59557,49.66207,728.1,male,9.6,NA,NA
-3412,NA,Sarahandrano,agroforest,3,-14.59497,49.66226,744.8,male,10.9,NA,NA
-3413,NA,Sarahandrano,agroforest,3,-14.59489,49.66242,744.2,male,9.2,NA,NA
-3414,NA,Sarahandrano,agroforest,3,-14.59504,49.6621,731.7,male,120,2,NA
-3415,NA,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,62,2,NA
-3417,NA,Sarahandrano,agroforest,3,-14.59544,49.66287,748.6,female,75.5,2,NA
-3418,NA,Sarahandrano,agroforest,3,-14.59539,49.66246,734.7,female,34,1,NA
-3419,NA,Sarahandrano,agroforest,3,-14.59555,49.66258,737.4,male,47,1,NA
-3421,NA,Sarahandrano,agroforest,3,-14.59557,49.66276,744.2,male,64,1,NA
-3423,NA,Sarahandrano,agroforest,3,-14.59534,49.6622,728.8,female,12,NA,NA
-3425,NA,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,121,2,NA
-3426,NA,Sarahandrano,agroforest,3,-14.59503,49.66278,754.4,female,36,1,NA
-3428,NA,Sarahandrano,agroforest,3,-14.59581,49.66227,728.7,female,66,2,NA
-3429,NA,Sarahandrano,agroforest,3,-14.59556,49.66231,734.6,female,92,2,NA
-3430,NA,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,102,2,NA
-3432,NA,Sarahandrano,agroforest,3,-14.59504,49.6627,754.1,female,69,2,NA
-3433,NA,Sarahandrano,agroforest,3,-14.59544,49.66287,748.6,female,106,2,NA
-3438,NA,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,85,2,NA
-3439,NA,Sarahandrano,village,3,-14.6067,49.64637,485.1,male,74,2,NA
-3440,NA,Sarahandrano,village,3,-14.60788,49.64873,487.8,male,11.4,NA,NA
-3441,NA,Sarahandrano,village,3,-14.60795,49.64533,484.1,female,12.2,NA,NA
-3442,NA,Sarahandrano,village,3,-14.60718,49.64618,485.5,female,103,3,NA
-3443,NA,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,male,11.8,NA,NA
-3446,NA,Sarahandrano,flooded_rice,3,-14.6075,49.64464,481,female,86.5,2,NA
-3448,NA,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,55,2,NA
-3449,NA,Sarahandrano,village,3,-14.6067,49.64637,485.1,male,138,2,NA
-3451,NA,Sarahandrano,village,3,-14.60234,49.65507,575.6,female,97,2,NA
-3452,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,117,2,NA
-3453,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,102,2,NA
-3456,NA,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,male,11.5,NA,NA
-3457,NA,Sarahandrano,flooded_rice,3,-14.60748,49.64473,479.4,male,10.5,NA,NA
-3459,NA,Sarahandrano,flooded_rice,3,-14.6075,49.64464,481,female,108,2,NA
-3460,NA,Sarahandrano,flooded_rice,3,-14.60716,49.64541,480.9,female,58,2,NA
-3461,NA,Sarahandrano,village,3,-14.60718,49.64618,485.5,male,128,2,NA
-3462,NA,Sarahandrano,village,3,-14.60234,49.65507,575.6,female,10.4,NA,NA
-3463,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,114,2,NA
-3465,NA,Sarahandrano,flooded_rice,3,-14.60751,49.64455,479.3,male,14.8,NA,NA
-3467,NA,Sarahandrano,village,3,-14.60891,49.64683,492.1,male,9.4,NA,NA
-3469,NA,Sarahandrano,village,3,-14.60234,49.65507,575.6,male,12,2,NA
-3470,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,158,2,NA
-3471,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,102,1,NA
-3473,NA,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,female,8.5,NA,NA
-3474,NA,Sarahandrano,flooded_rice,3,-14.60751,49.64455,479.3,female,12.4,NA,NA
-3475,NA,Sarahandrano,flooded_rice,3,-14.60661,49.64454,481.8,male,13.6,NA,NA
-3477,NA,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,77,2,NA
-3478,NA,Sarahandrano,village,3,-14.60823,49.64713,487.9,male,13.8,NA,NA
-3480,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,62.5,2,NA
-3481,NA,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,61.5,2,NA
-3482,NA,Sarahandrano,flooded_rice,3,-14.60747,49.64482,479.7,female,9.8,NA,NA
-3484,NA,Sarahandrano,village,3,-14.60891,49.64683,492.1,female,12.2,NA,NA
-3485,NA,Sarahandrano,village,3,-14.60788,49.64873,487.8,male,11.2,NA,NA
-3486,NA,Sarahandrano,village,3,-14.60795,49.64672,482.7,male,10.5,NA,NA
-3487,NA,Sarahandrano,village,3,-14.60795,49.64533,484.1,male,10.2,NA,NA
-3488,NA,Sarahandrano,village,3,-14.60795,49.64533,484.1,male,66.5,1,NA
-3489,NA,Sarahandrano,village,3,-14.60718,49.64618,485.5,male,14.5,1,NA
-3490,NA,Sarahandrano,village,3,-14.60823,49.64713,487.9,female,38.5,1,NA
-3491,NA,Sarahandrano,village,3,-14.60234,49.65507,575.6,male,120,2,NA
+3114,Rattus rattus,Sarahandrano,village,2,-14.60889,49.64676,490.1,male,99,2,NA
+3115,Rattus rattus,Sarahandrano,village,2,-14.60046,49.66498,723.8,female,152,2,NA
+3118,Rattus rattus,Sarahandrano,flooded_rice,2,-14.60735,49.64465,485.1,female,50.5,2,NA
+3119,Rattus rattus,Sarahandrano,village,2,-14.60801,49.64719,487.2,male,82,2,NA
+3120,Rattus rattus,Sarahandrano,village,2,-14.60787,49.6487,489.2,male,78,2,NA
+3121,Rattus rattus,Sarahandrano,village,2,-14.60823,49.64933,492.6,male,80,2,NA
+3127,Rattus rattus,Sarahandrano,agriculture,2,-14.60212,49.65582,587.6,female,106,2,NA
+3128,Rattus rattus,Sarahandrano,agriculture,2,-14.6015,49.65572,611,female,118,2,NA
+3129,Rattus rattus,Sarahandrano,agriculture,2,-14.60122,49.65584,625,female,106,2,NA
+3130,Rattus rattus,Sarahandrano,agriculture,2,-14.60199,49.6562,596.9,male,160,2,NA
+3136,Rattus rattus,Sarahandrano,agriculture,2,-14.60209,49.65574,583.7,male,152,2,NA
+3137,Rattus rattus,Sarahandrano,agriculture,2,-14.60168,49.6562,609.1,male,158,2,NA
+3138,Rattus rattus,Sarahandrano,agriculture,2,-14.60163,49.65585,604,male,154,2,NA
+3139,Rattus rattus,Sarahandrano,agriculture,2,-14.60152,49.65558,611.7,female,112,2,NA
+3140,Rattus rattus,Sarahandrano,agriculture,2,-14.60207,49.65589,591.1,female,76,2,NA
+3149,Rattus rattus,Sarahandrano,agriculture,2,-14.60135,49.65616,623.5,male,138,2,NA
+3150,Rattus rattus,Sarahandrano,agriculture,2,-14.60207,49.65589,591.1,female,66,2,NA
+3154,Rattus rattus,Sarahandrano,agriculture,2,-14.60199,49.65571,587.2,male,61,1,NA
+3155,Rattus rattus,Sarahandrano,agriculture,2,-14.6013,49.65596,625.4,male,118,2,NA
+3156,Rattus rattus,Sarahandrano,agriculture,2,-14.60147,49.65547,608.1,male,160,2,NA
+3162,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60232,49.65193,580,female,12.5,NA,NA
+3165,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60219,49.65166,588.2,male,13,NA,NA
+3168,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60223,49.65129,602.6,female,8.1,NA,NA
+3172,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60231,49.65204,579.9,female,90,2,NA
+3173,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60221,49.65207,583.8,male,54,1,NA
+3174,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60226,49.65164,594.9,female,31,1,NA
+3175,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60186,49.6514,607.3,female,128,2,NA
+3176,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60179,49.65136,608.4,male,75,1,NA
+3177,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60192,49.65128,606.1,female,45,1,NA
+3178,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60163,49.65179,600.4,male,69,1,NA
+3179,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.6023,49.65145,599.2,male,31.5,1,NA
+3180,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60188,49.65193,593,male,52.5,1,NA
+3181,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60195,49.65148,600.8,female,40.5,1,NA
+3182,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60177,49.65204,597.1,male,52.5,1,NA
+3183,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60255,49.65149,594.9,male,59,1,NA
+3184,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.6023,49.65216,582.3,male,30.5,1,NA
+3185,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60213,49.65189,582.6,male,97,2,NA
+3186,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.6021,49.65177,595.4,male,147,2,NA
+3187,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60179,49.65188,598.8,male,130,2,NA
+3188,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60204,49.65204,590.1,female,6.8,NA,NA
+3193,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60241,49.65202,583.6,male,15,NA,NA
+3195,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60243,49.65175,589.8,male,14.5,NA,NA
+3201,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60141,49.65179,610.3,male,5.2,NA,NA
+3205,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60185,49.65127,611.9,female,6.2,NA,NA
+3209,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60166,49.65162,601.4,male,11,NA,NA
+3213,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60195,49.65203,590.7,female,71,2,NA
+3214,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60203,49.65161,597.8,female,72,2,NA
+3216,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60255,49.65149,594.9,male,116,2,NA
+3217,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60249,49.65186,577.8,female,28.5,1,NA
+3218,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60245,49.65219,576.3,male,58,1,NA
+3219,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60238,49.65218,581.7,male,43.5,1,NA
+3220,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60206,49.65196,589.6,female,56,1,NA
+3223,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.6023,49.65145,599.2,female,10,NA,NA
+3229,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60205,49.65137,605.7,male,12.5,NA,NA
+3232,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60249,49.65186,577.8,female,98,2,NA
+3233,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.6021,49.65177,595.4,female,74,2,NA
+3237,Mus musculus,Sarahandrano,brushy_regrowth,3,-14.60195,49.65148,600.8,female,9.8,NA,NA
+3238,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.60257,49.6514,596.8,female,57,2,NA
+3239,Rattus rattus,Sarahandrano,brushy_regrowth,3,-14.6023,49.65216,582.3,female,84,2,NA
+3243,Rattus rattus,Sarahandrano,agriculture,3,-14.60164,49.65626,605.6,female,44,1,NA
+3244,Rattus rattus,Sarahandrano,agriculture,3,-14.60158,49.65623,609.3,male,39.5,1,NA
+3246,Rattus rattus,Sarahandrano,agriculture,3,-14.60158,49.65599,610.6,female,65,2,NA
+3247,Rattus rattus,Sarahandrano,agriculture,3,-14.60152,49.65576,612,female,118,2,NA
+3248,Rattus rattus,Sarahandrano,agriculture,3,-14.60154,49.65555,605.3,male,39,1,NA
+3250,Rattus rattus,Sarahandrano,agriculture,3,-14.60166,49.65597,600.2,female,75,2,NA
+3251,Rattus rattus,Sarahandrano,agriculture,3,-14.60148,49.65549,605.3,male,102,2,NA
+3262,Rattus rattus,Sarahandrano,agriculture,3,-14.60189,49.65607,589.9,male,90,2,NA
+3263,Rattus rattus,Sarahandrano,agriculture,3,-14.60211,49.65574,581.3,female,88,2,NA
+3268,Rattus rattus,Sarahandrano,agriculture,3,-14.60144,49.6559,614.5,male,44,1,NA
+3269,Rattus rattus,Sarahandrano,agriculture,3,-14.60137,49.65574,623.3,female,65,2,NA
+3271,Rattus rattus,Sarahandrano,agriculture,3,-14.60199,49.65602,584,male,123,2,NA
+3272,Rattus rattus,Sarahandrano,agriculture,3,-14.60137,49.65587,619.5,female,52,1,NA
+3273,Rattus rattus,Sarahandrano,agriculture,3,-14.60131,49.65582,624.6,male,138,2,NA
+3279,Rattus rattus,Sarahandrano,agriculture,3,-14.60214,49.65582,581.1,male,91,2,NA
+3281,Rattus rattus,Sarahandrano,agriculture,3,-14.60165,49.65568,600.6,male,126,2,NA
+3282,Rattus rattus,Sarahandrano,agriculture,3,-14.60141,49.65596,619.7,female,15.5,1,NA
+3284,Rattus rattus,Sarahandrano,agriculture,3,-14.6022,49.65587,577.8,male,92.5,1,NA
+3285,Rattus rattus,Sarahandrano,agriculture,3,-14.60172,49.65643,599.7,male,41.5,1,NA
+3286,Rattus rattus,Sarahandrano,agriculture,3,-14.60183,49.65628,596.5,male,16,1,NA
+3288,Rattus rattus,Sarahandrano,agriculture,3,-14.60185,49.65594,593,female,120,2,NA
+3289,Rattus rattus,Sarahandrano,agriculture,3,-14.60163,49.65618,609.1,male,92,2,NA
+3295,Rattus rattus,Sarahandrano,agriculture,3,-14.60211,49.65574,581.3,female,112,2,NA
+3296,Rattus rattus,Sarahandrano,agriculture,3,-14.60188,49.65588,590.7,male,63,1,NA
+3298,Rattus rattus,Sarahandrano,agriculture,3,-14.60187,49.65559,588.9,male,150,2,NA
+3299,Rattus rattus,Sarahandrano,agriculture,3,-14.60144,49.65602,614.1,female,108,2,NA
+3300,Rattus rattus,Sarahandrano,agriculture,3,-14.6016,49.65575,603,female,51.5,1,NA
+3302,Rattus rattus,Sarahandrano,agriculture,3,-14.60125,49.65605,631.4,male,56,1,NA
+3310,Rattus rattus,Sarahandrano,agriculture,3,-14.60144,49.65556,610.5,male,52,1,NA
+3312,Rattus rattus,Sarahandrano,agriculture,3,-14.6022,49.65587,577.8,male,128,2,NA
+3314,Rattus rattus,Sarahandrano,agriculture,3,-14.60166,49.65597,600.2,male,132,2,NA
+3315,Rattus rattus,Sarahandrano,agriculture,3,-14.60158,49.6555,603.3,male,184,2,NA
+3317,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59901,49.66737,784.9,female,69,2,NA
+3318,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,164,2,NA
+3319,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,female,90,2,NA
+3320,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59981,49.66764,779.9,male,60,2,NA
+3321,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59946,49.66734,780.5,male,79.5,1,NA
+3322,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59963,49.66772,780.5,female,90,2,NA
+3323,Rattus rattus,Sarahandrano,secondary_forest,3,-14.5993,49.66742,778.9,male,160,2,NA
+3328,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59919,49.66743,784.6,female,120,2,NA
+3329,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59904,49.66744,786.5,male,138,2,NA
+3330,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59934,49.66773,786.7,male,112,2,NA
+3331,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59979,49.66749,778.2,female,114,2,NA
+3333,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,male,102,2,NA
+3334,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59919,49.66743,784.6,male,164,2,NA
+3335,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59934,49.66773,786.7,female,116,2,NA
+3337,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59915,49.66781,791.1,female,148,2,NA
+3338,Rattus rattus,Sarahandrano,secondary_forest,3,-14.5989,49.66751,791.4,male,140,2,NA
+3339,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59935,49.66803,790.1,male,148,2,NA
+3340,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59898,49.66774,793.5,male,67,1,NA
+3341,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59924,49.66804,792.3,male,106,2,NA
+3342,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59888,49.66778,794.8,male,98,2,NA
+3344,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59881,49.6678,800.5,female,108,2,NA
+3345,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59945,49.66717,778.8,male,52,1,NA
+3346,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59931,49.6672,779.5,male,63,1,NA
+3347,Rattus rattus,Sarahandrano,secondary_forest,3,-14.5994,49.6682,784.1,male,98,2,NA
+3348,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,88,2,NA
+3349,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59937,49.66713,780.7,male,57,1,NA
+3350,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59918,49.66719,778.4,male,94,1,NA
+3351,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59904,49.66744,786.5,male,132,2,NA
+3354,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59982,49.66776,777.2,male,124,2,NA
+3356,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,84,1,NA
+3357,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59952,49.66809,787.7,male,130,2,NA
+3358,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59881,49.6678,800.5,male,172,2,NA
+3360,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59973,49.66745,778.7,male,104,2,NA
+3362,Rattus rattus,Sarahandrano,secondary_forest,3,-14.59952,49.66809,787.7,male,64,1,NA
+3370,Mus musculus,Sarahandrano,agroforest,3,-14.59571,49.66232,734.4,female,10.2,NA,NA
+3371,Mus musculus,Sarahandrano,agroforest,3,-14.5951,49.6623,740.9,male,12.5,NA,NA
+3373,Rattus rattus,Sarahandrano,agroforest,3,-14.59523,49.66207,729.4,male,58,1,NA
+3375,Rattus rattus,Sarahandrano,agroforest,3,-14.59512,49.66256,746.8,male,65,1,NA
+3377,Rattus rattus,Sarahandrano,agroforest,3,-14.5951,49.66271,749,male,41.5,1,NA
+3378,Rattus rattus,Sarahandrano,agroforest,3,-14.59516,49.66273,743.1,male,72,1,NA
+3380,Rattus rattus,Sarahandrano,agroforest,3,-14.5958,49.66213,719.5,male,102,2,NA
+3381,Rattus rattus,Sarahandrano,agroforest,3,-14.59556,49.66215,730.3,male,128,2,NA
+3382,Rattus rattus,Sarahandrano,agroforest,3,-14.59504,49.6621,731.7,female,98,2,NA
+3383,Rattus rattus,Sarahandrano,agroforest,3,-14.59581,49.66227,728.7,female,126,2,NA
+3384,Rattus rattus,Sarahandrano,agroforest,3,-14.59515,49.66233,740.6,male,106,2,NA
+3385,Rattus rattus,Sarahandrano,agroforest,3,-14.59522,49.66242,734.8,male,118,2,NA
+3386,Rattus rattus,Sarahandrano,agroforest,3,-14.59487,49.66248,747.3,male,116,2,NA
+3388,Mus musculus,Sarahandrano,agroforest,3,-14.59547,49.66246,737.9,male,10,NA,NA
+3389,Mus musculus,Sarahandrano,agroforest,3,-14.59489,49.66258,750.7,male,13.2,NA,NA
+3390,Rattus rattus,Sarahandrano,agroforest,3,-14.59543,49.66203,727.9,male,86,1,NA
+3391,Rattus rattus,Sarahandrano,agroforest,3,-14.5958,49.66213,719.5,female,69,2,NA
+3392,Rattus rattus,Sarahandrano,agroforest,3,-14.59516,49.66224,737.1,male,57,1,NA
+3393,Rattus rattus,Sarahandrano,agroforest,3,-14.59556,49.66231,734.6,male,70,1,NA
+3394,Rattus rattus,Sarahandrano,agroforest,3,-14.59542,49.6628,742.4,female,49,1,NA
+3395,Rattus rattus,Sarahandrano,agroforest,3,-14.59503,49.66278,754.4,male,128,2,NA
+3396,Rattus rattus,Sarahandrano,agroforest,3,-14.59588,49.66213,718.4,male,136,2,NA
+3397,Rattus rattus,Sarahandrano,agroforest,3,-14.59555,49.66248,740,female,50,1,NA
+3399,Rattus rattus,Sarahandrano,agroforest,3,-14.59515,49.6628,750.8,female,76,2,NA
+3400,Rattus rattus,Sarahandrano,agroforest,3,-14.59536,49.66287,747.7,female,60.5,2,NA
+3401,Mus musculus,Sarahandrano,agroforest,3,-14.59588,49.66213,718.4,female,7.6,NA,NA
+3402,Mus musculus,Sarahandrano,agroforest,3,-14.59555,49.66248,740,male,12,NA,NA
+3403,Mus musculus,Sarahandrano,agroforest,3,-14.59489,49.66242,744.2,male,10.2,NA,NA
+3404,Mus musculus,Sarahandrano,agroforest,3,-14.59489,49.66258,750.7,male,7.4,NA,NA
+3405,Rattus rattus,Sarahandrano,agroforest,3,-14.59566,49.66209,726.5,female,25,1,NA
+3407,Rattus rattus,Sarahandrano,agroforest,3,-14.59519,49.66214,731.5,female,52,2,NA
+3408,Rattus rattus,Sarahandrano,agroforest,3,-14.59547,49.66246,737.9,female,32,1,NA
+3410,Rattus rattus,Sarahandrano,agroforest,3,-14.59482,49.66258,750.9,female,77,2,NA
+3411,Mus musculus,Sarahandrano,agroforest,3,-14.59557,49.66207,728.1,male,9.6,NA,NA
+3412,Mus musculus,Sarahandrano,agroforest,3,-14.59497,49.66226,744.8,male,10.9,NA,NA
+3413,Mus musculus,Sarahandrano,agroforest,3,-14.59489,49.66242,744.2,male,9.2,NA,NA
+3414,Rattus rattus,Sarahandrano,agroforest,3,-14.59504,49.6621,731.7,male,120,2,NA
+3415,Rattus rattus,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,62,2,NA
+3417,Rattus rattus,Sarahandrano,agroforest,3,-14.59544,49.66287,748.6,female,75.5,2,NA
+3418,Rattus rattus,Sarahandrano,agroforest,3,-14.59539,49.66246,734.7,female,34,1,NA
+3419,Rattus rattus,Sarahandrano,agroforest,3,-14.59555,49.66258,737.4,male,47,1,NA
+3421,Rattus rattus,Sarahandrano,agroforest,3,-14.59557,49.66276,744.2,male,64,1,NA
+3423,Mus musculus,Sarahandrano,agroforest,3,-14.59534,49.6622,728.8,female,12,NA,NA
+3425,Rattus rattus,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,121,2,NA
+3426,Rattus rattus,Sarahandrano,agroforest,3,-14.59503,49.66278,754.4,female,36,1,NA
+3428,Rattus rattus,Sarahandrano,agroforest,3,-14.59581,49.66227,728.7,female,66,2,NA
+3429,Rattus rattus,Sarahandrano,agroforest,3,-14.59556,49.66231,734.6,female,92,2,NA
+3430,Rattus rattus,Sarahandrano,agroforest,3,-14.59548,49.66243,738.2,female,102,2,NA
+3432,Rattus rattus,Sarahandrano,agroforest,3,-14.59504,49.6627,754.1,female,69,2,NA
+3433,Rattus rattus,Sarahandrano,agroforest,3,-14.59544,49.66287,748.6,female,106,2,NA
+3438,Rattus rattus,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,85,2,NA
+3439,Rattus rattus,Sarahandrano,village,3,-14.6067,49.64637,485.1,male,74,2,NA
+3440,Mus musculus,Sarahandrano,village,3,-14.60788,49.64873,487.8,male,11.4,NA,NA
+3441,Mus musculus,Sarahandrano,village,3,-14.60795,49.64533,484.1,female,12.2,NA,NA
+3442,Rattus rattus,Sarahandrano,village,3,-14.60718,49.64618,485.5,female,103,3,NA
+3443,Mus musculus,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,male,11.8,NA,NA
+3446,Rattus rattus,Sarahandrano,flooded_rice,3,-14.6075,49.64464,481,female,86.5,2,NA
+3448,Rattus rattus,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,55,2,NA
+3449,Rattus rattus,Sarahandrano,village,3,-14.6067,49.64637,485.1,male,138,2,NA
+3451,Rattus rattus,Sarahandrano,village,3,-14.60234,49.65507,575.6,female,97,2,NA
+3452,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,117,2,NA
+3453,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,102,2,NA
+3456,Mus musculus,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,male,11.5,NA,NA
+3457,Mus musculus,Sarahandrano,flooded_rice,3,-14.60748,49.64473,479.4,male,10.5,NA,NA
+3459,Rattus rattus,Sarahandrano,flooded_rice,3,-14.6075,49.64464,481,female,108,2,NA
+3460,Rattus rattus,Sarahandrano,flooded_rice,3,-14.60716,49.64541,480.9,female,58,2,NA
+3461,Rattus rattus,Sarahandrano,village,3,-14.60718,49.64618,485.5,male,128,2,NA
+3462,Mus musculus,Sarahandrano,village,3,-14.60234,49.65507,575.6,female,10.4,NA,NA
+3463,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,114,2,NA
+3465,Mus musculus,Sarahandrano,flooded_rice,3,-14.60751,49.64455,479.3,male,14.8,NA,NA
+3467,Mus musculus,Sarahandrano,village,3,-14.60891,49.64683,492.1,male,9.4,NA,NA
+3469,Rattus rattus,Sarahandrano,village,3,-14.60234,49.65507,575.6,male,12,2,NA
+3470,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,158,2,NA
+3471,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,male,102,1,NA
+3473,Mus musculus,Sarahandrano,flooded_rice,3,-14.60743,49.64502,478,female,8.5,NA,NA
+3474,Mus musculus,Sarahandrano,flooded_rice,3,-14.60751,49.64455,479.3,female,12.4,NA,NA
+3475,Mus musculus,Sarahandrano,flooded_rice,3,-14.60661,49.64454,481.8,male,13.6,NA,NA
+3477,Rattus rattus,Sarahandrano,village,3,-14.6067,49.64637,485.1,female,77,2,NA
+3478,Mus musculus,Sarahandrano,village,3,-14.60823,49.64713,487.9,male,13.8,NA,NA
+3480,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,62.5,2,NA
+3481,Rattus rattus,Sarahandrano,village,3,-14.60046,49.66498,723.8,female,61.5,2,NA
+3482,Mus musculus,Sarahandrano,flooded_rice,3,-14.60747,49.64482,479.7,female,9.8,NA,NA
+3484,Mus musculus,Sarahandrano,village,3,-14.60891,49.64683,492.1,female,12.2,NA,NA
+3485,Mus musculus,Sarahandrano,village,3,-14.60788,49.64873,487.8,male,11.2,NA,NA
+3486,Mus musculus,Sarahandrano,village,3,-14.60795,49.64672,482.7,male,10.5,NA,NA
+3487,Mus musculus,Sarahandrano,village,3,-14.60795,49.64533,484.1,male,10.2,NA,NA
+3488,Rattus rattus,Sarahandrano,village,3,-14.60795,49.64533,484.1,male,66.5,1,NA
+3489,Rattus rattus,Sarahandrano,village,3,-14.60718,49.64618,485.5,male,14.5,1,NA
+3490,Rattus rattus,Sarahandrano,village,3,-14.60823,49.64713,487.9,female,38.5,1,NA
+3491,Rattus rattus,Sarahandrano,village,3,-14.60234,49.65507,575.6,male,120,2,NA
 3496,Mus musculus,Andatsakala,brushy_regrowth,1,-14.39512501,49.87086399,384.519562,male,15.2,NA,NA
 3497,Mus musculus,Andatsakala,brushy_regrowth,1,-14.39517103,49.87064296,387.639404,male,16.5,NA,NA
 3498,Mus musculus,Andatsakala,brushy_regrowth,1,-14.39512904,49.87026804,397.560364,male,11.2,NA,NA

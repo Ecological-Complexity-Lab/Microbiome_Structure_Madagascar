@@ -153,6 +153,19 @@ fun_grid_distance <- function(dat) {
 }
 
 
+##### grid small mammals community #######################################################################
+
+fun_grid_mammals <- function(dat) {
+  
+  dat_mat <- small_mammals %>% 
+    select(host_species, grid) %>% 
+    count(grid, host_species)
+    spread(host_species, n, fill = 0)
+    
+  
+}
+
+
 
 ############################################################################
 # main script
@@ -160,6 +173,7 @@ fun_grid_distance <- function(dat) {
 # reading the raw data
 habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
 plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv")
+small_mammals <- read_csv("data/data_processed/small_mammals/small_mammals_attributes.csv")
 
 # for loop for three villages
 
