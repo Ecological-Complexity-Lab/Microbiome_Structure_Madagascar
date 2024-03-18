@@ -6,6 +6,7 @@ library(magrittr)
 library(vegan)
 library(geosphere)
 library(reshape2)
+library(psych)
 
 setwd("GitHub/Small_Mammals_Microbiome")
 rm(list=ls())
@@ -116,7 +117,7 @@ grid_sum_mat <- grid_sum %>%
   as.matrix()
 
 ## calculating *dis-similarity* between grids
-distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray")) 
+distmat_grid <- as.matrix(vegdist(sqrt(grid_sum_mat), method = "bray")) 
 
 # long format
 # removing duplicated values
@@ -172,7 +173,7 @@ fun_grid_mammals <- function(dat) {
     as.matrix()
   
   # calculating *dis-similarity* between grids
-  mammals_disimilarity <- as.matrix(vegdist(dat_mat, method = "bray"))
+  mammals_disimilarity <- as.matrix(vegdist(sqrt(dat_mat), method = "bray"))
     
   # long format
   # removing duplicated values
@@ -218,42 +219,12 @@ for (v in village_names) {
   village_summary <- rbind(village_summary, grid_summary)
 }
 
+# saving the results
+write_csv(village_summary, "data/data_processed/village_summary.csv")
 
 
+#####
+# correlations between variables
+psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
 
 
-## nmds
-nms <- metaMDS(distmat_grid,
-               k = 3, 
-               maxit = 999,
-               trymax = 500,
-               wascores = T)
-## plot ordination grids
-ordiplot(nms, type = "none")
-points(nms, display = "sites")
-text(nms, display = "sites")
-
-
-# calculating distance between grids
-plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv") %>% 
-  filter(village == "Sarahandrano") %>% 
-  arrange(grid)
-
-grid_dist <- geosphere::distm(plots_location[3:4], fun = distHaversine)
-
-# long format
-# removing duplicated values
-grid_dist2 <- grid_dist[-7,-7] # removing the village
-grid_dist2[upper.tri(grid_dist2)] <- NA
-diag(grid_dist2) <- NA
-grid_distance <- melt(grid_dist2) %>% 
-  rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
-  filter(!(is.na(grid_dist)))
-
-# mantel test
-mantel_grid_attr <- ecodist::mantel(as.dist(distmat_grid) ~ as.dist(grid_dist[-7,-7]))
-mantel_grid_attr
-
-# correlation
-cor.test(grid_distance$grid_dist,grid_disimilarity$grid_attr)
-plot(grid_distance$grid_dist ~ grid_disimilarity$grid_attr)
