@@ -17,21 +17,8 @@ rm(list=ls())
 
 # reading microbiome data
 data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
-  filter(host_species == "Rattus rattus" & village == "Andatsakala")
+  filter(host_species == "Rattus rattus")
 
-
-############################################################################
-# NMI analysis for different values of core microbiome
-
-# calculating ASVs degree 
-asv_degree <- data_asv %>% 
-  count(asv_ID) %>% 
-  rename(asv_degree = n)
-  #mutate(prevalence = asv_degree/length(unique(data_asv$host_ID)))
-# exploring quantiles of asv degree
-quantile(asv_degree$asv_degree, c(0.25,0.5,0.75,0.9,0.95))
-
-data_asv %<>% left_join(asv_degree, by="asv_ID")
 
 
 ##### functions #####################################################################
@@ -110,32 +97,17 @@ fun_nmi_calc <- function(dat, figure) {
 }
 
 
-
-############################################################################
 # calculating NMI for different values of core microbiome
 # core microbiome = the number of hosts the asv infects (asv's degree)
-
-# setting thresholds for core
-core_seq <- seq(1:15)
-
-#####
-# observed network
-# modularity
-modules_observed <- fun_modularity_analysis(data_asv)
-
-# NMI
-nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
-nmi_observed[[1]]
-nmi_observed[[2]]
-
+fun_modularity_diff_core <- function(dat, nmi_observed, cor_seq) {
+  
 #####
 # running for core microbiome
-
 nmi_summary_core <- NULL
 for (i in core_seq) {
   
   # filtering out ASVs with lower degree than the threshold
-  data_asv_filtered_core <- data_asv %>% filter(asv_degree >= i)
+  data_asv_filtered_core <- dat %>% filter(asv_degree >= i)
   
   # modularity
   modules <- fun_modularity_analysis(data_asv_filtered_core)
@@ -150,12 +122,11 @@ for (i in core_seq) {
 
 #####
 # running for non-core microbiome
-
 nmi_summary_noncore <- NULL
 for (j in core_seq) {
   
   # filtering out ASVs with lower degree than the threshold
-  data_asv_filtered_noncore <- data_asv %>% filter(asv_degree <= j)
+  data_asv_filtered_noncore <- dat %>% filter(asv_degree <= j)
   
   # modularity
   modules <- fun_modularity_analysis(data_asv_filtered_noncore)
@@ -170,7 +141,6 @@ for (j in core_seq) {
 
 #####
 # plotting the results
-
 #nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
 p1 <- nmi_summary_core %>% 
@@ -195,7 +165,140 @@ p2 <- nmi_summary_noncore %>%
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 14), legend.position = "none",plot.title = element_text(hjust = 0.5)) +
   labs(title = "Non-Core Microbes", x="Maximum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
-cowplot::plot_grid(p1, p2)
+p3 <- cowplot::plot_grid(p1,p2)
+final_figs <- list(p3)
+
+return(final_figs)
+}
+
+
+# function for calculating similarity in modules between grids
+fun_modules_similarity <- function(dat) {
+  
+  # matrix of grid similarity in modules
+  grid_modules <- dat %>% 
+    group_by(grid, host_group) %>% 
+    summarise(host_n = n_distinct(host_ID)) %>% 
+    spread(host_group, host_n, fill = 0) %>% 
+    mutate(grid = as.character(grid)) %>%
+    arrange(grid) %>% 
+    column_to_rownames("grid") %>% 
+    as.matrix() 
+  
+  # calculating the *similarity* between grids
+  grid_modules_dist <- as.matrix(1-vegdist(sqrt(grid_modules), method = "bray"))
+  
+  # transforming to long format
+  grid_mudules_dist_m <- grid_modules_dist
+  grid_mudules_dist_m[lower.tri(grid_mudules_dist_m)] <- NA
+  diag(grid_mudules_dist_m) <- NA
+  grid_mudules_dist_m <- melt(grid_mudules_dist_m) %>% 
+    filter(!is.na(value)) %>% 
+    dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) 
+  
+  return(grid_mudules_dist_m)
+}
+
+
+
+
+############################################################################
+# main script
+
+
+# setting thresholds for core
+core_seq <- seq(1:5)
+village_names <- unique(data_asv$village)
+nmi_observed_three_villages <- NULL
+nmi_diff_core_three_villages <- NULL
+modules_similarity_three_villages <- NULL
+
+# for loop for three villages
+for (v in village_names) {
+  
+  data_asv_village <- data_asv %>% 
+    filter(village == v)
+
+# calculating ASVs degree 
+asv_degree <- data_asv_village %>% 
+  count(asv_ID) %>% 
+  rename(asv_degree = n)
+data_asv_village %<>% left_join(asv_degree, by="asv_ID")
+
+##### observed network
+# finding modules
+modules_observed <- fun_modularity_analysis(data_asv_village)
+
+# calculating similarity in modules between grids
+modules_similarity <- fun_modules_similarity(modules_observed) %>% 
+  mutate(village = v)
+# saving results in one table
+modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
+
+# calculating NMI
+nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
+# saving results in one list
+nmi_observed_three_villages <- append(nmi_observed_three_villages, nmi_observed)
+
+##### NMI for different values of core microbiome
+# calling the function
+nmi_diff_core <- fun_modularity_diff_core(data_asv_village, nmi_observed, core_seq)
+# saving results in one list
+nmi_diff_core_three_villages <- append(nmi_diff_core_three_villages, nmi_diff_core)
+}
+
+
+######################################################
+# hypotheses testing
+
+# reading grid similarity results
+grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
+
+# combining the variables
+final_data <- modules_similarity_three_villages %>% 
+  left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
+  filter(grid1!="village") # removing the village grid
+
+# checking VIF
+# as a rule of thumb, VIF< 10 for a variable is fine
+library(car)
+M <- lm(module_similarity ~ grid_attr + grid_dist + sm_community, data = final_data)
+vif(M)
+
+##### plotting the regression
+# grid attributes
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Grids Attributes Similarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+
+# grid distance
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Distance Between Grids [m]", y = "Modules Similarity [Bray-Curtis]")
+
+# small mammals similarity
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Small Mammals Similarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+
+
+##### model selection
+
+
+
+######################################################
 
 # number of modules as a function of asv degree
 n_module_grid <- modules_observed %>% 
@@ -209,11 +312,9 @@ n_asv <- modules_observed %>%
   mutate(n = ifelse(asv_degree<5,"1-4", ifelse(asv_degree>=10,"10+", "5-9"))) %>% 
   mutate(n = factor(n, levels = c("1-4","5-9","10+"))) 
 
-n_asv %>% 
+p3 <- n_asv %>% 
   ggplot(aes(x=n, y=n_grid, fill=n)) + 
   geom_boxplot() + 
   theme_bw() +
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
   labs(x="ASVs Degree", y="Modules' No. of Land Uses")
-
-
