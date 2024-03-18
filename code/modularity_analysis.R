@@ -17,7 +17,7 @@ rm(list=ls())
 
 # reading microbiome data
 data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
-  filter(host_species == "Rattus rattus")
+  filter(host_species == "Rattus rattus" & grid!="village")
 
 
 
