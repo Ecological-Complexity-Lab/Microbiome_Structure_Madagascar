@@ -141,18 +141,18 @@ for (j in core_seq) {
 
 #####
 # plotting the results
-#nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
+nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
-p1 <- nmi_summary_core %>% 
-  ggplot(aes(x=degree, y=nmi)) + 
-  geom_point(color = "blue") +
-  geom_line(color = "blue") + 
+p1 <- nmi_summary %>% 
+  ggplot(aes(x=degree, y=nmi, color = type)) + 
+  geom_point() +
+  geom_line() + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
   scale_y_continuous(limits = c(0, 0.35)) +
   scale_x_continuous(limits = c(0, 15)) +
   theme_bw() +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 14), legend.position = "none", plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Core Microbes", x="Minimum ASVs Degree", y="Normalized Mutual Information (NMI)")
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
+  labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
 
 p2 <- nmi_summary_noncore %>% 
   ggplot(aes(x=degree, y=nmi)) + 
@@ -165,8 +165,8 @@ p2 <- nmi_summary_noncore %>%
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 14), legend.position = "none",plot.title = element_text(hjust = 0.5)) +
   labs(title = "Non-Core Microbes", x="Maximum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
-p3 <- cowplot::plot_grid(p1,p2)
-final_figs <- list(p3)
+#p3 <- cowplot::plot_grid(p1,p2)
+final_figs <- list(p1)
 
 return(final_figs)
 }
