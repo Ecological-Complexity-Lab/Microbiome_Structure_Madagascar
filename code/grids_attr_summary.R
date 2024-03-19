@@ -8,7 +8,6 @@ library(geosphere)
 library(reshape2)
 library(psych)
 
-setwd("GitHub/Small_Mammals_Microbiome")
 rm(list=ls())
 
 ############################################################################
@@ -117,7 +116,7 @@ grid_sum_mat <- grid_sum %>%
   as.matrix()
 
 ## calculating *dis-similarity* between grids
-distmat_grid <- as.matrix(vegdist(sqrt(grid_sum_mat), method = "bray")) 
+distmat_grid <- as.matrix(vegdist(sqrt(grid_sum_mat), method = "bray"))
 
 # long format
 # removing duplicated values
@@ -165,6 +164,7 @@ fun_grid_mammals <- function(dat) {
   dat_mat <- dat %>% 
     filter(grepl("TMR", animal_id)) %>% 
     rename(host_species = field_identification, grid = habitat_type) %>% 
+    filter(host_species != "Rattus rattus") %>% 
     select(host_species, grid) %>% 
     count(grid, host_species) %>% 
     spread(host_species, n, fill = 0) %>% 
@@ -219,11 +219,14 @@ for (v in village_names) {
   village_summary <- rbind(village_summary, grid_summary)
 }
 
+# log transformation for the distance variable to match the variables scales
+village_summary2 <- village_summary %>% mutate(grid_dist = log(grid_dist))
 # saving the results
-write_csv(village_summary, "data/data_processed/village_summary.csv")
+write_csv(village_summary2, "data/data_processed/village_summary.csv")
 
 
 #####
+village_summary <- read_csv("data/data_processed/village_summary.csv")
 # correlations between variables
 psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
 

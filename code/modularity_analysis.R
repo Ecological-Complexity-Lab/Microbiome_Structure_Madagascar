@@ -207,7 +207,7 @@ fun_modules_similarity <- function(dat) {
 
 
 # setting thresholds for core
-core_seq <- seq(1:15)
+core_seq <- seq(1:2)
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
 nmi_diff_core_three_villages <- NULL
@@ -257,7 +257,6 @@ grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
 # combining the variables
 final_data <- modules_similarity_three_villages %>% 
   left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
-  mutate(grid_dist = sqrt(grid_dist)) %>% 
   filter(grid1!="village") # removing the village grid
 
 # saving the results
