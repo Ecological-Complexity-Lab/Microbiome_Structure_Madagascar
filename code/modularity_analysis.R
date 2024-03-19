@@ -207,7 +207,7 @@ fun_modules_similarity <- function(dat) {
 
 
 # setting thresholds for core
-core_seq <- seq(1:5)
+core_seq <- seq(1:15)
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
 nmi_diff_core_three_villages <- NULL
