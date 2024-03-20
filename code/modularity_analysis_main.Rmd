@@ -11,7 +11,7 @@ output:
     highlight: tango
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='40%')
+knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='40%')
 ```
 
 
@@ -58,6 +58,9 @@ nmi_diff_core_three_villages <- NULL
 modules_similarity_three_villages <- NULL
 asv_degree_distribution_three_villages <- NULL
 modules_three_villages <- NULL
+modules_size_three_villages <- NULL
+modules_grid_three_villages <- NULL
+
 
 # for loop for three villages
 for (v in village_names) {
@@ -88,6 +91,14 @@ for (v in village_names) {
   # figure of modules 
   modules <- fun_modules(modules_observed)
   modules_three_villages <- append(modules_three_villages, modules)
+  
+  # modules size
+  modules_size <- fun_module_size(modules_observed)
+  modules_size_three_villages <- append(modules_size_three_villages, modules_size)
+  
+  # Number of land uses per module
+  modules_grid <- fun_module_grid(modules_observed)
+  modules_grid_three_villages <- append(modules_grid_three_villages, modules_grid)
   
   # calculating NMI
   nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
@@ -127,10 +138,12 @@ for (i in 1:3) {
   cat('\n','\n')
   
   cat('#### Modules size','\n')
-  
+  print(modules_size_three_villages[[i]])
+  cat('\n','\n')
   
   cat('#### No. of land uses','\n')
-  
+  print(modules_grid_three_villages[[i]])
+  cat('\n','\n')
   
 }
 
@@ -174,7 +187,7 @@ explanation of the hypotheses
 
 ## The model
 
-```{r, echo=TRUE}
+```{r, the_model, echo=TRUE}
 # setting the full model
 library(nlme)
 full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)

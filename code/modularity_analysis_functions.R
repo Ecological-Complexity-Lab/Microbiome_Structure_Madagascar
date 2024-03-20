@@ -81,11 +81,11 @@ fun_nmi_calc <- function(dat, figure) {
     g <- as.data.frame(nmi_shuff) %>% 
       ggplot(aes(nmi_shuff)) + 
       geom_histogram() + 
-      theme_bw() +
+      theme_classic() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
       labs(x="NMI", y="No. of Shuffled Networks") +
-      annotate(geom = "text", x=c((nmi_obs+0.001)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
+      annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
   } else {
     g <- NULL
   }
@@ -150,7 +150,7 @@ p1 <- nmi_summary %>%
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
   scale_y_continuous(limits = c(0, 0.35)) +
   scale_x_continuous(limits = c(0, 15)) +
-  theme_bw() +
+  theme_classic() +
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
   labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
 
@@ -239,6 +239,39 @@ fun_modules <- function(dat) {
   return(list(g))
 }
 
+
+# function for plotting modules size
+fun_module_size <- function(dat) {
+  
+  g <- dat %>% 
+    group_by(host_group) %>% 
+    summarise(n = n_distinct(host_ID)) %>% 
+    ggplot(aes(x=n)) +
+    geom_histogram(binwidth = 1) +
+    theme_bw() +
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+    labs(x="Module Size", y="No. of Modules")
+  
+  return(list(g))
+}
+
+
+# function for plotting number of land uses per module
+fun_module_grid <- function(dat) {
+  
+  n_landuse <- dat %>% 
+    group_by(host_group) %>% 
+    summarise(n = n_distinct(grid)) 
+  
+  g <- n_landuse %>%  
+    ggplot(aes(x=n)) +
+    geom_histogram(binwidth = 1) +
+    theme_bw() +
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+    labs(x="No. of Land Uses", y="No. of Modules")
+  
+  return(list(g))
+}
 
 ############################################################################
 # main script
