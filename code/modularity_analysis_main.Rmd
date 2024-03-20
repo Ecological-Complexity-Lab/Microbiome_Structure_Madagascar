@@ -1,5 +1,8 @@
 ---
-title: "Modularity Analysis"
+title: "Land use and microbe prevalence jointly determine host-microbe network structure"
+subtitle: "Analysis and results"
+author: "Matan Markfeld"
+date: "Last edit: 2024-03-20"
 output: 
   html_document:
     toc: true
@@ -7,7 +10,6 @@ output:
     collapse: false
     number_sections: true
     code_folding: hide
-    theme: united
     highlight: tango
 ---
 ```{r setup, include=FALSE}
@@ -183,9 +185,17 @@ final_data <- modules_similarity_three_villages %>%
 #write_csv(final_data, "data/data_processed/final_modularity_data.csv")
 ```
 
-explanation of the hypotheses
+I explore 4 non-mutual exclusive hypotheses for why land use affects the network's modular structure:
+
+ 1. **Neutral process**  - stochastic processes cause to a variation in the microbiome and modules across grids. Therefore, no variable explains modules similarity.
+ 2. **environmental filtering** - grid attributes (vegetation) induce selective pressure. Therefore, grids with similar vegetation attributes have higher modules similarity.
+ 3. **Rattus movement** - Rattus individuals can move between grids. Therefore, closer grids have higher modules similarity.
+ 4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
+
 
 ## The model
+
+I use a linear mixed model (LMM) with 'modules similarity' as response variable and (1) 'grid attributes similarity, (2) 'grids distance', and (3) 'small mammals community similarity' as predictors. I add the 'village' as random factor.\
 
 ```{r, the_model, echo=TRUE}
 # setting the full model
@@ -205,7 +215,9 @@ print(psych::pairs.panels(final_data %>% filter(grid1!="village") %>%  select(-v
 
 ### VIF
 
-what is VIF
+Variance Inflation Factor (VIF) - is a measure used in regression analysis to assess multicollinearity among predictor variables.\
+VIF quantifies how much the variance of an estimated regression coefficient is increased due to multicollinearity. It is calculated for each predictor variable by regressing it against all other predictor variables in the model.\
+A VIF value of 1 indicates no multicollinearity, while higher values indicate increasing levels of multicollinearity. **A common rule of thumb is that a VIF > 10 indicates problematic multicollinearity**.\
 
 ```{r, vif}
 # checking VIF
@@ -266,8 +278,10 @@ dredge_modules_similarity <- MuMIn::dredge(full_model)
 
 ### Table
 
+Presenting only the best models: delta AICc <= 5\
+
 ```{r, aic_table}
-# The best models: delta <= 10
+# The best models: delta <= 5
 results_modules_similarity <- subset(dredge_modules_similarity, delta <= 5 | df == 3 | df == max(df), recalc.weights = FALSE)
 row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
  

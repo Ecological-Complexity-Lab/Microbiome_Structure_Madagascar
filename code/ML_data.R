@@ -17,7 +17,7 @@ data_mammals %<>% mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", anima
 
 data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
 data_asv_filtered <- data_asv %>% 
-  filter(host_species == "Microgale brevicaudata" & village == "Mandena") %>% 
+  filter(host_species == "Rattus rattus" & village == "Mandena" & grid != "village") %>% 
   select(host_ID, asv_ID, grid, season) %>% 
   left_join(data_mammals, by="host_ID") 
 
