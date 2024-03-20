@@ -9,7 +9,6 @@ library(igraph)
 library(reshape2)
 library(infomapecology)
 library(aricode)
-library(cowplot)
 
 rm(list=ls())
 

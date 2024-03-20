@@ -1,0 +1,227 @@
+---
+title: "Modularity Analysis"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    collapse: false
+    number_sections: true
+    code_folding: hide
+    theme: united
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='40%')
+```
+
+
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(vegan)
+library(igraph)
+library(reshape2)
+library(infomapecology)
+library(aricode)
+
+rm(list=ls())
+```
+
+```{r, microbiome data}
+# reading the microbiome data
+# working only with Rattus from the three villages
+# removing the 'village' grid from the analysis
+
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
+  filter(host_species == "Rattus rattus" & grid!="village")
+```
+
+```{r, main analysis}
+# first of all, run this chunk of code.
+# this code does all the modularity analysis using the functions in "modularity_analysis_functions".
+# There is a loop runs for the three villages, and all the analysis is done separately for each village.
+# the output of the code is variables holding the final results figures (the output of the functions used)
+
+source("modularity_analysis_functions.R")
+
+# setting thresholds for core
+core_seq <- seq(1:2)
+
+village_names <- unique(data_asv$village)
+nmi_observed_three_villages <- NULL
+nmi_diff_core_three_villages <- NULL
+modules_similarity_three_villages <- NULL
+
+# for loop for three villages
+for (v in village_names) {
+  
+  data_asv_village <- data_asv %>% 
+    filter(village == v)
+  
+  # calculating ASVs degree 
+  asv_degree <- data_asv_village %>% 
+    count(asv_ID) %>% 
+    rename(asv_degree = n)
+  data_asv_village %<>% left_join(asv_degree, by="asv_ID")
+  
+  ##### observed network
+  # finding modules
+  modules_observed <- fun_modularity_analysis(data_asv_village)
+  
+  # calculating similarity in modules between grids
+  modules_similarity <- fun_modules_similarity(modules_observed) %>% 
+    mutate(village = v)
+  # saving results in one table
+  modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
+  
+  # calculating NMI
+  nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
+  # saving results in one list
+  nmi_observed_three_villages <- append(nmi_observed_three_villages, nmi_observed)
+  
+  ##### NMI for different values of core microbiome
+  # calling the function
+  nmi_diff_core <- fun_modularity_diff_core(data_asv_village, nmi_observed, core_seq)
+  # saving results in one list
+  nmi_diff_core_three_villages <- append(nmi_diff_core_three_villages, nmi_diff_core)
+  
+}
+```
+# Modularity analysis
+
+## Network exploration {.tabset}
+
+
+```{r}
+# loop for three villages
+for (i in 1:3) {
+  
+  cat('###',village_names[i],'{.tabset}','\n','\n')
+
+cat('#### ASVs degree distribution','\n')
+
+
+cat('#### Modules','\n')
+
+
+cat('#### Modules size','\n')
+
+
+cat('#### No. of land uses','\n')
+
+
+}
+
+```
+
+## Normalized Mutual Information (NMI)
+
+```{r}
+# loop for three villages
+for (j in 1:3) {
+  
+  cat('###',village_names[j],'{.tabset}','\n','\n')
+
+cat('#### NMI','\n')
+
+
+cat('#### NMI for core/non-core','\n')
+
+}
+
+```
+
+# Hypotheses testing
+
+```{r}
+# reading grid similarity results
+grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
+
+# combining the variables
+final_data <- modules_similarity_three_villages %>% 
+  left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
+  filter(grid1!="village") # removing the village grid
+
+# saving the final table
+#write_csv(final_data, "data/data_processed/final_modularity_data.csv")
+```
+
+explanation of the hypotheses
+
+## The model
+
+```{r}
+# setting the full model
+library(nlme)
+full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
+```
+
+## Correlations between variables {.tabset}
+
+### Correlations
+
+```{r}
+# correlations between variables
+library(psych)
+print(psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+```
+
+### VIF
+
+```{r}
+# checking VIF
+# as a rule of thumb, VIF< 10 for a variable is fine
+library(car)
+print(knitr::kable(car::vif(full_model)))
+```
+
+## Linear regression {.tabset}
+
+### Grid attributes
+
+```{r}
+# grid attributes
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Grids Attributes Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+```
+
+### Distance
+
+```{r}
+# grid distance
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
+```
+
+### Small mammals community
+
+```{r}
+# small mammals similarity
+final_data %>% 
+  ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+```
+
+
+## Model selection {.tabset}
+
+### Table
+
+### Variables Importance
+
+
