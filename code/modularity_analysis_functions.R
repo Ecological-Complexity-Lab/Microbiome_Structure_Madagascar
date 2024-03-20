@@ -14,9 +14,9 @@ rm(list=ls())
 
 ############################################################################
 
-# reading microbiome data
-data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
-  filter(host_species == "Rattus rattus" & grid!="village")
+# # reading microbiome data
+#data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
+ #  filter(host_species == "Rattus rattus" & grid!="village")
 
 
 
@@ -85,7 +85,7 @@ fun_nmi_calc <- function(dat, figure) {
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
       labs(x="NMI", y="No. of Shuffled Networks") +
-      annotate(geom = "text", x=c((nmi_obs+0.05)), y=c(100,90), label=c(paste('NMI =',round(nmi_obs),2), paste('p-value =',p)))
+      annotate(geom = "text", x=c((nmi_obs+0.02)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs),3), paste('p-value =',p)))
   } else {
     g <- NULL
   }
@@ -206,7 +206,6 @@ fun_asv_degree_distribution <- function(dat) {
   g <- dat %>% 
     ggplot(aes(x=asv_degree)) +
     geom_histogram(binwidth = 1) +
-    facet_wrap(~host_species)+
     geom_vline(xintercept = c(10), linetype="dashed") +
     xlim(0,100)+
     theme_bw() +
@@ -235,7 +234,7 @@ fun_modules <- function(dat) {
     theme_classic() +
     scale_fill_viridis_c(limits = c(0, 1)) +
     theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-    labs(x='Module ID', y='Land Use')
+    labs(x='Module ID', y='Land Use', color = "Host Abundance [%]")
   
   return(list(g))
 }
@@ -245,136 +244,136 @@ fun_modules <- function(dat) {
 # main script
 
 
-# setting thresholds for core
-core_seq <- seq(1:2)
-village_names <- unique(data_asv$village)
-nmi_observed_three_villages <- NULL
-nmi_diff_core_three_villages <- NULL
-modules_similarity_three_villages <- NULL
-
-# for loop for three villages
-for (v in village_names) {
-  
-  data_asv_village <- data_asv %>% 
-    filter(village == v)
-
-# calculating ASVs degree 
-asv_degree <- data_asv_village %>% 
-  count(asv_ID) %>% 
-  rename(asv_degree = n)
-data_asv_village %<>% left_join(asv_degree, by="asv_ID")
-
-##### observed network
-# finding modules
-modules_observed <- fun_modularity_analysis(data_asv_village)
-
-# calculating similarity in modules between grids
-modules_similarity <- fun_modules_similarity(modules_observed) %>% 
-  mutate(village = v)
-# saving results in one table
-modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
-
-# calculating NMI
-nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
-# saving results in one list
-nmi_observed_three_villages <- append(nmi_observed_three_villages, nmi_observed)
-
-##### NMI for different values of core microbiome
-# calling the function
-nmi_diff_core <- fun_modularity_diff_core(data_asv_village, nmi_observed, core_seq)
-# saving results in one list
-nmi_diff_core_three_villages <- append(nmi_diff_core_three_villages, nmi_diff_core)
-}
-
-
-######################################################
-# hypotheses testing
-
-# reading grid similarity results
-grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
-
-# combining the variables
-final_data <- modules_similarity_three_villages %>% 
-  left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
-  filter(grid1!="village") # removing the village grid
-
-# saving the results
-write_csv(final_data, "data/data_processed/final_modularity_data.csv")
-
-
-final_data <- read_csv("data/data_processed/final_modularity_data.csv")
-##### plotting the regression
-# grid attributes
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Grids Attributes Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
-
-# grid distance
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
-
-# small mammals similarity
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
-
-
-##### model selection
-
-# full model
-# adding the village as a random factor
-
-
-
-library(nlme)
-full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
-
-#library(lme4)
-#full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
-#library(glmmTMB)
-#full_model <- glmmTMB::glmmTMB(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = beta_family())
-
-# checking VIF
-# as a rule of thumb, VIF< 10 for a variable is fine
-library(car)
-car::vif(full_model)
-
-#library(fitdistrplus)
-#a=fitdist(final_data$module_similarity, "norm")
-#b=fitdist(final_data$module_similarity, "beta")
-#a$aic
-#b$aic
-#plot(b)
-#qqPlot(final_data$grid_attr)
-#shapiro.test(final_data$module_similarity)
-
-# AIC 
-library(MuMIn)
-dredge_modules_similarity <- MuMIn::dredge(full_model)
-# The best models: delta <= 10
-results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
-row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
-
-# variables importance
-imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
-var_names <- rownames(imp)
-imp_values <- as.vector(imp[[1]])
-# Plotting
-barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1))
-
+# # setting thresholds for core
+# core_seq <- seq(1:2)
+# village_names <- unique(data_asv$village)
+# nmi_observed_three_villages <- NULL
+# nmi_diff_core_three_villages <- NULL
+# modules_similarity_three_villages <- NULL
+# 
+# # for loop for three villages
+# for (v in village_names) {
+#   
+#   data_asv_village <- data_asv %>% 
+#     filter(village == v)
+# 
+# # calculating ASVs degree 
+# asv_degree <- data_asv_village %>% 
+#   count(asv_ID) %>% 
+#   rename(asv_degree = n)
+# data_asv_village %<>% left_join(asv_degree, by="asv_ID")
+# 
+# ##### observed network
+# # finding modules
+# modules_observed <- fun_modularity_analysis(data_asv_village)
+# 
+# # calculating similarity in modules between grids
+# modules_similarity <- fun_modules_similarity(modules_observed) %>% 
+#   mutate(village = v)
+# # saving results in one table
+# modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
+# 
+# # calculating NMI
+# nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
+# # saving results in one list
+# nmi_observed_three_villages <- append(nmi_observed_three_villages, nmi_observed)
+# 
+# ##### NMI for different values of core microbiome
+# # calling the function
+# nmi_diff_core <- fun_modularity_diff_core(data_asv_village, nmi_observed, core_seq)
+# # saving results in one list
+# nmi_diff_core_three_villages <- append(nmi_diff_core_three_villages, nmi_diff_core)
+# }
+# 
+# 
+# ######################################################
+# # hypotheses testing
+# 
+# # reading grid similarity results
+# grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
+# 
+# # combining the variables
+# final_data <- modules_similarity_three_villages %>% 
+#   left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
+#   filter(grid1!="village") # removing the village grid
+# 
+# # saving the results
+# write_csv(final_data, "data/data_processed/final_modularity_data.csv")
+# 
+# 
+# final_data <- read_csv("data/data_processed/final_modularity_data.csv")
+# ##### plotting the regression
+# # grid attributes
+# final_data %>% 
+#   ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
+#   geom_point(alpha = 0.8) +
+#   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+#   labs(x = "Grids Attributes Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+# 
+# # grid distance
+# final_data %>% 
+#   ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
+#   geom_point(alpha = 0.8) +
+#   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+#   labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
+# 
+# # small mammals similarity
+# final_data %>% 
+#   ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
+#   geom_point(alpha = 0.8) +
+#   geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+#   labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
+# 
+# 
+# ##### model selection
+# 
+# # full model
+# # adding the village as a random factor
+# 
+# 
+# 
+# library(nlme)
+# full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
+# 
+# #library(lme4)
+# #full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
+# #library(glmmTMB)
+# #full_model <- glmmTMB::glmmTMB(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = beta_family())
+# 
+# # checking VIF
+# # as a rule of thumb, VIF< 10 for a variable is fine
+# library(car)
+# car::vif(full_model)
+# 
+# #library(fitdistrplus)
+# #a=fitdist(final_data$module_similarity, "norm")
+# #b=fitdist(final_data$module_similarity, "beta")
+# #a$aic
+# #b$aic
+# #plot(b)
+# #qqPlot(final_data$grid_attr)
+# #shapiro.test(final_data$module_similarity)
+# 
+# # AIC 
+# library(MuMIn)
+# dredge_modules_similarity <- MuMIn::dredge(full_model)
+# # The best models: delta <= 10
+# results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
+# row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
+# 
+# # variables importance
+# imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
+# var_names <- rownames(imp)
+# imp_values <- as.vector(imp[[1]])
+# # Plotting
+# barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1))
+# 
 
 
 

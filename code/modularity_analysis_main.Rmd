@@ -28,6 +28,10 @@ library(aricode)
 rm(list=ls())
 ```
 
+```{r}
+source("modularity_analysis_functions.R", local = knitr::knit_global())
+```
+
 ```{r, microbiome data}
 # reading the microbiome data
 # working only with Rattus from the three villages
@@ -37,13 +41,13 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
   filter(host_species == "Rattus rattus" & grid!="village")
 ```
 
-```{r, main analysis}
+```{r, main analysis, include=FALSE}
 # first of all, run this chunk of code.
 # this code does all the modularity analysis using the functions in "modularity_analysis_functions".
 # There is a loop runs for the three villages, and all the analysis is done separately for each village.
 # the output of the code is variables holding the final results figures (the output of the functions used)
 
-source("modularity_analysis_functions.R")
+
 
 # setting thresholds for core
 core_seq <- seq(1:2)
@@ -103,47 +107,47 @@ for (v in village_names) {
 ## Network exploration {.tabset}
 
 
-```{r}
+```{r, network_exploration}
 # loop for three villages
 for (i in 1:3) {
   
   cat('###',village_names[i],'{.tabset}','\n','\n')
-
-cat('#### ASVs degree distribution','\n')
-
-
-print(asv_degree_distribution_three_villages[[i]])
-
-
-cat('#### Modules','\n')
-cat('The color indicates number of host individuals at the module / total number of hosts at the whole grid [%]','\n')
-
-print(modules_similarity_three_villages[[i]])
-
-
-cat('#### Modules size','\n')
-
-
-cat('#### No. of land uses','\n')
-
-
+  
+  cat('#### ASVs degree distribution','\n')
+  
+  
+  print(asv_degree_distribution_three_villages[[i]])
+  
+  
+  cat('#### Modules','\n')
+  cat('The color indicates number of host individuals at the module / total number of hosts at the whole grid [%]','\n')
+  
+  print(modules_similarity_three_villages[[i]])
+  
+  
+  cat('#### Modules size','\n')
+  
+  
+  cat('#### No. of land uses','\n')
+  
+  
 }
 
 ```
 
 ## Normalized Mutual Information (NMI)
 
-```{r}
+```{r, nmi}
 # loop for three villages
 for (j in 1:3) {
   
   cat('###',village_names[j],'{.tabset}','\n','\n')
-
-cat('#### NMI','\n')
-print(nmi_observed_three_villages[[j*2]])
-
-cat('#### NMI for core/non-core','\n')
-print(nmi_diff_core_three_villages[[j]])
+  
+  cat('#### NMI','\n')
+  print(nmi_observed_three_villages[[j*2]])
+  
+  cat('#### NMI for core/non-core','\n')
+  print(nmi_diff_core_three_villages[[j]])
 }
 
 ```
@@ -152,7 +156,7 @@ print(nmi_diff_core_three_villages[[j]])
 
 ```{r}
 # reading grid similarity results
-grids_similarity_attr <- read_csv("data/data_processed/village_summary.csv")
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
 
 # combining the variables
 final_data <- modules_similarity_three_villages %>% 
@@ -177,17 +181,17 @@ full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, rand
 
 ### Correlations
 
-```{r}
+```{r, variables_correlation}
 # correlations between variables
 library(psych)
-print(psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+print(psych::pairs.panels(final_data %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
 ```
 
 ### VIF
 
 what is VIF
 
-```{r}
+```{r, vif}
 # checking VIF
 # as a rule of thumb, VIF< 10 for a variable is fine
 library(car)
@@ -198,7 +202,7 @@ print(knitr::kable(car::vif(full_model)))
 
 ### Grid attributes
 
-```{r}
+```{r, regression_attributes}
 # grid attributes
 final_data %>% 
   ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
@@ -211,7 +215,7 @@ final_data %>%
 
 ### Distance
 
-```{r}
+```{r, regression_distcance}
 # grid distance
 final_data %>% 
   ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
@@ -224,7 +228,7 @@ final_data %>%
 
 ### Small mammals community
 
-```{r}
+```{r, regression_sm_community}
 # small mammals similarity
 final_data %>% 
   ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
@@ -238,7 +242,7 @@ final_data %>%
 
 ## Model selection {.tabset}
 
-```{r}
+```{r, model_selection}
 # AIC 
 library(MuMIn)
 dredge_modules_similarity <- MuMIn::dredge(full_model)
@@ -246,7 +250,7 @@ dredge_modules_similarity <- MuMIn::dredge(full_model)
 
 ### Table
 
-```{r}
+```{r, aic_table}
 # The best models: delta <= 10
 results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
 row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
@@ -258,7 +262,7 @@ row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
 
 ### Variables Importance
 
-```{r}
+```{r, aic_importance}
 imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
 var_names <- rownames(imp)
 imp_values <- as.vector(imp[[1]])
