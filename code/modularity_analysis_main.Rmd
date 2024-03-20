@@ -268,11 +268,16 @@ dredge_modules_similarity <- MuMIn::dredge(full_model)
 
 ```{r, aic_table}
 # The best models: delta <= 10
-results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
+results_modules_similarity <- subset(dredge_modules_similarity, delta <= 5 | df == 3 | df == max(df), recalc.weights = FALSE)
 row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
+ 
 
 # arranging the final table
-
+aic_results_final <- as.data.frame(results_modules_similarity) %>% 
+  select(-df, -logLik) %>% 
+  dplyr::rename(intercept='(Intercept)', grid_attributes=grid_attr, grid_distance=grid_dist, sm_similarity=sm_community) %>% 
+  mutate(across(everything()), round(.,3))
+print(knitr::kable(aic_results_final))
 ```
 
 
@@ -280,11 +285,26 @@ row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
 
 ```{r, aic_importance}
 imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
+colnames(imp) <- "importance"
 var_names <- rownames(imp)
 imp_values <- as.vector(imp[[1]])
 
 # Plotting
-print(barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1)))
+g <- imp %>% 
+  rownames_to_column("variable") %>% 
+  mutate(variable = factor(variable)) %>% 
+  ggplot(aes(x=reorder(variable,-importance), y=importance)) +
+    geom_bar(stat="identity", fill = "#e5e5e5", color="#8b8c89") +
+    theme_bw() +
+    scale_y_continuous(limits = c(0, 1)) +
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12), legend.position="none",
+          panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()) +
+  geom_text(aes(label=round(importance,2)), vjust=-0.5) +
+ # annotate(geom = "text", x=imp$variable, y=imp$importance, label=imp$importance) +
+    labs(x="", y="Variable's Importamce")
+print(g)
+
 ```
 
 
