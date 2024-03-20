@@ -52,6 +52,8 @@ village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
 nmi_diff_core_three_villages <- NULL
 modules_similarity_three_villages <- NULL
+asv_degree_distribution_three_villages <- NULL
+modules_three_villages <- NULL
 
 # for loop for three villages
 for (v in village_names) {
@@ -74,6 +76,14 @@ for (v in village_names) {
     mutate(village = v)
   # saving results in one table
   modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
+  
+  # ASVs degree distribution
+  asv_degree_distribution <- fun_asv_degree_distribution(data_asv_village)
+  asv_degree_distribution_three_villages <- append(asv_degree_distribution_three_villages, asv_degree_distribution)
+  
+  # figure of modules 
+  modules <- fun_modules(modules_observed)
+  modules_three_villages <- append(modules_three_villages, modules)
   
   # calculating NMI
   nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
@@ -102,7 +112,13 @@ for (i in 1:3) {
 cat('#### ASVs degree distribution','\n')
 
 
+print(asv_degree_distribution_three_villages[[i]])
+
+
 cat('#### Modules','\n')
+cat('The color indicates number of host individuals at the module / total number of hosts at the whole grid [%]','\n')
+
+print(modules_similarity_three_villages[[i]])
 
 
 cat('#### Modules size','\n')
@@ -124,10 +140,10 @@ for (j in 1:3) {
   cat('###',village_names[j],'{.tabset}','\n','\n')
 
 cat('#### NMI','\n')
-
+print(nmi_observed_three_villages[[j*2]])
 
 cat('#### NMI for core/non-core','\n')
-
+print(nmi_diff_core_three_villages[[j]])
 }
 
 ```
@@ -151,7 +167,7 @@ explanation of the hypotheses
 
 ## The model
 
-```{r}
+```{r, echo=TRUE}
 # setting the full model
 library(nlme)
 full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
@@ -168,6 +184,8 @@ print(psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  sele
 ```
 
 ### VIF
+
+what is VIF
 
 ```{r}
 # checking VIF
@@ -220,8 +238,34 @@ final_data %>%
 
 ## Model selection {.tabset}
 
+```{r}
+# AIC 
+library(MuMIn)
+dredge_modules_similarity <- MuMIn::dredge(full_model)
+```
+
 ### Table
 
+```{r}
+# The best models: delta <= 10
+results_modules_similarity <- subset(dredge_modules_similarity, delta <= 10 | df == 3 | df == max(df), recalc.weights = FALSE)
+row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
+
+# arranging the final table
+
+```
+
+
 ### Variables Importance
+
+```{r}
+imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
+var_names <- rownames(imp)
+imp_values <- as.vector(imp[[1]])
+
+# Plotting
+print(barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1)))
+```
+
 
 

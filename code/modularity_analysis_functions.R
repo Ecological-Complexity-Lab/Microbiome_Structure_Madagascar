@@ -84,7 +84,8 @@ fun_nmi_calc <- function(dat, figure) {
       theme_bw() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
-      labs(x="NMI", y="No. of Shuffled Networks")
+      labs(x="NMI", y="No. of Shuffled Networks") +
+      annotate(geom = "text", x=c((nmi_obs+0.05)), y=c(100,90), label=c(paste('NMI =',round(nmi_obs),2), paste('p-value =',p)))
   } else {
     g <- NULL
   }
@@ -199,6 +200,45 @@ fun_modules_similarity <- function(dat) {
 }
 
 
+# function for plotting ASVs degree distribution
+fun_asv_degree_distribution <- function(dat) {
+  
+  g <- dat %>% 
+    ggplot(aes(x=asv_degree)) +
+    geom_histogram(binwidth = 1) +
+    facet_wrap(~host_species)+
+    geom_vline(xintercept = c(10), linetype="dashed") +
+    xlim(0,100)+
+    theme_bw() +
+    theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+    labs(x="ASVs Degree", y="No. of ASVs")
+  
+  return(list(g))
+}
+
+# function for plotting modules
+fun_modules <- function(dat) {
+  
+  # how many host individuals in every grid
+  n_host_grid <- dat %>% 
+    distinct(host_ID, grid) %>% 
+    count(grid) %>% 
+    dplyr::rename(n_grid=n)
+  
+  g <- dat %>% 
+    distinct(host_ID, grid, host_group) %>% 
+    count(grid, host_group) %>% 
+    left_join(n_host_grid, by="grid") %>% 
+    mutate(n_rel = n/n_grid) %>% 
+    ggplot(aes(x = host_group, y = grid, fill=n_rel)) +
+    geom_tile(color='white') +
+    theme_classic() +
+    scale_fill_viridis_c(limits = c(0, 1)) +
+    theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+    labs(x='Module ID', y='Land Use')
+  
+  return(list(g))
+}
 
 
 ############################################################################
@@ -297,12 +337,13 @@ final_data %>%
 # full model
 # adding the village as a random factor
 
-#library(lme4)
-#full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
+
 
 library(nlme)
 full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
 
+#library(lme4)
+#full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
 #library(glmmTMB)
 #full_model <- glmmTMB::glmmTMB(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = beta_family())
 
@@ -317,8 +358,8 @@ car::vif(full_model)
 #a$aic
 #b$aic
 #plot(b)
-qqPlot(final_data$grid_attr)
-shapiro.test(final_data$module_similarity)
+#qqPlot(final_data$grid_attr)
+#shapiro.test(final_data$module_similarity)
 
 # AIC 
 library(MuMIn)
@@ -340,21 +381,21 @@ barplot(imp_values, names.arg=var_names, ylab = "Importance", ylim = c(0,1))
 
 ######################################################
 
-# number of modules as a function of asv degree
-n_module_grid <- modules_observed %>% 
-  group_by(host_group) %>% 
-  summarise(n_grid = n_distinct(grid))
-
-n_asv <- modules_observed %>% 
-  #distinct(asv_ID, asv_degree, host_group) %>% 
-  left_join(n_module_grid, by = c("asv_group"="host_group")) %>% 
-  group_by(asv_ID, asv_degree) %>% summarise(n_grid = mean(n_grid)) %>% 
-  mutate(n = ifelse(asv_degree<5,"1-4", ifelse(asv_degree>=10,"10+", "5-9"))) %>% 
-  mutate(n = factor(n, levels = c("1-4","5-9","10+"))) 
-
-p3 <- n_asv %>% 
-  ggplot(aes(x=n, y=n_grid, fill=n)) + 
-  geom_boxplot() + 
-  theme_bw() +
-  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
-  labs(x="ASVs Degree", y="Modules' No. of Land Uses")
+# # number of modules as a function of asv degree
+# n_module_grid <- modules_observed %>% 
+#   group_by(host_group) %>% 
+#   summarise(n_grid = n_distinct(grid))
+# 
+# n_asv <- modules_observed %>% 
+#   #distinct(asv_ID, asv_degree, host_group) %>% 
+#   left_join(n_module_grid, by = c("asv_group"="host_group")) %>% 
+#   group_by(asv_ID, asv_degree) %>% summarise(n_grid = mean(n_grid)) %>% 
+#   mutate(n = ifelse(asv_degree<5,"1-4", ifelse(asv_degree>=10,"10+", "5-9"))) %>% 
+#   mutate(n = factor(n, levels = c("1-4","5-9","10+"))) 
+# 
+# p3 <- n_asv %>% 
+#   ggplot(aes(x=n, y=n_grid, fill=n)) + 
+#   geom_boxplot() + 
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
+#   labs(x="ASVs Degree", y="Modules' No. of Land Uses")
