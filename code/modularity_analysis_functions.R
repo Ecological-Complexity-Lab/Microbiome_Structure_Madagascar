@@ -85,7 +85,7 @@ fun_nmi_calc <- function(dat, figure) {
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
       labs(x="NMI", y="No. of Shuffled Networks") +
-      annotate(geom = "text", x=c((nmi_obs+0.02)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs),3), paste('p-value =',p)))
+      annotate(geom = "text", x=c((nmi_obs+0.001)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
   } else {
     g <- NULL
   }
