@@ -6,15 +6,16 @@ library(magrittr)
 
 rm(list=ls())
 
+#####################################################
 # reading the data
+
 # small mammals (hosts)
 data_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
 data_mammals %<>% mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) %>% 
   select(host_ID, elevation.obs, sex, mass, age_repro) %>% 
   mutate(sex = as.factor(sex), age_repro = as.factor(age_repro)) 
 
-
-
+# microbiome
 data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
 data_asv_filtered <- data_asv %>% 
   filter(host_species == "Rattus rattus" & village == "Mandena" & grid != "village") %>% 
@@ -22,10 +23,29 @@ data_asv_filtered <- data_asv %>%
   left_join(data_mammals, by="host_ID") 
 
 
+#####################################################
+# PCA for grid attributes
     
+
+#####################################################
+# PCA for small mammals community
+
+
+
+#####################################################
+# calculate network attributes
+
+
+#####################################################
+# calculate network attributes from a uni-partite projection
+
+
+
     
-    # ------------
-    # making the full table
+
+
+#####################################################
+# making the full table
     
     data_asv_mat <- data_asv_filtered %>% 
       mutate(link = 1) %>% 
