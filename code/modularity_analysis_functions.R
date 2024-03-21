@@ -85,7 +85,7 @@ fun_nmi_calc <- function(dat, figure) {
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
       labs(x="NMI", y="No. of Shuffled Networks") +
-      annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(150,140), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
+      annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(120,110), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
   } else {
     g <- NULL
   }
@@ -154,21 +154,7 @@ p1 <- nmi_summary %>%
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
   labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
 
-p2 <- nmi_summary_noncore %>% 
-  ggplot(aes(x=degree, y=nmi)) + 
-  geom_point(color = "red") +
-  geom_line(color="red") + 
-  geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
-  scale_y_continuous(limits = c(0, 0.35)) +
-  scale_x_continuous(limits = c(0, 15)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 14), legend.position = "none",plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Non-Core Microbes", x="Maximum ASVs Degree", y="Normalized Mutual Information (NMI)")
-
-#p3 <- cowplot::plot_grid(p1,p2)
-final_figs <- list(p1)
-
-return(final_figs)
+return(list(p1))
 }
 
 
@@ -204,6 +190,7 @@ fun_modules_similarity <- function(dat) {
 fun_asv_degree_distribution <- function(dat) {
   
   g <- dat %>% 
+    distinct(asv_ID, asv_degree) %>% 
     ggplot(aes(x=asv_degree)) +
     geom_histogram(binwidth = 1) +
     geom_vline(xintercept = c(10), linetype="dashed") +

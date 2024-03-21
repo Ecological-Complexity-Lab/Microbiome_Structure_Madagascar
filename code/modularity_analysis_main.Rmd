@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-03-20"
+date: "Last edit: 2024-03-21"
 output: 
   html_document:
     toc: true
@@ -52,7 +52,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
 
 
 # setting thresholds for core
-core_seq <- seq(1:2)
+core_seq <- seq(1:15)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
@@ -134,7 +134,7 @@ for (i in 1:3) {
   
   
   cat('#### Modules','\n')
-  cat('The color indicates number of host individuals at the module / total number of hosts at the whole grid [%]','\n','\n')
+  cat('The color indicates number of host individuals in the module / total number of hosts in the whole grid [%]','\n','\n')
   
   print(modules_three_villages[[i]])
   cat('\n','\n')
@@ -195,7 +195,7 @@ I explore 4 non-mutual exclusive hypotheses for why land use affects the network
 
 ## The model
 
-I use a linear mixed model (LMM) with 'modules similarity' as response variable and (1) 'grid attributes similarity, (2) 'grids distance', and (3) 'small mammals community similarity' as predictors. I add the 'village' as random factor.\
+I used a linear mixed model (LMM) with 'modules similarity' as response variable and (1) 'grid attributes similarity, (2) 'grids distance', and (3) 'small mammals community similarity' as predictors. I added the 'village' as random factor.\
 
 ```{r, the_model, echo=TRUE}
 # setting the full model
