@@ -35,8 +35,8 @@ data_asv_filtered %<>% left_join(asv_degree, by="asv_ID") %>%
 # ASVs taxonomy
 
 asv_taxa <- read_delim("data/data_raw/data_microbiome/ASVs_all_merged_taxonomy.tsv") %>%
-     select(ASV, Phylum, Class)
-   
+  select(ASV, Phylum, Class)
+
 
 #####################################################
 # PCA for grid attributes
@@ -86,10 +86,12 @@ data_asv_mat <- data_asv_filtered %>% select(host_ID, asv_ID) %>%
 node_centrality <- bipartite::specieslevel(data_asv_mat, index = c("degree", "betweenness", "closeness"))
 asv_centrality <- node_centrality$`higher level` %>% 
   select(degree, betweenness, closeness) %>% 
+  rename(asv_degree=degree, asv_betweenness=betweenness, asv_closeness=closeness) %>% 
   rownames_to_column("asv_ID")
 host_centrality <- node_centrality$`lower level` %>% 
   select(degree, betweenness, closeness) %>% 
-  rownames_to_column("host_ID")
+  rename(host_degree=degree, host_betweenness=betweenness, host_closeness=closeness) %>%
+  rownames_to_column("host_ID") %>% mutate(host_ID = as.double(host_ID))
 
 # modularity
 # building the network
@@ -119,18 +121,36 @@ short_path <- igraph::distances(network_object$igraph_object) %>%
   as.data.frame() %>% 
   select(starts_with("ASV")) %>% 
   rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
   filter(host_ID %in% modules_host$host_ID) %>% 
   gather("asv_ID", "shortest_path",starts_with("ASV"))
-  
+
 
 #####################################################
 # making the full table
-    
-    data_asv_mat <- data_asv_filtered %>% 
-      mutate(link = 1) %>% 
-      spread(asv_ID, link, fill = 0)  %>% 
-      gather("asv_ID","Link", starts_with("ASV"))
-  
+
+final_table <- data_asv_filtered %>% 
+  mutate(link = 1) %>% 
+  spread(asv_ID, link, fill = 0)  %>% 
+  gather("asv_ID","Link", starts_with("ASV")) %>% 
+  left_join(grid_attributes, by="grid") %>% 
+  left_join(data_mammals_full_mat, by="grid") %>% 
+  left_join(asv_taxa, by=c("asv_ID"="ASV")) %>% 
+  left_join(host_centrality, by="host_ID") %>% 
+  left_join(asv_centrality, by="asv_ID") %>% 
+  left_join(modules_host, by="host_ID") %>% 
+  left_join(modules_asv, by="asv_ID") %>% 
+  left_join(short_path, by=c("host_ID", "asv_ID")) %>% 
+  mutate(pref_attach = host_degree*asv_degree) %>% 
+  select(host_ID, asv_ID, Link, grid, pca_grid_attr, pca_grid_sm, season,
+         elevation.obs, mass, sex, age_repro, Phylum, Class,
+         host_degree, host_betweenness, host_closeness, host_module,
+         asv_degree, asv_betweenness, asv_closeness, asv_module,
+         shortest_path, pref_attach)
+
+
+
+
 
 # saving the final table as .csv
 write_csv(data_asv_mat, "data/data_processed/microbiome/ML_microgale_mandena.csv")
