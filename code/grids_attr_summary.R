@@ -115,6 +115,8 @@ grid_sum_mat <- grid_sum %>%
   select(-village) %>%
   as.matrix()
 
+#write_csv(grid_sum, "data/data_processed/village_attributes.csv")
+
 ## calculating *dis-similarity* between grids
 distmat_grid <- as.matrix(vegdist(sqrt(grid_sum_mat), method = "bray"))
 
