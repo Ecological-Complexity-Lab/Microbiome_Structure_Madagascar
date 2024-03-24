@@ -41,6 +41,18 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 
 data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
   filter(host_species == "Rattus rattus" & grid!="village")
+
+# # ASVs taxonomy
+# asv_taxa <- read_delim("../data/data_raw/data_microbiome/ASVs_all_merged_taxonomy.tsv") %>% 
+#   select(ASV, Family)
+# data_asv %<>% left_join(asv_taxa, by=c("asv_ID"="ASV")) 
+# 
+# data_asv_family <- data_asv %>% 
+#   group_by(host_ID, village, host_species, grid, season, Family) %>% 
+#   summarise(reads = sum(reads)) %>% 
+#   rename(asv_ID = Family) %>% 
+#   filter(!(is.na(asv_ID)))
+# data_asv <- data_asv_family
 ```
 
 ```{r, main analysis, include=FALSE}
@@ -72,7 +84,8 @@ for (v in village_names) {
   
   # calculating ASVs degree 
   asv_degree <- data_asv_village %>% 
-    count(asv_ID) %>% 
+    group_by(asv_ID) %>% 
+    summarise(n = n_distinct(host_ID)) %>% 
     rename(asv_degree = n)
   data_asv_village %<>% left_join(asv_degree, by="asv_ID")
   
