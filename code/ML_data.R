@@ -153,5 +153,5 @@ final_table <- data_asv_filtered %>%
 
 
 # saving the final table as .csv
-write_csv(data_asv_mat, "data/data_processed/microbiome/ML_microgale_mandena.csv")
+write_csv(final_table, "data/data_processed/microbiome/ML_rattus_mandena.csv")
 

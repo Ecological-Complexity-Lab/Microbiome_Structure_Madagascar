@@ -27,21 +27,27 @@ host_attr <- read_csv("data/data_processed/small_mammals/small_mammals_attribute
 
 host_final_data <- host_median_degree %>% 
   left_join(host_attr, by="host_ID") %>% 
+  mutate(age_repro = factor(age_repro)) %>% 
   mutate(pre = ifelse(median_degree<5,"low", ifelse(median_degree>27,"high", "medium"))) %>% 
-  mutate(pre = factor(pre, levels = c("low","medium","high")))
-  # mutate(sex2 = ifelse(sex=="male",1,0)) %>% 
-  # mutate(age = ifelse(age_repro==1,1,0))
+  mutate(pre = factor(pre, levels = c("low","medium","high"))) %>% 
+  mutate(sex2 = ifelse(sex=="male",1,0)) %>% 
+  mutate(age = ifelse(age_repro==1,1,0))
 
 # exploring the distribution
 a=quantile(host_final_data$median_degree, c(0.1,0.5,0.9))
 
 # difference between groups
 host_final_data %>% 
-ggplot(aes(x=pre, y=age_repro, fill=pre)) + 
+ggplot(aes(x=age_repro, y=median_degree, fill=age_repro)) + 
   geom_boxplot() + 
   theme_bw() +
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none")
 
 # logistic regression
-sex_reg <- glmer(age ~ median_degree + (1|village) + (1|grid), data = host_final_data, family = "binomial")
+library(lme4)
+sex_reg <- glmer(median_degree ~ age_repro + sex + (1|village) + (1|grid), data = host_final_data, family = "gaussian")
+summary(sex_reg)
+
+library(nlme)
+sex_reg <- lme(median_degree ~ age + sex, random=~1|village , data = host_final_data, method = "ML", na.action = na.fail)
 summary(sex_reg)

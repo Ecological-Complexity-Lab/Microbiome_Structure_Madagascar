@@ -25,7 +25,7 @@ fun_modularity_analysis <- function(dat) {
   
   # transforming to matrix
   data_asv_mat <- dat %>% select(-village,-host_species,-grid,-season,-asv_degree,-total_reads) %>% 
-    #mutate(reads = 1) %>% 
+    mutate(reads = 1) %>% 
     spread(asv_ID, reads, fill = 0) %>% 
     column_to_rownames("host_ID") %>% 
     as.matrix()
