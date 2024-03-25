@@ -55,7 +55,7 @@ fun_nmi_calc <- function(dat, figure) {
   # input: dat = ASV data in long format, figure = print the figure? (T/F)
   # output: data frame with observed NMI value and p value, if figure=T a figure of shuffled nmi distribution
   
-  hosts <- dat %>% distinct(host_ID, grid, host_group) 
+  hosts <- dat %>% ungroup() %>% distinct(host_ID, grid, host_group)
   
   nmi_obs <- aricode::NMI(hosts$grid, hosts$host_group)
   nmi_shuff <- vector(length = 1000)
