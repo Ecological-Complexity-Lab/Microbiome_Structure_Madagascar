@@ -74,6 +74,7 @@ asv_degree_distribution_three_villages <- NULL
 modules_three_villages <- NULL
 modules_size_three_villages <- NULL
 modules_grid_three_villages <- NULL
+modules_table_three_villages <- NULL
 
 
 # for loop for three villages
@@ -92,6 +93,7 @@ for (v in village_names) {
   ##### observed network
   # finding modules
   modules_observed <- fun_modularity_analysis(data_asv_village)
+  modules_table_three_villages <- rbind(modules_table_three_villages, modules_observed)
   
   # calculating similarity in modules between grids
   modules_similarity <- fun_modules_similarity(modules_observed) %>% 
