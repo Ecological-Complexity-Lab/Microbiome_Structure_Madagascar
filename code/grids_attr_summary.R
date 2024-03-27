@@ -113,12 +113,13 @@ grid_sum_mat <- grid_sum %>%
   column_to_rownames("grid_name") %>%
   ungroup() %>% 
   select(-village) %>%
-  as.matrix()
+  as.matrix() %>% 
+  decostand(method = "standardize")
 
 #write_csv(grid_sum, "data/data_processed/village_attributes.csv")
 
 ## calculating *dis-similarity* between grids
-distmat_grid <- as.matrix(vegdist(sqrt(grid_sum_mat), method = "bray"))
+distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "euclidean"))
 
 # long format
 # removing duplicated values
@@ -224,12 +225,12 @@ for (v in village_names) {
 # log transformation for the distance variable to match the variables scales
 village_summary2 <- village_summary %>% mutate(grid_dist = log(grid_dist))
 # saving the results
-write_csv(village_summary2, "data/data_processed/village_summary.csv")
+write_csv(village_summary2, "data/data_processed/village_summary2.csv")
 
 
 #####
 village_summary <- read_csv("data/data_processed/village_summary.csv")
 # correlations between variables
-psych::pairs.panels(village_summary %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
+psych::pairs.panels(village_summary2 %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
 
 

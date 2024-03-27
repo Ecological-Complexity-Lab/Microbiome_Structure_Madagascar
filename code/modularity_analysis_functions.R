@@ -144,7 +144,7 @@ p1 <- nmi_summary %>%
   geom_line() + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
   scale_y_continuous(limits = c(0, 0.35)) +
-  scale_x_continuous(limits = c(0, 15)) +
+  scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
   labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
