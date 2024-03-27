@@ -8,7 +8,8 @@ rm(list=ls())
 
 
 # reading microbiome data
-data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
+data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
+  filter(grid != "village" & village == "Mandena")
 
 # ASVs that have at least one link to host species other than rattus
 asv_no_rattus <- data_asv %>% 
@@ -21,16 +22,16 @@ dat <- data_asv %>%
 
 # matrix for shared ASVs in the grid level
 shared_mat <- dat %>% 
-  filter(asv_ID %in% asv_no_rattus$asv_ID) %>% 
+  filter(!(asv_ID %in% asv_no_rattus$asv_ID)) %>% 
   group_by(grid, asv_ID) %>% 
-  summarise(reads = mean(reads)) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
   mutate(reads = 1) %>% 
-  spread(asv_ID, reads, fill = 0) %>% 
+  spread(asv_ID, n, fill = 0) %>% 
   column_to_rownames("grid") %>% 
   dplyr::select(starts_with("ASV")) %>% 
   as.matrix()
 
-shared_species <- as.matrix(1-vegdist(shared_mat, method = "jaccard"))
+shared_species <- as.matrix(1-vegdist(shared_mat, method = "bray"))
 
 # long format
 shared_species2 <- shared_species

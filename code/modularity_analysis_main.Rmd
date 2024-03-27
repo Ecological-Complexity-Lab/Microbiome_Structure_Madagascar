@@ -64,7 +64,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
 
 
 # setting thresholds for core
-core_seq <- seq(1,20, by=2)
+core_seq <- seq(1,2, by=2)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
@@ -215,6 +215,7 @@ I used a linear mixed model (LMM) with 'modules similarity' as response variable
 # setting the full model
 library(nlme)
 full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
+# r.squaredGLMM(full_model)
 ```
 
 ## Correlations between variables {.tabset}
