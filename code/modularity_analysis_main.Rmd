@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-03-27"
+date: "Last edit: 2024-03-28"
 output: 
   html_document:
     toc: true
@@ -203,7 +203,7 @@ final_data <- modules_similarity_three_villages %>%
 ![image](../presentations/hypotheses.png)
 I explore 4 non-mutual exclusive hypotheses for why land use affects the network's modular structure:
 
- 1. **Neutral process**  - stochastic processes cause to a variation in the microbiome and modules across grids. Therefore, no variable explains modules similarity.
+ 1. **Random process**  - stochastic processes such as priority effect or just sampling error lead to random turnover of microbes and modules across grids. Therefore, no variable explains modules similarity.
  2. **environmental filtering** - grid attributes (vegetation) induce selective pressure. Therefore, grids with similar vegetation attributes have higher modules similarity.
  3. **Rattus movement** - Rattus individuals can move between grids. Therefore, closer grids have higher modules similarity.
  4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
@@ -361,13 +361,13 @@ host_attr <- read_csv("../data/data_processed/small_mammals/small_mammals_attrib
 
 # final table
 host_final_data <- modules_table_three_villages %>% 
-  #filter(village == "Mandena") %>% 
+  #filter(village == "Sarahandrano") %>% 
   distinct(host_ID, host_group) %>% 
   left_join(host_attr, by="host_ID") %>% 
   left_join(host_median_degree, by="host_ID") %>% 
   left_join(n_landuse, by=c("village","host_group")) %>% 
   #mutate(age_repro = factor(age_repro)) %>% 
-  mutate(pre = ifelse(n_grid<3,"low", ifelse(n_grid>4,"high", "medium"))) %>% 
+  mutate(pre = ifelse(n_grid<2,"low", ifelse(n_grid>4,"high", "medium"))) %>% 
   mutate(pre = factor(pre, levels = c("low","medium","high"))) %>%   
   mutate(sex2 = ifelse(sex=="male",1,0)) %>% 
   mutate(age = ifelse(age_repro==1,"young","adult"))
