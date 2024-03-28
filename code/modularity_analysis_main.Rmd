@@ -339,4 +339,119 @@ print(g)
 ```
 
 
+# Host attributes {.tabset}
 
+Low = 1-2 land uses\
+Medium = 3-4 land uses\
+High = 5-6 land uses\
+
+```{r}
+# number of grids of every module
+n_landuse <- modules_table_three_villages %>% 
+  group_by(village, host_group) %>% 
+  summarise(n_grid = n_distinct(grid))
+
+# calculating the median and mean ASV degree and ASV richness for each host
+host_median_degree <- modules_table_three_villages %>% 
+  group_by(host_ID) %>% 
+  summarise(median_degree = median(asv_degree), mean_degree = mean(asv_degree), richness = n_distinct(asv_ID))
+
+# adding host attributes
+host_attr <- read_csv("../data/data_processed/small_mammals/small_mammals_attributes.csv")
+
+# final table
+host_final_data <- modules_table_three_villages %>% 
+  #filter(village == "Mandena") %>% 
+  distinct(host_ID, host_group) %>% 
+  left_join(host_attr, by="host_ID") %>% 
+  left_join(host_median_degree, by="host_ID") %>% 
+  left_join(n_landuse, by=c("village","host_group")) %>% 
+  #mutate(age_repro = factor(age_repro)) %>% 
+  mutate(pre = ifelse(n_grid<3,"low", ifelse(n_grid>4,"high", "medium"))) %>% 
+  mutate(pre = factor(pre, levels = c("low","medium","high"))) %>%   
+  mutate(sex2 = ifelse(sex=="male",1,0)) %>% 
+  mutate(age = ifelse(age_repro==1,"young","adult"))
+```
+
+## Mean ASVs degree
+
+```{r}
+diff_results <- host_final_data %>%
+  group_by(pre) %>% 
+  summarise(n = mean(mean_degree))
+
+g <- host_final_data %>% 
+ggplot(aes(x=pre, y=mean_degree, fill=pre)) + 
+  geom_boxplot() + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
+  labs(x="No. of Land Uses per Module", y="Average ASVs Degree")
+print(g)
+```
+
+## Mean ASVs richness
+
+```{r}
+diff_results <- host_final_data %>%
+  #filter(sex == "male") %>% 
+  group_by(pre) %>% 
+  summarise(n = mean(richness))
+
+g <- host_final_data %>% 
+ggplot(aes(x=pre, y=richness, fill=pre)) + 
+  geom_boxplot() + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
+  labs(x="No. of Land Uses per Module", y="Average ASVs Richness")
+print(g)
+```
+
+## Sex ratio
+
+```{r}
+diff_results <- host_final_data %>%
+  group_by(pre) %>% 
+  count(sex)
+
+g <- diff_results %>% 
+ggplot(aes(x=pre, y=n, fill=sex)) + 
+  geom_bar(position="fill", stat="identity") + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
+  labs(x="No. of Land Uses per Module", y="Sex Ratio")
+print(g)
+```
+
+## Age ratio
+
+```{r}
+diff_results <- host_final_data %>%
+  group_by(pre) %>% 
+  count(age)
+
+g <- diff_results %>% 
+ggplot(aes(x=pre, y=n, fill=age)) + 
+  geom_bar(position="fill", stat="identity") + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
+  labs(x="No. of Land Uses per Module", y="Age Ratio")
+print(g)
+```
+
+## Mass
+
+```{r}
+diff_results <- host_final_data %>%
+  #filter(sex == "male") %>% 
+  group_by(pre) %>% 
+  summarise(n = mean(mass))
+
+g <- host_final_data %>% 
+  filter(sex == "male") %>%
+ggplot(aes(x=pre, y=mass, fill=pre)) + 
+  geom_boxplot() + 
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
+  labs(x="No. of Land Uses per Module", y="Average Host Mass [g]")
+print(g)
+```
