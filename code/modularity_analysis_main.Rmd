@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-03-28"
+date: "Last edit: 2024-03-31"
 output: 
   html_document:
     toc: true
@@ -60,8 +60,6 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
 # this code does all the modularity analysis using the functions in "modularity_analysis_functions".
 # There is a loop runs for the three villages, and all the analysis is done separately for each village.
 # the output of the code is variables holding the final results figures (the output of the functions used)
-
-
 
 # setting thresholds for core
 core_seq <- seq(1,20, by=1)

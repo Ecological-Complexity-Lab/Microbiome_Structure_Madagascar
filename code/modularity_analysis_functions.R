@@ -57,7 +57,7 @@ fun_nmi_calc <- function(dat, figure) {
   
   hosts <- dat %>% ungroup() %>% distinct(host_ID, grid, host_group)
   
-  nmi_obs <- aricode::NMI(hosts$grid, hosts$host_group)
+  nmi_obs <- aricode::NMI(hosts$grid, hosts$host_group, "sqrt")
   nmi_shuff <- vector(length = 1000)
   for(i in 1:1000) {
     # shuffling the grid attribute
@@ -65,7 +65,7 @@ fun_nmi_calc <- function(dat, figure) {
       mutate(grid = sample(grid,nrow(hosts)))
     
     # calculating nmi
-    nmi_shuff[i] <- aricode::NMI(hosts_shuff$grid, hosts_shuff$host_group)
+    nmi_shuff[i] <- aricode::NMI(hosts_shuff$grid, hosts_shuff$host_group, "sqrt")
   }
   
   # calculating p value
@@ -143,7 +143,7 @@ p1 <- nmi_summary %>%
   geom_point() +
   geom_line() + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
-  scale_y_continuous(limits = c(0, 0.35)) +
+  scale_y_continuous(limits = c(0, 0.6)) +
   scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
