@@ -139,6 +139,7 @@ for (j in core_seq) {
 nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
 p1 <- nmi_summary %>% 
+  mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
   ggplot(aes(x=degree, y=nmi, color = type)) + 
   geom_point() +
   geom_line() + 
