@@ -174,7 +174,6 @@ fun_grid_mammals <- function(dat) {
     arrange(grid) %>% 
     column_to_rownames("grid") %>% 
     as.matrix()
-  
   # calculating *dis-similarity* between grids
   mammals_disimilarity <- as.matrix(vegdist(sqrt(dat_mat), method = "bray"))
     
