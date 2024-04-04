@@ -143,13 +143,13 @@ p1 <- nmi_summary %>%
   mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
   ggplot(aes(x=degree, y=nmi)) + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
+  geom_line(color = "#2596be") +
   geom_point(aes(shape = as.factor(sig), size = n_asv), color = "#2596be") +
   scale_shape_manual(values = c(1, 16)) +
-  geom_line(color = "#2596be") + 
   scale_y_continuous(limits = c(0, 0.36)) +
   scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 16)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15)) +
   labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
 
 return(list(p1))

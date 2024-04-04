@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-03-31"
+date: "Last edit: 2024-04-04"
 output: 
   html_document:
     toc: true
@@ -62,7 +62,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
 # the output of the code is variables holding the final results figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(1,20, by=2)
+core_seq <- seq(1,20, by=1)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
@@ -199,6 +199,7 @@ grids_similarity_attr <- read_csv("../data/data_processed/village_summary2.csv")
 # combining the variables
 final_data <- modules_similarity_three_villages %>% 
   left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
+  mutate(village = as.factor(village)) %>% 
   filter(grid1!="village") # removing the village grid
 
 # saving the final table
@@ -223,7 +224,13 @@ I used a linear mixed model (LMM) with 'modules similarity' as response variable
 library(nlme)
 full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
 # r.squaredGLMM(full_model)
+
+# checking normality assumption
+#shapiro.test(residuals(full_model))
+#qqnorm(residuals(full_model))
+#qqline(residuals(full_model))
 ```
+
 
 ## Correlations between variables {.tabset}
 
@@ -307,7 +314,6 @@ Presenting only the best models: delta AICc <= 5\
 results_modules_similarity <- subset(dredge_modules_similarity, delta <= 5 | df == 3 | df == max(df), recalc.weights = FALSE)
 row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
  
-
 # arranging the final table
 aic_results_final <- as.data.frame(results_modules_similarity) %>% 
   select(-df, -logLik) %>% 
