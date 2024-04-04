@@ -57,7 +57,7 @@ fun_nmi_calc <- function(dat, figure) {
   
   hosts <- dat %>% ungroup() %>% distinct(host_ID, grid, host_group)
   
-  nmi_obs <- aricode::NMI(hosts$grid, hosts$host_group, "sqrt")
+  nmi_obs <- aricode::NMI(hosts$grid, hosts$host_group, "sum")
   nmi_shuff <- vector(length = 1000)
   for(i in 1:1000) {
     # shuffling the grid attribute
@@ -65,11 +65,11 @@ fun_nmi_calc <- function(dat, figure) {
       mutate(grid = sample(grid,nrow(hosts)))
     
     # calculating nmi
-    nmi_shuff[i] <- aricode::NMI(hosts_shuff$grid, hosts_shuff$host_group, "sqrt")
+    nmi_shuff[i] <- aricode::NMI(hosts_shuff$grid, hosts_shuff$host_group, "sum")
   }
   
   # calculating p value
-  p <- length(nmi_shuff[nmi_shuff>nmi_obs]) / length(nmi_shuff)
+  p <- length(nmi_shuff[nmi_shuff>=nmi_obs]) / length(nmi_shuff)
   
   # plotting
   if(figure){
@@ -110,7 +110,7 @@ for (i in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0))
+    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0), n_asv = length(unique(data_asv_filtered_core$asv_ID)))
   
   nmi_summary_core <- rbind(nmi_summary_core, nmi_mid)
 }
@@ -129,7 +129,7 @@ for (j in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0))
+    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_asv = length(unique(data_asv_filtered_noncore$asv_ID)))
   
   nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
 }
@@ -139,15 +139,17 @@ for (j in core_seq) {
 nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
 p1 <- nmi_summary %>% 
+  filter(type == "core") %>% 
   mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
-  ggplot(aes(x=degree, y=nmi, color = type)) + 
-  geom_point() +
-  geom_line() + 
+  ggplot(aes(x=degree, y=nmi)) + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
-  scale_y_continuous(limits = c(0, 0.6)) +
+  geom_point(aes(shape = as.factor(sig), size = n_asv), color = "#2596be") +
+  scale_shape_manual(values = c(1, 16)) +
+  geom_line(color = "#2596be") + 
+  scale_y_continuous(limits = c(0, 0.36)) +
   scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
-  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 18), plot.title = element_text(hjust = 0.5)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 16)) +
   labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
 
 return(list(p1))
