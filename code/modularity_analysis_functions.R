@@ -75,7 +75,7 @@ fun_nmi_calc <- function(dat, figure) {
   if(figure){
     g <- as.data.frame(nmi_shuff) %>% 
       ggplot(aes(nmi_shuff)) + 
-      geom_histogram() + 
+      geom_histogram(color = "#2596be") + 
       theme_classic() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
