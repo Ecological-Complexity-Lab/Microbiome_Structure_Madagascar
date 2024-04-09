@@ -28,7 +28,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
   
-  #asv_pool2 <- colnames(dat_mat)
+  asv_pool2 <- colnames(dat_mat)
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
@@ -52,7 +52,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   # calculating betaNTI
   betaNTI_mat <- (mntd_obs - mntd_shuff_mean) / mntd_shuff_sd
   betaNTI_mat2 <- betaNTI_mat
-  betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
+  #betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
   diag(betaNTI_mat2) <- NA
   betaNTI <- melt(betaNTI_mat2) %>% 
     filter(!(is.na(value))) %>% 
@@ -86,39 +86,59 @@ for (g in grids_names) {
   # transforming to a community matrix - rows = modules, cols = ASVs
   data_asv_mat <- data_asv_grid %>% 
     filter(host_group==asv_group) %>% 
+    filter(asv_degree <= 2) %>%
     distinct(asv_ID, host_group) %>% 
     mutate(abundance = 1) %>% 
     spread(asv_ID, abundance, fill = 0) %>% 
     column_to_rownames("host_group") %>% 
     as.matrix()
   
+  ###
+  # transforming to a community matrix - rows = individuals, cols = ASVs
+  data_asv_mat2 <- data_asv_grid %>% 
+    mutate(abundance = 1) %>% 
+    #filter(asv_degree > 5) %>% 
+    distinct(host_ID, asv_ID, abundance) %>% 
+    spread(asv_ID, abundance, fill = 0) %>% 
+    column_to_rownames("host_ID") %>% 
+    as.matrix()
+  
   # calculating betaNTI
-  betaNTI_results_grid <- fun_calc_betaNTI(data_asv_mat, asv_distance, asv_pool) %>% 
+  betaNTI_results_grid <- fun_calc_betaNTI(data_asv_mat2, asv_distance, asv_pool) %>% 
     mutate(grid = g)
   betaNTI_results <- rbind(betaNTI_results, betaNTI_results_grid)
+  
 }
 
 # finding the small modules (occuring in only 1-2 grids)
 n_grids_module <- data_asv_village %>% 
   group_by(host_group) %>% 
   summarise(n_grid = n_distinct(grid)) %>% 
-  filter(n_grid <= 1)
+  filter(n_grid <= 2)
 
 # plotting
-betaNTI_results %>% 
-  filter(module1 %in% n_grids_module$host_group & module2 %in% n_grids_module$host_group) %>% 
+a=betaNTI_results %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group), by=c("module1"="host_ID")) %>% rename(host_group1=host_group) %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group), by=c("module2"="host_ID")) %>% rename(host_group2=host_group) %>%
+  #filter(host_group1 %in% n_grids_module$n_grid & host_group2 %in% n_grids_module$n_grid) %>% 
+  filter(host_group1 != host_group2) %>% 
+  group_by(grid, host_group1) %>% 
+  summarise(mean = mean(betaNTI)) %>% 
+  group_by(grid) %>% 
+  summarise(mean = mean(mean))
   ggplot(aes(x=grid, y=betaNTI, fill=grid)) + 
   geom_boxplot() + 
   theme_bw() +
   theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20), legend.position = "none") +
   labs(x="Land use", y="betaNTI")
 
-a=betaNTI_results %>% filter(grid=="brushy_regrowth")
-t.test(a$betaNTI, mu=0)
+b=a %>% filter(grid=="flooded_rice") %>% filter(host_group1 != host_group2)
+t.test(b$mean, mu=0)
 
 
 
 data_betaNTI <- data_asv_village %>% 
+  filter(asv_degree <= 2) %>%
   group_by(grid, asv_ID) %>% 
   summarise(reads = mean(reads)) %>% 
   mutate(reads = 1) %>% 
@@ -126,7 +146,7 @@ data_betaNTI <- data_asv_village %>%
   column_to_rownames("grid") %>% 
   as.matrix()
 
-
+r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool)
 
 ###########################################################################
 
