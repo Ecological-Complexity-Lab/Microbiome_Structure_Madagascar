@@ -33,9 +33,11 @@ names(seq_fa2) <- asv_names$asv_ID
 nrow(asv_names)
 
 # align the sequences
+# method 1
 seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_merged_full_0.01.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
+# method 2
 seq_aligned <- msa::msaClustalOmega("data/data_raw/data_microbiome/ASV_merged_full_0.01.fa", type="dna",
                                     auto=F,
                                     cluster=100,
@@ -47,6 +49,7 @@ rownames(seq_aligned2) <- asv_names$asv_ID
 
 dnaphydatAll <- phyDat(seq_aligned2, type="DNA", levels=NULL)
 
+# finding the best tree
 mt2 <- modelTest(dnaphydatAll,
                  model="all", multicore = T, mc.cores=2)
 
