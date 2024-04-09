@@ -102,15 +102,29 @@ for (g in grids_names) {
 n_grids_module <- data_asv_village %>% 
   group_by(host_group) %>% 
   summarise(n_grid = n_distinct(grid)) %>% 
-  filter(n_grid <= 2)
+  filter(n_grid <= 1)
 
 # plotting
 betaNTI_results %>% 
+  filter(module1 %in% n_grids_module$host_group & module2 %in% n_grids_module$host_group) %>% 
   ggplot(aes(x=grid, y=betaNTI, fill=grid)) + 
   geom_boxplot() + 
   theme_bw() +
   theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20), legend.position = "none") +
   labs(x="Land use", y="betaNTI")
+
+a=betaNTI_results %>% filter(grid=="brushy_regrowth")
+t.test(a$betaNTI, mu=0)
+
+
+
+data_betaNTI <- data_asv_village %>% 
+  group_by(grid, asv_ID) %>% 
+  summarise(reads = mean(reads)) %>% 
+  mutate(reads = 1) %>% 
+  spread(asv_ID, reads, fill = 0) %>% 
+  column_to_rownames("grid") %>% 
+  as.matrix()
 
 
 
@@ -126,6 +140,5 @@ data_betaNTI <- data_asv %>%
   dplyr::select(grid, abundance, asv_ID) %>% 
   as.data.frame()
   
-options(scipen = 999)
 # calculating betaNTI between grids
 betaNTI_resutlts <- phylocomr::ph_comdistnt(data_betaNTI, phylo_tree_sing, rand_test = TRUE, null_model = 1, randomizations = 999, abundance = FALSE)
