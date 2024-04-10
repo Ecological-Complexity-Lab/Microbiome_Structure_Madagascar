@@ -23,7 +23,7 @@ filter(host_species == "Rattus rattus" & grid!="village")
 ###########################################################################
 # function to calculate beta-NTI
 
-fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool, abu) {
+fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
@@ -33,16 +33,16 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool, abu) {
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
   
-  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,10))
+  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,20))
   # loop for shuffling
-  for (i in 1:10) {
+  for (i in 1:20) {
     # randomly sampling ASVs from the ASV pool
-    shuff_asv_names <- sample(asv_pool, n_asv, replace = FALSE)
+    shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, prob = asv_pool$p, replace = FALSE)
     # changing the cols names
     dat_mat_shuff <- dat_mat
     colnames(dat_mat_shuff) <- shuff_asv_names
     # calculating MNTD
-    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist, abundance.weighted = abu))
+    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist))
   }
   
   # taking the mean and sd of the shuffled matrices
@@ -74,7 +74,11 @@ data_asv_village <- data_asv %>%
   filter(village == "Mandena")
 
 # ASVs pool
-asv_pool <- unique(data_asv_village$asv_ID)
+asv_pool <- data_asv_village %>% 
+  distinct(asv_ID, asv_degree) %>% 
+  mutate(p = asv_degree/length(unique(data_asv_village$asv_ID)))
+
+#asv_pool <- unique(data_asv_village$asv_ID)
 
 grids_names <- unique(data_asv_village$grid)
 betaNTI_results <- NULL
@@ -113,8 +117,7 @@ for (g in grids_names) {
 # finding the small modules (occuring in only 1-2 grids)
 n_grids_module <- data_asv_village %>% 
   group_by(host_group) %>% 
-  summarise(n_grid = n_distinct(grid)) %>% 
-  filter(n_grid <= 2)
+  summarise(n_grid = n_distinct(grid)) 
 
 # plotting
 a=betaNTI_results %>% 
@@ -145,17 +148,32 @@ data_betaNTI <- data_asv_village %>%
   column_to_rownames("host_ID") %>% 
   as.matrix()
 
-r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, FALSE)
+r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool)
 
 # the same module
 same_module <- r %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
-  filter(host_group1 == host_group2 & grid1!=grid2) %>% 
+  filter(host_group1 != host_group2) %>% mutate(sig = ifelse(betaNTI>2,1,0))
+  group_by(host_group1) %>% 
+  summarise(mean = mean(betaNTI)) %>% 
+    left_join(n_grids_module, by=c("host_group1"="host_group"))
+
+plot(same_module$mean~same_module$n_grid)
+t.test(same_module$mean, mu=0)
+
+raupc <- raupcrick(data_betaNTI)
+raupc2 <- as.matrix(raupc) 
+raupc2[upper.tri(raupc2)] <- NA
+diag(raupc2) <- NA
+same_module_raup <- melt(raupc2) %>% 
+  filter(!(is.na(value)))%>% 
+  rename(module1 = Var1, module2 = Var2, betaNTI = value) %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
+  filter(host_group1 == host_group2) %>% 
   group_by(host_group1) %>% 
   summarise(mean = mean(betaNTI))
-
-t.test(same_module$mean, mu=0)
 
 ################
 # population level
