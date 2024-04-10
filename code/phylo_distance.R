@@ -23,12 +23,12 @@ filter(host_species == "Rattus rattus" & grid!="village")
 ###########################################################################
 # function to calculate beta-NTI
 
-fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
+fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool, abu) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
   
-  asv_pool2 <- colnames(dat_mat)
+  #asv_pool2 <- colnames(dat_mat)
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
@@ -42,7 +42,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
     dat_mat_shuff <- dat_mat
     colnames(dat_mat_shuff) <- shuff_asv_names
     # calculating MNTD
-    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist))
+    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist, abundance.weighted = abu))
   }
   
   # taking the mean and sd of the shuffled matrices
@@ -52,7 +52,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   # calculating betaNTI
   betaNTI_mat <- (mntd_obs - mntd_shuff_mean) / mntd_shuff_sd
   betaNTI_mat2 <- betaNTI_mat
-  #betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
+  betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
   diag(betaNTI_mat2) <- NA
   betaNTI <- melt(betaNTI_mat2) %>% 
     filter(!(is.na(value))) %>% 
@@ -104,7 +104,7 @@ for (g in grids_names) {
     as.matrix()
   
   # calculating betaNTI
-  betaNTI_results_grid <- fun_calc_betaNTI(data_asv_mat2, asv_distance, asv_pool) %>% 
+  betaNTI_results_grid <- fun_calc_betaNTI(data_asv_mat2, asv_distance, asv_pool, FALSE) %>% 
     mutate(grid = g)
   betaNTI_results <- rbind(betaNTI_results, betaNTI_results_grid)
   
@@ -122,8 +122,8 @@ a=betaNTI_results %>%
   left_join(data_asv_village %>% distinct(host_ID, host_group), by=c("module2"="host_ID")) %>% rename(host_group2=host_group) %>%
   #filter(host_group1 %in% n_grids_module$n_grid & host_group2 %in% n_grids_module$n_grid) %>% 
   filter(host_group1 != host_group2) %>% 
-  group_by(grid, host_group1) %>% 
-  summarise(mean = mean(betaNTI)) %>% 
+  group_by(grid) %>% 
+  summarise(mean = mean(betaNTI))
   group_by(grid) %>% 
   summarise(mean = mean(mean))
   ggplot(aes(x=grid, y=betaNTI, fill=grid)) + 
@@ -136,17 +136,66 @@ b=a %>% filter(grid=="flooded_rice") %>% filter(host_group1 != host_group2)
 t.test(b$mean, mu=0)
 
 
-
+################
+# individuals across grids
 data_betaNTI <- data_asv_village %>% 
-  filter(asv_degree <= 2) %>%
-  group_by(grid, asv_ID) %>% 
-  summarise(reads = mean(reads)) %>% 
+  distinct(host_ID, asv_ID) %>% 
   mutate(reads = 1) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
+
+r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, FALSE)
+
+# the same module
+same_module <- r %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
+  filter(host_group1 == host_group2 & grid1!=grid2) %>% 
+  group_by(host_group1) %>% 
+  summarise(mean = mean(betaNTI))
+
+t.test(same_module$mean, mu=0)
+
+################
+# population level
+n_grid <- data_asv_village %>% group_by(grid) %>% summarise(n_host = n_distinct(host_ID))
+
+data_betaNTI <- data_asv_village %>% 
+  group_by(grid, asv_ID) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  left_join(n_grid, by="grid") %>% 
+  mutate(n_rel = n/n_host) %>% 
+  select(-n,-n_host) %>% 
+  spread(asv_ID, n_rel, fill = 0) %>% 
   column_to_rownames("grid") %>% 
   as.matrix()
 
-r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool)
+betaNTI_pop <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, TRUE)
+
+###
+across_grids <- r %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
+  left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
+  filter(grid1!=grid2) %>% 
+  mutate(grid1_org = grid1) %>% 
+  rowwise() %>%
+  mutate(grid1 = sort(c(grid1, grid2))[1], grid2 = sort(c(grid1_org, grid2))[2]) %>% 
+  group_by(grid1, grid2) %>% 
+  summarise(mean = mean(betaNTI))
+
+# reading the final modularity analysis dat
+final_data <- read_csv("data/data_processed/final_modularity_data.csv") %>% 
+  filter(village=="Mandena") %>% 
+  left_join(across_grids, by=c("grid1"="grid2", "grid2"="grid1"))
+
+final_data %>% 
+  ggplot(aes(y=mean, x=module_similarity)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "betaNTI")
 
 ###########################################################################
 
