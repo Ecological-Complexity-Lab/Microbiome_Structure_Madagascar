@@ -110,7 +110,7 @@ for (i in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0), n_asv = length(unique(data_asv_filtered_core$asv_ID)))
+    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(data_asv_filtered_core$host_group)))
   
   nmi_summary_core <- rbind(nmi_summary_core, nmi_mid)
 }
@@ -129,7 +129,7 @@ for (j in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_asv = length(unique(data_asv_filtered_noncore$asv_ID)))
+    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(data_asv_filtered_noncore$host_group)))
   
   nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
 }
@@ -144,7 +144,7 @@ p1 <- nmi_summary %>%
   ggplot(aes(x=degree, y=nmi)) + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
   geom_line(color = "#2596be") +
-  geom_point(aes(shape = as.factor(sig), size = n_asv), color = "#2596be") +
+  geom_point(aes(shape = as.factor(sig), size = n_module), color = "#2596be") +
   scale_shape_manual(values = c(1, 16)) +
   scale_y_continuous(limits = c(0, 0.36)) +
   scale_x_continuous(limits = c(0, 20)) +
@@ -159,18 +159,27 @@ return(list(p1))
 # function for calculating similarity in modules between grids
 fun_modules_similarity <- function(dat) {
   
+  # how many host individuals in every grid
+  n_host_grid <- dat %>% 
+    distinct(host_ID, grid) %>% 
+    count(grid) %>% 
+    dplyr::rename(n_grid=n)
+  
   # matrix of grid similarity in modules
   grid_modules <- dat %>% 
     group_by(grid, host_group) %>% 
     summarise(host_n = n_distinct(host_ID)) %>% 
-    spread(host_group, host_n, fill = 0) %>% 
+    left_join(n_host_grid, by="grid") %>% 
+    mutate(n = host_n/n_host_grid) %>% 
+    select(-host_n, -n_host_grid) %>% 
+    spread(host_group, n, fill = 0) %>% 
     mutate(grid = as.character(grid)) %>%
     arrange(grid) %>% 
     column_to_rownames("grid") %>% 
     as.matrix() 
   
   # calculating the *similarity* between grids
-  grid_modules_dist <- as.matrix(1-vegdist(sqrt(grid_modules), method = "bray"))
+  grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
   
   # transforming to long format
   grid_mudules_dist_m <- grid_modules_dist

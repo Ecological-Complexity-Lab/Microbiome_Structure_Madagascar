@@ -230,6 +230,6 @@ write_csv(village_summary2, "data/data_processed/village_summary2.csv")
 #####
 village_summary <- read_csv("data/data_processed/village_summary.csv")
 # correlations between variables
-psych::pairs.panels(village_summary2 %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
+psych::pairs.panels(village_summary %>% filter(village=="Mandena") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
 
 
