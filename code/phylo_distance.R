@@ -33,9 +33,9 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
   
-  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,20))
+  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,10))
   # loop for shuffling
-  for (i in 1:20) {
+  for (i in 1:10) {
     # randomly sampling ASVs from the ASV pool
     shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, prob = asv_pool$p, replace = FALSE)
     # changing the cols names
@@ -154,10 +154,10 @@ r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool)
 same_module <- r %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
-  filter(host_group1 != host_group2 & grid1==grid2) %>% mutate(sig = ifelse(betaNTI>2,1,0))
+  filter(host_group1 == host_group2) %>% 
+  mutate(sig = ifelse(betaNTI>2,1,0)) %>% 
   group_by(host_group1) %>% 
-  summarise(mean = mean(betaNTI)) %>% 
-    left_join(n_grids_module, by=c("host_group1"="host_group"))
+  summarise(mean = mean(betaNTI)) 
 
 plot(same_module$mean~same_module$n_grid)
 t.test(same_module$mean, mu=0)
@@ -171,7 +171,7 @@ same_module_raup <- melt(raupc2) %>%
   rename(module1 = Var1, module2 = Var2, betaNTI = value) %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
-  filter(host_group1 == host_group2) %>% 
+  filter(host_group1 != host_group2) %>% 
   group_by(host_group1) %>% 
   summarise(mean = mean(betaNTI))
 
