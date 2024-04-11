@@ -154,7 +154,7 @@ r <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool)
 same_module <- r %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
   left_join(data_asv_village %>% distinct(host_ID, host_group, grid), by=c("module2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>%
-  filter(host_group1 != host_group2) %>% mutate(sig = ifelse(betaNTI>2,1,0))
+  filter(host_group1 != host_group2 & grid1==grid2) %>% mutate(sig = ifelse(betaNTI>2,1,0))
   group_by(host_group1) %>% 
   summarise(mean = mean(betaNTI)) %>% 
     left_join(n_grids_module, by=c("host_group1"="host_group"))
