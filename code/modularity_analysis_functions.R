@@ -267,63 +267,48 @@ fun_module_grid <- function(dat) {
   return(list(g))
 }
 
+
+###########################################################################
+# function to calculate beta-NTI
+
+fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
+  
+  n_modules <- nrow(dat_mat)
+  n_asv <- ncol(dat_mat)
+  n_shuff <- 10
+  
+  # calculating observed MNTD
+  mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
+  
+  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,n_shuff))
+  # loop for shuffling
+  for (i in 1:n_shuff) {
+    # randomly sampling ASVs from the ASV pool
+    shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, prob = asv_pool$p, replace = FALSE)
+    # changing the cols names
+    dat_mat_shuff <- dat_mat
+    colnames(dat_mat_shuff) <- shuff_asv_names
+    # calculating MNTD
+    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist))
+  }
+  
+  # taking the mean and sd of the shuffled matrices
+  mntd_shuff_mean <- apply(mntd_shuff,c(1,2),mean)
+  mntd_shuff_sd <- apply(mntd_shuff,c(1,2),sd)
+  
+  # calculating betaNTI
+  betaNTI_mat <- (mntd_obs - mntd_shuff_mean) / mntd_shuff_sd
+  
+  # transforming to long format
+  betaNTI_mat2 <- betaNTI_mat
+  betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
+  diag(betaNTI_mat2) <- NA
+  betaNTI <- melt(betaNTI_mat2) %>% 
+    filter(!(is.na(value))) %>% 
+    rename(host1 = Var1, host2 = Var2, betaNTI = value)
+  
+  return(betaNTI)
+}
+
 ############################################################################
 
-# ######################################################
-# # hypotheses testing
-# 
-
-# 
-# ##### model selection
-# 
-# # full model
-# # adding the village as a random factor
-# 
-# 
-# 
-# library(nlme)
-# full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
-# 
-# #library(lme4)
-# #full_model <- lme4::glmer(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = "beta")
-# #library(glmmTMB)
-# #full_model <- glmmTMB::glmmTMB(module_similarity ~ grid_attr + grid_dist + sm_community + (1|village), data = final_data, REML = F, na.action = na.fail, family = beta_family())
-# 
-# # checking VIF
-# # as a rule of thumb, VIF< 10 for a variable is fine
-# library(car)
-# car::vif(full_model)
-# 
-# #library(fitdistrplus)
-# #a=fitdist(final_data$module_similarity, "norm")
-# #b=fitdist(final_data$module_similarity, "beta")
-# #a$aic
-# #b$aic
-# #plot(b)
-# #qqPlot(final_data$grid_attr)
-# #shapiro.test(final_data$module_similarity)
-# 
-
-
-
-
-######################################################
-
-# # number of modules as a function of asv degree
-# n_module_grid <- modules_observed %>% 
-#   group_by(host_group) %>% 
-#   summarise(n_grid = n_distinct(grid))
-# 
-# n_asv <- modules_observed %>% 
-#   #distinct(asv_ID, asv_degree, host_group) %>% 
-#   left_join(n_module_grid, by = c("asv_group"="host_group")) %>% 
-#   group_by(asv_ID, asv_degree) %>% summarise(n_grid = mean(n_grid)) %>% 
-#   mutate(n = ifelse(asv_degree<5,"1-4", ifelse(asv_degree>=10,"10+", "5-9"))) %>% 
-#   mutate(n = factor(n, levels = c("1-4","5-9","10+"))) 
-# 
-# p3 <- n_asv %>% 
-#   ggplot(aes(x=n, y=n_grid, fill=n)) + 
-#   geom_boxplot() + 
-#   theme_bw() +
-#   theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), legend.position = "none") +
-#   labs(x="ASVs Degree", y="Modules' No. of Land Uses")
