@@ -45,7 +45,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
   filter(host_species == "Rattus rattus")
 ```
 
-```{r, main analysis, include=FALSE}
+```{r, main analysis, include=FALSE, results='hide'}
 # first of all, run this chunk of code.
 # this code does all the modularity analysis using the functions in "modularity_analysis_functions".
 # There is a loop runs for the three villages, and all the analysis is done separately for each village.
@@ -63,7 +63,14 @@ modules_three_villages <- NULL
 modules_size_three_villages <- NULL
 modules_grid_three_villages <- NULL
 modules_table_three_villages <- NULL
+betaNTI_three_villages <- NULL
+raupc_three_villages <- NULL
 
+# reading the phylogenetic tree
+best_tree <- readRDS(file = "../results/phylo_tree_0.01_2.rds")
+phylo_tree <- best_tree$tree
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
 # for loop for three villages
 for (v in village_names) {
@@ -116,6 +123,34 @@ for (v in village_names) {
   # saving results in one list
   nmi_diff_core_three_villages <- append(nmi_diff_core_three_villages, nmi_diff_core)
   
+  ##### phylogenetic analysis
+  # ASVs pool
+asv_pool <- data_asv_village %>% 
+  distinct(asv_ID, asv_degree) %>% 
+  mutate(p = asv_degree/length(unique(data_asv_village$asv_ID)))
+
+# calculating betaNTI
+data_betaNTI <- data_asv_village %>% 
+  distinct(host_ID, asv_ID) %>% 
+  mutate(reads = 1) %>% 
+  spread(asv_ID, reads, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
+
+betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% mutate(village = v)
+betaNTI_three_villages <- rbind(betaNTI_three_villages, betaNTI)
+
+# raup-crick
+raupc <- raupcrick(data_betaNTI)
+raupc2 <- as.matrix(raupc) 
+raupc2[upper.tri(raupc2)] <- NA
+diag(raupc2) <- NA
+same_module_raup <- melt(raupc2) %>% 
+  filter(!(is.na(value)))%>% 
+  rename(module1 = Var1, module2 = Var2, betaNTI = value) %>% 
+  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
+  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid)
+raupc_three_villages <- rbind(raupc_three_villages, raupc2)
 }
 ```
 # Modularity analysis
@@ -161,88 +196,6 @@ for (i in 1:3) {
 
 ```
 
-## Normalized Mutual Information (NMI) {.tabset}
-
-```{r, nmi}
-# loop for three villages
-for (j in 1:3) {
-  
-  cat('###',village_names[j],'{.tabset}','\n','\n')
-  
-  cat('#### NMI','\n')
-  print(nmi_observed_three_villages[[j*2]])
-  cat('\n','\n')
-  
-  cat('#### NMI for common microbes','\n')
-  print(nmi_diff_core_three_villages[[j]])
-  cat('\n','\n')
-}
-
-```
-
-# Modules similarity across land use change gradient
-
-```{r}
-# reading grid similarity results
-grids_similarity_attr <- read_csv("../data/data_processed/village_summary2.csv")
-
-# combining the variables
-final_data <- modules_similarity_three_villages %>% 
-  left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
-  mutate(village = as.factor(village))
-
-# saving the final table
-#write_csv(final_data, "data/data_processed/final_modularity_data.csv")
-```
-
-![image](../presentations/hypotheses.png)
-I explore 4 non-mutual exclusive hypotheses for why land use affects the network's modular structure:
-
- 1. **Random process**  - stochastic processes such as priority effect or just sampling error lead to random turnover of microbes and modules across grids. Therefore, no variable explains modules similarity.
- 2. **environmental filtering** - grid attributes (vegetation) induce selective pressure. Therefore, grids with similar vegetation attributes have higher modules similarity.
- 3. **Rattus movement** - Rattus individuals can move between grids. Therefore, closer grids have higher modules similarity.
- 4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
-
-
-
-## Correlations between variables {.tabset}
-
-Distance is a proxy for habitat degradation.
-
-```{r, variables_correlation}
-# correlations between variables
-# loop for three villages
-library(psych)
-for (j in 1:3) {
-  
-  cat('###',village_names[j],'{.tabset}','\n','\n')
-  
-  print(psych::pairs.panels(final_data %>% filter(village == j) %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
-  cat('\n','\n')
-}
-```
-
-
-
-## Linear regression {.tabset}
-
-
-### Distance
-
-```{r, regression_distcance}
-# grid distance
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=grid_dist, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
-```
-
-
-
-
 # Phylogenetic analysis
 
 ```{r, results='hide'}
@@ -283,6 +236,7 @@ for (g in grids_names) {
     mutate(grid = g)
   betaNTI_results <- rbind(betaNTI_results, betaNTI_results_grid)
   
+  
 }
 
 # plotting
@@ -297,4 +251,80 @@ betaNTI_results %>%
   labs(x="Land use", y="betaNTI")
 cat('\n','\n')
 ```
+
+
+## Normalized Mutual Information (NMI) {.tabset}
+
+```{r, nmi}
+# loop for three villages
+for (j in 1:3) {
+  
+  cat('###',village_names[j],'{.tabset}','\n','\n')
+  
+  cat('#### NMI','\n')
+  print(nmi_observed_three_villages[[j*2]])
+  cat('\n','\n')
+  
+  cat('#### NMI for common microbes','\n')
+  print(nmi_diff_core_three_villages[[j]])
+  cat('\n','\n')
+}
+
+```
+
+# Modules similarity across land use change gradient
+
+![image](../presentations/hypotheses.png)
+I explore 4 non-mutual exclusive hypotheses for why land use affects the network's modular structure:
+
+ 1. **Random process**  - stochastic processes such as priority effect or just sampling error lead to random turnover of microbes and modules across grids. Therefore, no variable explains modules similarity.
+ 2. **environmental filtering** - grid attributes (vegetation) induce selective pressure. Therefore, grids with similar vegetation attributes have higher modules similarity.
+ 3. **Rattus movement** - Rattus individuals can move between grids. Therefore, closer grids have higher modules similarity.
+ 4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
+
+
+
+## Correlations between variables {.tabset}
+
+Distance is a proxy for habitat degradation.
+
+```{r, variables_correlation}
+# reading grid similarity results
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary2.csv")
+
+# correlations between variables
+# loop for three villages
+library(psych)
+for (j in village_names) {
+  
+  cat('###',j,'\n','\n')
+  
+  print(psych::pairs.panels(grids_similarity_attr %>% filter(village == j) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+  cat('\n','\n')
+}
+```
+
+
+
+## Mantel test {.tabset}
+
+```{r, mantel_test}
+# mantel test for: modules similarity ~ distance between grids
+# loop for three villages
+for (j in 1:3) {
+  
+  cat('###',village_names[j],'{.tabset}','\n','\n')
+  
+  grid_modules_mat <- final_data %>% 
+    filter(village == village_names[j]) %>% 
+    select(grid1, grid2, module_similarity) %>% 
+    spread(grid1, module_similarity)
+  print(psych::pairs.panels(final_data %>% filter(village == village_names[j]) %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
+  cat('\n','\n')
+}
+```
+
+
+
+
 
