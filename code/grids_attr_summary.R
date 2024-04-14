@@ -138,24 +138,48 @@ return(grid_disimilarity)
 ##### grid distance #######################################################################
 
 fun_grid_distance <- function(dat) {
+  # calculating the difference between grids in the distance to village
   
   dat %<>% arrange(grid)
-  grid_dist <- geosphere::distm(dat[3:4], fun = distHaversine)
-    rownames(grid_dist) <- dat$grid
-    colnames(grid_dist) <- dat$grid
+  vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
+  dist_village_grids <- as.data.frame(geosphere::distm(dat[3:4], vil , fun = distHaversine))
+  rownames(dist_village_grids) <- dat$grid
+  colnames(dist_village_grids) <- "dist_to_village"
+  dist_village_grids <- rownames_to_column(dist_village_grids, "grid")
   
-  # long format
-  # removing duplicated values
-  grid_dist2 <- grid_dist
-  grid_dist2[upper.tri(grid_dist2)] <- NA
-  diag(grid_dist2) <- NA
-  grid_distance <- melt(grid_dist2) %>% 
-    rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
-    filter(!(is.na(grid_dist))) %>% 
-    arrange(grid1, grid2)
+  grid_dist <- expand_grid(grid1=dist_village_grids$grid, grid2=dist_village_grids$grid) %>% 
+    left_join(dist_village_grids, by=c("grid1"="grid")) %>% dplyr::rename(dist1=dist_to_village) %>% 
+    left_join(dist_village_grids, by=c("grid2"="grid")) %>% dplyr::rename(dist2=dist_to_village) %>%
+    mutate(distance = abs(dist1-dist2)) %>% 
+    select(grid1,grid2,distance) %>% 
+    spread(grid2, distance) %>% 
+    column_to_rownames("grid1") %>% 
+    as.matrix() 
   
-  return(grid_distance)
+  return(list(grid_distance))
 }
+
+
+# fun_grid_distance <- function(dat) {
+#   
+#   dat %<>% arrange(grid)
+vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
+#   grid_dist <- geosphere::distm(dat[3:4], vil , fun = distHaversine)
+#     rownames(grid_dist) <- dat$grid
+#     colnames(grid_dist) <- dat$grid
+#   
+#   # long format
+#   # removing duplicated values
+#   grid_dist2 <- grid_dist
+#   grid_dist2[upper.tri(grid_dist2)] <- NA
+#   diag(grid_dist2) <- NA
+#   grid_distance <- melt(grid_dist2) %>% 
+#     rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
+#     filter(!(is.na(grid_dist))) %>% 
+#     arrange(grid1, grid2)
+#   
+#   return(grid_distance)
+# }
 
 
 ##### grid small mammals community #######################################################################
@@ -202,6 +226,7 @@ small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.
 
 village_names <- unique(plots_location$village)
 village_summary <- NULL
+grid_distance_three_villages <- NULL
 
 # for loop for three villages
 for (v in village_names) {
@@ -210,10 +235,22 @@ for (v in village_names) {
   grid_attributes <- fun_grid_attributes(habitat.raw %>% filter(village == v))
   # grid distance
   grid_distance <- fun_grid_distance(plots_location %>% filter(village == v))
+  grid_distance_three_villages <- append(grid_distance_three_villages, grid_distance)
   # grid community similarity
   grid_mammals <- fun_grid_mammals(small_mammals %>% filter(village == v))
+  
   # combining all variables into one table
-  grid_summary <- full_join(grid_attributes, grid_distance, by=c("grid1","grid2")) %>% 
+  
+  # transforming distance to long format
+  grid_dist2 <- grid_distance[[1]]
+  grid_dist2[upper.tri(grid_dist2)] <- NA
+  diag(grid_dist2) <- NA
+  grid_distance_m <- melt(grid_dist2) %>% 
+  rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
+  filter(!(is.na(grid_dist))) %>% 
+  arrange(grid1, grid2)
+  
+  grid_summary <- full_join(grid_attributes, grid_distance_m, by=c("grid1","grid2")) %>% 
     full_join(grid_mammals, by=c("grid1","grid2")) %>% 
     mutate(village = v) # adding village col
   
@@ -221,10 +258,8 @@ for (v in village_names) {
   village_summary <- rbind(village_summary, grid_summary)
 }
 
-# log transformation for the distance variable to match the variables scales
-village_summary2 <- village_summary %>% mutate(grid_dist = log(grid_dist))
 # saving the results
-write_csv(village_summary2, "data/data_processed/village_summary2.csv")
+write_csv(village_summary, "data/data_processed/village_summary2.csv")
 
 
 #####
