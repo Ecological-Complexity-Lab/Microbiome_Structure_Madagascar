@@ -180,7 +180,7 @@ for (j in 1:3) {
 
 ```
 
-# Hypotheses testing
+# Modules similarity across land use change gradient
 
 ```{r}
 # reading grid similarity results
@@ -189,8 +189,7 @@ grids_similarity_attr <- read_csv("../data/data_processed/village_summary2.csv")
 # combining the variables
 final_data <- modules_similarity_three_villages %>% 
   left_join(grids_similarity_attr, by=c("village","grid1","grid2")) %>% 
-  mutate(village = as.factor(village)) %>% 
-  filter(grid1!="village") # removing the village grid
+  mutate(village = as.factor(village))
 
 # saving the final table
 #write_csv(final_data, "data/data_processed/final_modularity_data.csv")
@@ -205,60 +204,28 @@ I explore 4 non-mutual exclusive hypotheses for why land use affects the network
  4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
 
 
-## The model
-
-I used a linear mixed model (LMM) with 'modules similarity' as response variable and (1) 'grid attributes similarity, (2) 'grids distance', and (3) 'small mammals community similarity' as predictors. I added the 'village' as random factor.\
-
-```{r, the_model, echo=TRUE}
-# setting the full model
-library(nlme)
-full_model <- lme(module_similarity ~ grid_attr + grid_dist + sm_community, random=~1|village, data = final_data, method = "ML", na.action = na.fail)
-# r.squaredGLMM(full_model)
-
-# checking normality assumption
-#shapiro.test(residuals(full_model))
-#qqnorm(residuals(full_model))
-#qqline(residuals(full_model))
-```
-
 
 ## Correlations between variables {.tabset}
 
-### Correlations
+Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
 # correlations between variables
+# loop for three villages
 library(psych)
-print(psych::pairs.panels(final_data %>% filter(grid1!="village") %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
+for (j in 1:3) {
+  
+  cat('###',village_names[j],'{.tabset}','\n','\n')
+  
+  print(psych::pairs.panels(final_data %>% filter(village == j) %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
+  cat('\n','\n')
+}
 ```
 
-### VIF
 
-Variance Inflation Factor (VIF) - is a measure used in regression analysis to assess multicollinearity among predictor variables.\
-VIF quantifies how much the variance of an estimated regression coefficient is increased due to multicollinearity. It is calculated for each predictor variable by regressing it against all other predictor variables in the model.\
-A VIF value of 1 indicates no multicollinearity, while higher values indicate increasing levels of multicollinearity. **A common rule of thumb is that a VIF > 10 indicates problematic multicollinearity**.\
-
-```{r, vif}
-# checking VIF
-# as a rule of thumb, VIF< 10 for a variable is fine
-library(car)
-print(knitr::kable(car::vif(full_model)))
-```
 
 ## Linear regression {.tabset}
 
-### Grid attributes
-
-```{r, regression_attributes}
-# grid attributes
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=grid_attr, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Grids Attributes Disimilarity [Euclidean]", y = "Modules Similarity [Bray-Curtis]")
-```
 
 ### Distance
 
@@ -273,71 +240,7 @@ final_data %>%
   labs(x = "Distance Between Grids [Log(m)]", y = "Modules Similarity [Bray-Curtis]")
 ```
 
-### Small mammals community
 
-```{r, regression_sm_community}
-# small mammals similarity
-final_data %>% 
-  ggplot(aes(y=module_similarity, x=sm_community, color=village)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(method = "glm", se=F, method.args = list(family = "gaussian")) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Small Mammals Disimilarity [Bray-Curtis]", y = "Modules Similarity [Bray-Curtis]")
-```
-
-
-## Model selection {.tabset}
-
-```{r, model_selection}
-# AIC 
-library(MuMIn)
-dredge_modules_similarity <- MuMIn::dredge(full_model)
-```
-
-### Table
-
-Presenting only the best models: delta AICc <= 5\
-
-```{r, aic_table}
-# The best models: delta <= 5
-results_modules_similarity <- subset(dredge_modules_similarity, delta <= 5 | df == 3 | df == max(df), recalc.weights = FALSE)
-row.names(results_modules_similarity) <- c(1:(nrow(results_modules_similarity)))
- 
-# arranging the final table
-aic_results_final <- as.data.frame(results_modules_similarity) %>% 
-  select(-df, -logLik) %>% 
-  dplyr::rename(intercept='(Intercept)', grid_attributes=grid_attr, grid_distance=grid_dist, sm_similarity=sm_community) %>% 
-  mutate(across(everything()), round(.,3))
-print(knitr::kable(aic_results_final))
-```
-
-
-### Variables Importance
-
-```{r, aic_importance}
-imp <- as.data.frame(MuMIn::sw(dredge_modules_similarity))
-colnames(imp) <- "importance"
-var_names <- rownames(imp)
-imp_values <- as.vector(imp[[1]])
-
-# Plotting
-g <- imp %>% 
-  rownames_to_column("variable") %>% 
-  mutate(variable = factor(variable)) %>% 
-  ggplot(aes(x=reorder(variable,-importance), y=importance)) +
-    geom_bar(stat="identity", fill = "#e5e5e5", color="#8b8c89") +
-    theme_bw() +
-    scale_y_continuous(limits = c(0, 1)) +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12), legend.position="none",
-          panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()) +
-  geom_text(aes(label=round(importance,2)), vjust=-0.5) +
- # annotate(geom = "text", x=imp$variable, y=imp$importance, label=imp$importance) +
-    labs(x="", y="Variable's Importamce")
-print(g)
-
-```
 
 
 # Phylogenetic analysis
