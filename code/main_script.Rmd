@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-04-12"
+date: "Last edit: 2024-04-15"
 output: 
   html_document:
     toc: true
@@ -52,7 +52,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(1,1, by=1)
+core_seq <- seq(1,20, by=1)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
@@ -273,13 +273,6 @@ for (j in 1:3) {
 # Modules similarity across land use change gradient
 
 ![image](../presentations/hypotheses.png)
-I explore 4 non-mutual exclusive hypotheses for why land use affects the network's modular structure:
-
- 1. **Random process**  - stochastic processes such as priority effect or just sampling error lead to random turnover of microbes and modules across grids. Therefore, no variable explains modules similarity.
- 2. **environmental filtering** - grid attributes (vegetation) induce selective pressure. Therefore, grids with similar vegetation attributes have higher modules similarity.
- 3. **Rattus movement** - Rattus individuals can move between grids. Therefore, closer grids have higher modules similarity.
- 4. **Microbes reservoir** - microbes of other host species constitute a microbes reservoir in the grid. Therefore, grids with similart small mammals communities have higher modules similarity.
-
 
 
 ## Correlations between variables {.tabset}
@@ -338,7 +331,7 @@ for (i in 1:3) {
   
   # plotting
     g <- final_data %>% 
-      ggplot(aes(y=module_similarity, x=sm_community)) +
+      ggplot(aes(y=module_similarity, x=grid_dist)) +
   geom_point(alpha = 0.8) +
   geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
   theme_bw() +
