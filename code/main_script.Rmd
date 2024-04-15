@@ -136,7 +136,10 @@ data_betaNTI <- data_asv_village %>%
   column_to_rownames("host_ID") %>% 
   as.matrix()
 
-betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% mutate(village = v)
+betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
+  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
+  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>% 
+  mutate(village = v)
 betaNTI_three_villages <- rbind(betaNTI_three_villages, betaNTI)
 
 # raup-crick
@@ -197,22 +200,54 @@ for (i in 1:3) {
 
 ```
 
-# Phylogenetic analysis
+# Phylogenetic analysis {.tabset}
 
 ```{r, phylogenetic_analysis}
-
-
-# plotting
-betaNTI_results %>% 
-  left_join(data_asv_village %>% distinct(host_ID, host_group), by=c("host1"="host_ID")) %>% rename(host_group1=host_group) %>% 
-  left_join(data_asv_village %>% distinct(host_ID, host_group), by=c("host2"="host_ID")) %>% rename(host_group2=host_group) %>%
-  filter(host_group1 != host_group2) %>% 
-  ggplot(aes(x=grid, y=betaNTI, fill=grid)) + 
-  geom_boxplot() + 
+  cat('##', 'betaNTI','\n','\n')
+  
+  # same module?
+  betaNTI_final <- betaNTI_three_villages %>% 
+    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
+    mutate(host_group1_org = host_group1) %>% 
+  rowwise() %>%
+  mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
+    
+  #plotting
+  betaNTI_g <- betaNTI_final %>% 
+    group_by(village, same_module, host_group1, host_group2) %>% 
+    summarise(mean_betaNTI = mean(betaNTI)) %>% 
+  ggplot(aes(x=same_module, y=mean_betaNTI, fill=village)) + 
+  geom_boxplot(outlier.shape = NA) + 
   theme_bw() +
-  theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20), legend.position = "none") +
-  labs(x="Land use", y="betaNTI")
+  scale_y_continuous(limits = c(-2, 4), breaks = seq(-2,4, by=2)) +
+  theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20)) +
+  labs(x="", y="betaNTI")
+  print(betaNTI_g)
 cat('\n','\n')
+  
+
+cat('##', 'Raup-Crick','\n','\n')
+  
+  # same module?
+  raupc_final <- raupc_three_villages %>% 
+    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
+    mutate(host_group1_org = host_group1) %>% 
+  rowwise() %>%
+  mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
+    
+  #plotting
+  raupc_g <- raupc_final %>% 
+    group_by(village, same_module, host_group1, host_group2) %>% 
+    summarise(mean_raupc = mean(raupc)) %>% 
+  ggplot(aes(x=same_module, y=mean_raupc, fill=village)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  theme_bw() +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0,1, by=0.2)) +
+  theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20)) +
+  labs(x="", y="Raup-Crick")
+  print(raupc_g)
+cat('\n','\n')
+
 ```
 
 
