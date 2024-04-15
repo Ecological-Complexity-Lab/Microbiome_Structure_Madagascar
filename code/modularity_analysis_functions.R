@@ -79,8 +79,8 @@ fun_nmi_calc <- function(dat, figure) {
       theme_classic() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
-      labs(x="NMI", y="No. of Shuffled Networks") +
-      annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(120,110), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
+      labs(x="Normalized Mutual Information (NMI)", y="No. of Shuffled Networks") +
+      annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(110,100), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
   } else {
     g <- NULL
   }
@@ -110,7 +110,7 @@ for (i in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(data_asv_filtered_core$host_group)))
+    mutate(degree = i, type = "core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(modules$host_group)))
   
   nmi_summary_core <- rbind(nmi_summary_core, nmi_mid)
 }
@@ -240,12 +240,11 @@ fun_module_size <- function(dat) {
   g <- dat %>% 
     group_by(host_group) %>% 
     summarise(n = n_distinct(host_ID)) %>% 
-    arrange(n) %>% 
-    ggplot(aes(x=host_group)) +
-    geom_bar() +
+    ggplot(aes(x=n)) +
+    geom_histogram(binwidth = 1) +
     theme_bw() +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12), axis.text.x=element_blank()) +
-    labs(x="Modules", y="Module Size")
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+    labs(x="Module Size", y="No. of Modules")
   
   return(list(g))
 }

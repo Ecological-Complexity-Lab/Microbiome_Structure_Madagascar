@@ -157,18 +157,17 @@ raupc_three_villages <- rbind(raupc_three_villages, raupc2_m)
 }
 ```
 
-# Modularity analysis
 
-## Network exploration {.tabset}
+# Network exploration {.tabset}
 
 
 ```{r, network_exploration}
 # loop for three villages
 for (i in 1:3) {
   
-  cat('###',village_names[i],'{.tabset}','\n','\n')
+  cat('##',village_names[i],'{.tabset}','\n','\n')
   
-  cat('#### ASVs degree distribution','\n')
+  cat('### ASVs degree distribution','\n')
   
   print(asv_degree_distribution_three_villages[[i]])
   cat('\n','\n')
@@ -182,17 +181,17 @@ for (i in 1:3) {
   cat('Connectance: ', nrow(connectance_data) / (length(unique(connectance_data$host_ID)) * length(unique(connectance_data$asv_ID))) ,'\n','\n')
   
   
-  cat('#### Modules','\n')
+  cat('### Modules','\n')
   cat('The color indicates number of host individuals in the module / total number of hosts in the whole grid [%]','\n','\n')
   
   print(modules_three_villages[[i]])
   cat('\n','\n')
   
-  cat('#### Modules size','\n')
+  cat('### Modules size','\n')
   print(modules_size_three_villages[[i]])
   cat('\n','\n')
   
-  cat('#### No. of land uses','\n')
+  cat('### No. of land uses','\n')
   print(modules_grid_three_villages[[i]])
   cat('\n','\n')
   
@@ -212,15 +211,24 @@ for (i in 1:3) {
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
     
+  betaNTI_summary <- betaNTI_final %>% 
+    group_by(village, same_module, host_group1, host_group2) %>% 
+    summarise(mean_betaNTI = mean(betaNTI)) %>%
+    group_by(village, same_module) %>% 
+    summarise(betaNTI = mean(mean_betaNTI))
+    print(knitr::kable(betaNTI_summary))
+    cat('\n','\n')
+    
   #plotting
   betaNTI_g <- betaNTI_final %>% 
     group_by(village, same_module, host_group1, host_group2) %>% 
     summarise(mean_betaNTI = mean(betaNTI)) %>% 
   ggplot(aes(x=same_module, y=mean_betaNTI, fill=village)) + 
   geom_boxplot(outlier.shape = NA) + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
   theme_bw() +
   scale_y_continuous(limits = c(-2, 4), breaks = seq(-2,4, by=2)) +
-  theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20)) +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
   labs(x="", y="betaNTI")
   print(betaNTI_g)
 cat('\n','\n')
@@ -234,6 +242,14 @@ cat('##', 'Raup-Crick','\n','\n')
     mutate(host_group1_org = host_group1) %>% 
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
+  
+  raupc_summary <- raupc_final %>% 
+    group_by(village, same_module, host_group1, host_group2) %>% 
+    summarise(mean_raupc = mean(raupc)) %>%
+    group_by(village, same_module) %>% 
+    summarise(raupc = mean(mean_raupc))
+    print(knitr::kable(raupc_summary))
+    cat('\n','\n')
     
   #plotting
   raupc_g <- raupc_final %>% 
@@ -243,7 +259,7 @@ cat('##', 'Raup-Crick','\n','\n')
   geom_boxplot(outlier.shape = NA) + 
   theme_bw() +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0,1, by=0.2)) +
-  theme(axis.text = element_text(size = 8, color = 'black'), title = element_text(size = 20)) +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
   labs(x="", y="Raup-Crick")
   print(raupc_g)
 cat('\n','\n')
@@ -251,19 +267,19 @@ cat('\n','\n')
 ```
 
 
-## Normalized Mutual Information (NMI) {.tabset}
+# Normalized Mutual Information (NMI) {.tabset}
 
 ```{r, nmi}
 # loop for three villages
 for (j in 1:3) {
   
-  cat('###',village_names[j],'{.tabset}','\n','\n')
+  cat('##',village_names[j],'{.tabset}','\n','\n')
   
-  cat('#### NMI','\n')
+  cat('### NMI','\n')
   print(nmi_observed_three_villages[[j*2]])
   cat('\n','\n')
   
-  cat('#### NMI for common microbes','\n')
+  cat('### NMI for common microbes','\n')
   print(nmi_diff_core_three_villages[[j]])
   cat('\n','\n')
 }
@@ -317,8 +333,8 @@ for (i in 1:3) {
 
   # calculating mantel test
   mantel_result <- vegan::mantel(modules_similarity, grid_distance)
-  cat('r: ', mantel_result$statistic,'\n')
-  cat('p-value: ', 1-mantel_result$signif,'\n')
+  cat('r = ', mantel_result$statistic,'\n','\n')
+  cat('p-value = ', 1-mantel_result$signif,'\n','\n')
   
   # transforming to long format
   modules_similarity_m <- modules_similarity
@@ -336,7 +352,7 @@ for (i in 1:3) {
   geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-  labs(x = "Difference in Distance from Village [m]", y = "Modules Similarity [Bray-Curtis]")
+  labs(x = "Distance Between Land Uses [m]", y = "Modules Similarity [Bray-Curtis]")
     print(g)
   cat('\n','\n')
 }

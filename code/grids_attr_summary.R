@@ -137,36 +137,38 @@ return(grid_disimilarity)
 
 ##### grid distance #######################################################################
 
-fun_grid_distance <- function(dat) {
-  # calculating the difference between grids in the distance to village
-  
-  dat %<>% arrange(grid)
-  vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
-  dist_village_grids <- as.data.frame(geosphere::distm(dat[3:4], vil , fun = distHaversine))
-  rownames(dist_village_grids) <- dat$grid
-  colnames(dist_village_grids) <- "dist_to_village"
-  dist_village_grids <- rownames_to_column(dist_village_grids, "grid")
-  
-  grid_dist <- expand_grid(grid1=dist_village_grids$grid, grid2=dist_village_grids$grid) %>% 
-    left_join(dist_village_grids, by=c("grid1"="grid")) %>% dplyr::rename(dist1=dist_to_village) %>% 
-    left_join(dist_village_grids, by=c("grid2"="grid")) %>% dplyr::rename(dist2=dist_to_village) %>%
-    mutate(distance = abs(dist1-dist2)) %>% 
-    select(grid1,grid2,distance) %>% 
-    spread(grid2, distance) %>% 
-    column_to_rownames("grid1") %>% 
-    as.matrix() 
-  
-  return(list(grid_dist))
-}
-
-
 # fun_grid_distance <- function(dat) {
+#   # calculating the difference between grids in the distance to village
 #   
 #   dat %<>% arrange(grid)
-#vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
-#   grid_dist <- geosphere::distm(dat[3:4], vil , fun = distHaversine)
-#     rownames(grid_dist) <- dat$grid
-#     colnames(grid_dist) <- dat$grid
+#   vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
+#   dist_village_grids <- as.data.frame(geosphere::distm(dat[3:4], vil , fun = distHaversine))
+#   rownames(dist_village_grids) <- dat$grid
+#   colnames(dist_village_grids) <- "dist_to_village"
+#   dist_village_grids <- rownames_to_column(dist_village_grids, "grid")
+#   
+#   grid_dist <- expand_grid(grid1=dist_village_grids$grid, grid2=dist_village_grids$grid) %>% 
+#     left_join(dist_village_grids, by=c("grid1"="grid")) %>% dplyr::rename(dist1=dist_to_village) %>% 
+#     left_join(dist_village_grids, by=c("grid2"="grid")) %>% dplyr::rename(dist2=dist_to_village) %>%
+#     mutate(distance = abs(dist1-dist2)) %>% 
+#     select(grid1,grid2,distance) %>% 
+#     spread(grid2, distance) %>% 
+#     column_to_rownames("grid1") %>% 
+#     as.matrix() 
+#   
+#   return(list(grid_dist))
+# }
+
+
+fun_grid_distance <- function(dat) {
+
+  dat %<>% arrange(grid)
+  grid_dist <- geosphere::distm(dat[3:4] , fun = distHaversine)
+    rownames(grid_dist) <- dat$grid
+    colnames(grid_dist) <- dat$grid
+    
+    return(list(grid_dist))
+}
 #   
 #   # long format
 #   # removing duplicated values
@@ -191,7 +193,7 @@ fun_grid_mammals <- function(dat) {
   dat_mat <- dat %>% 
     filter(grepl("TMR", animal_id)) %>% 
     rename(host_species = field_identification, grid = habitat_type) %>% 
-    #filter(host_species != "Rattus rattus") %>% 
+    filter(host_species != "Rattus rattus") %>% 
     select(host_species, grid) %>% 
     count(grid, host_species) %>% 
     spread(host_species, n, fill = 0) %>% 
