@@ -288,8 +288,6 @@ for (j in 1:3) {
 
 # Modules similarity across land use change gradient
 
-![image](../presentations/hypotheses.png)
-
 
 ## Correlations between variables {.tabset}
 
@@ -358,6 +356,33 @@ for (i in 1:3) {
 }
 ```
 
+# Link prediction
+
+```{r}
+library(caret)
+library(pROC)
+
+# reading the ML results files
+test_set <- read_csv("../data/data_processed/ML/test_set.csv")
+feature_importance <- read_csv("../data/data_processed/ML/feature_importance.csv")
+
+# setting a threshold for prediction
+th <- 0.5
+test_set_predict <- test_set %>% 
+  select(y_true, y_proba) %>% 
+  mutate(y_proba_th = ifelse(y_proba >= th, 1, 0)) %>% 
+  mutate(predict = ifelse(y_true == y_proba_th, 1, 0))
+
+accuracy <- nrow(test_set_predict %>% filter(predict==1)) / nrow(test_set_predict)
+
+conf_matrix <- table(test_set_predict$y_proba_th, test_set_predict$y_true)
+conf_matrix
+
+precision <- diag(conf_matrix) / colSums(conf_matrix)
+
+roc_obj <- roc(test_set_predict$y_true, test_set_predict$y_proba)
+plot(roc_obj, main = "ROC Curve", col = "blue")
+```
 
 
 
