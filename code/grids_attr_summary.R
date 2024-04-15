@@ -156,7 +156,7 @@ fun_grid_distance <- function(dat) {
     column_to_rownames("grid1") %>% 
     as.matrix() 
   
-  return(list(grid_distance))
+  return(list(grid_dist))
 }
 
 
@@ -258,9 +258,12 @@ for (v in village_names) {
   village_summary <- rbind(village_summary, grid_summary)
 }
 
-# saving the results
-write_csv(village_summary, "data/data_processed/village_summary2.csv")
+# log transform distance for a better correlation
+village_summary %<>% mutate(grid_dist = log(grid_dist))
 
+# saving the results
+write_csv(village_summary, "data/data_processed/village_summary.csv")
+save(grid_distance_three_villages, file = "data/data_processed/distance_three_villages.RData")
 
 #####
 village_summary <- read_csv("data/data_processed/village_summary.csv")
