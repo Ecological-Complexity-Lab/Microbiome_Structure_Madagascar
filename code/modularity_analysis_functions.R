@@ -75,7 +75,7 @@ fun_nmi_calc <- function(dat, figure) {
   if(figure){
     g <- as.data.frame(nmi_shuff) %>% 
       ggplot(aes(nmi_shuff)) + 
-      geom_histogram(fill = "#2596be") + 
+      geom_histogram(fill = "black") + 
       theme_classic() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
       theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
@@ -129,7 +129,7 @@ for (j in core_seq) {
   # NMI
   nmi_mid <- fun_nmi_calc(modules, FALSE)
   nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(data_asv_filtered_noncore$host_group)))
+    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(modules$host_group)))
   
   nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
 }
@@ -143,10 +143,10 @@ p1 <- nmi_summary %>%
   mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
   ggplot(aes(x=degree, y=nmi)) + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
-  geom_line(color = "#2596be") +
-  geom_point(aes(shape = as.factor(sig), size = n_module), color = "#2596be") +
+  geom_line(color = "black") +
+  geom_point(aes(shape = as.factor(sig), size = n_module), color = "black") +
   scale_shape_manual(values = c(1, 16)) +
-  scale_y_continuous(limits = c(0, 0.36)) +
+  scale_y_continuous(limits = c(0, 0.35)) +
   scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15)) +
@@ -170,8 +170,8 @@ fun_modules_similarity <- function(dat) {
     group_by(grid, host_group) %>% 
     summarise(host_n = n_distinct(host_ID)) %>% 
     left_join(n_host_grid, by="grid") %>% 
-    mutate(n = host_n/n_host_grid) %>% 
-    select(-host_n, -n_host_grid) %>% 
+    mutate(n = host_n/n_grid) %>% 
+    select(-host_n, -n_grid) %>% 
     spread(host_group, n, fill = 0) %>% 
     mutate(grid = as.character(grid)) %>%
     arrange(grid) %>% 
@@ -181,15 +181,15 @@ fun_modules_similarity <- function(dat) {
   # calculating the *similarity* between grids
   grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
   
-  # transforming to long format
-  grid_mudules_dist_m <- grid_modules_dist
-  grid_mudules_dist_m[lower.tri(grid_mudules_dist_m)] <- NA
-  diag(grid_mudules_dist_m) <- NA
-  grid_mudules_dist_m <- melt(grid_mudules_dist_m) %>% 
-    filter(!is.na(value)) %>% 
-    dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) 
+  # # transforming to long format
+  # grid_mudules_dist_m <- grid_modules_dist
+  # grid_mudules_dist_m[lower.tri(grid_mudules_dist_m)] <- NA
+  # diag(grid_mudules_dist_m) <- NA
+  # grid_mudules_dist_m <- melt(grid_mudules_dist_m) %>% 
+  #   filter(!is.na(value)) %>% 
+  #   dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) 
   
-  return(grid_mudules_dist_m)
+  return(list(grid_modules_dist))
 }
 
 
@@ -241,8 +241,8 @@ fun_module_size <- function(dat) {
     group_by(host_group) %>% 
     summarise(n = n_distinct(host_ID)) %>% 
     arrange(n) %>% 
-    ggplot(aes(x=n)) +
-    geom_histogram(binwidth = 1) +
+    ggplot(aes(x=host_group)) +
+    geom_bar() +
     theme_bw() +
     theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12), axis.text.x=element_blank()) +
     labs(x="Modules", y="Module Size")

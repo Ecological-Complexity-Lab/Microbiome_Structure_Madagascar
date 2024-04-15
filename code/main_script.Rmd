@@ -91,10 +91,9 @@ for (v in village_names) {
   modules_table_three_villages <- rbind(modules_table_three_villages, modules_observed)
   
   # calculating similarity in modules between grids
-  modules_similarity <- fun_modules_similarity(modules_observed) %>% 
-    mutate(village = v)
+  modules_similarity <- fun_modules_similarity(modules_observed)
   # saving results in one table
-  modules_similarity_three_villages <- rbind(modules_similarity_three_villages, modules_similarity)
+  modules_similarity_three_villages <- append(modules_similarity_three_villages, modules_similarity)
   
   # ASVs degree distribution
   asv_degree_distribution <- fun_asv_degree_distribution(data_asv_village)
@@ -145,14 +144,16 @@ raupc <- raupcrick(data_betaNTI)
 raupc2 <- as.matrix(raupc) 
 raupc2[upper.tri(raupc2)] <- NA
 diag(raupc2) <- NA
-same_module_raup <- melt(raupc2) %>% 
+raupc2_m <- melt(raupc2) %>% 
   filter(!(is.na(value)))%>% 
-  rename(module1 = Var1, module2 = Var2, betaNTI = value) %>% 
+  rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
   left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% rename(host_group1=host_group, grid1=grid) %>% 
-  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid)
-raupc_three_villages <- rbind(raupc_three_villages, raupc2)
+  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% rename(host_group2=host_group, grid2=grid) %>% 
+  mutate(village = v)
+raupc_three_villages <- rbind(raupc_three_villages, raupc2_m)
 }
 ```
+
 # Modularity analysis
 
 ## Network exploration {.tabset}
@@ -198,7 +199,7 @@ for (i in 1:3) {
 
 # Phylogenetic analysis
 
-```{r, results='hide'}
+```{r, phylogenetic_analysis}
 
 
 # plotting
@@ -252,7 +253,7 @@ Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
 # reading grid similarity results
-grids_similarity_attr <- read_csv("../data/data_processed/village_summary2.csv")
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
 
 # correlations between variables
 # loop for three villages
@@ -260,7 +261,6 @@ library(psych)
 for (j in village_names) {
   
   cat('###',j,'\n','\n')
-  
   print(psych::pairs.panels(grids_similarity_attr %>% filter(village == j) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
   cat('\n','\n')
 }
@@ -272,16 +272,44 @@ for (j in village_names) {
 
 ```{r, mantel_test}
 # mantel test for: modules similarity ~ distance between grids
+
+# distance between grids matrices
+load("../data/data_processed/distance_three_villages.RData")
+
 # loop for three villages
-for (j in 1:3) {
+for (i in 1:3) {
   
-  cat('###',village_names[j],'{.tabset}','\n','\n')
+  cat('###',village_names[i],'{.tabset}','\n','\n')
   
-  grid_modules_mat <- final_data %>% 
-    filter(village == village_names[j]) %>% 
-    select(grid1, grid2, module_similarity) %>% 
-    spread(grid1, module_similarity)
-  print(psych::pairs.panels(final_data %>% filter(village == village_names[j]) %>%  select(-village,-grid1,-grid2, -module_similarity), ellipses = F, lm = T))
+  modules_similarity <- modules_similarity_three_villages[[i]]
+  grid_names <- rownames(modules_similarity)
+  grid_distance <- grid_distance_three_villages[[i]]
+  # filtering the distance matrix to the existing grids
+  grid_distance <- grid_distance[grid_names, grid_names]
+
+  # calculating mantel test
+  mantel_result <- vegan::mantel(modules_similarity, grid_distance)
+  cat('r: ', mantel_result$statistic,'\n')
+  cat('p-value: ', 1-mantel_result$signif,'\n')
+  
+  # transforming to long format
+  modules_similarity_m <- modules_similarity
+  modules_similarity_m[lower.tri(modules_similarity_m)] <- NA
+  diag(modules_similarity_m) <- NA
+  final_data <- melt(modules_similarity_m) %>% 
+  filter(!is.na(value)) %>% 
+  dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) %>% 
+    left_join(grids_similarity_attr %>% filter(village == village_names[i]), by=c("grid1","grid2"))
+  
+  # plotting
+    g <- final_data %>% 
+      ggplot(aes(y=module_similarity, x=sm_community)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+  labs(x = "Difference in Distance from Village [m]", y = "Modules Similarity [Bray-Curtis]")
+    print(g)
   cat('\n','\n')
 }
 ```

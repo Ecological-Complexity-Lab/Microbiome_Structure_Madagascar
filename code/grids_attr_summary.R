@@ -163,7 +163,7 @@ fun_grid_distance <- function(dat) {
 # fun_grid_distance <- function(dat) {
 #   
 #   dat %<>% arrange(grid)
-vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
+#vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
 #   grid_dist <- geosphere::distm(dat[3:4], vil , fun = distHaversine)
 #     rownames(grid_dist) <- dat$grid
 #     colnames(grid_dist) <- dat$grid
@@ -191,7 +191,7 @@ fun_grid_mammals <- function(dat) {
   dat_mat <- dat %>% 
     filter(grepl("TMR", animal_id)) %>% 
     rename(host_species = field_identification, grid = habitat_type) %>% 
-    filter(host_species != "Rattus rattus") %>% 
+    #filter(host_species != "Rattus rattus") %>% 
     select(host_species, grid) %>% 
     count(grid, host_species) %>% 
     spread(host_species, n, fill = 0) %>% 
@@ -259,7 +259,7 @@ for (v in village_names) {
 }
 
 # log transform distance for a better correlation
-village_summary %<>% mutate(grid_dist = log(grid_dist))
+#village_summary %<>% mutate(grid_dist = log(grid_dist))
 
 # saving the results
 write_csv(village_summary, "data/data_processed/village_summary.csv")
