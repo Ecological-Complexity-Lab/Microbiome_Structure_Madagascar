@@ -356,11 +356,11 @@ for (i in 1:3) {
 }
 ```
 
-# Link prediction
+# Link prediction {.tabset}
 
 ```{r}
 library(caret)
-library(pROC)
+library(yardstick)
 
 # reading the ML results files
 test_set <- read_csv("../data/data_processed/ML/test_set.csv")
@@ -371,17 +371,50 @@ th <- 0.5
 test_set_predict <- test_set %>% 
   select(y_true, y_proba) %>% 
   mutate(y_proba_th = ifelse(y_proba >= th, 1, 0)) %>% 
-  mutate(predict = ifelse(y_true == y_proba_th, 1, 0))
+  mutate(predict = ifelse(y_true == y_proba_th, 1, 0)) %>% 
+  mutate(y_proba_th = factor(y_proba_th, levels = c(1,0)), y_true = factor(y_true, levels = c(1,0)))
 
-accuracy <- nrow(test_set_predict %>% filter(predict==1)) / nrow(test_set_predict)
+cat('## Metrics','\n','\n')
 
-conf_matrix <- table(test_set_predict$y_proba_th, test_set_predict$y_true)
-conf_matrix
+conf_matrix <- caret::confusionMatrix(data=test_set_predict$y_proba_th, reference = test_set_predict$y_true, dnn = c("Prediction", "Reference"))
+print(knitr::kable(conf_matrix$table))
+cat('\n','\n')
 
-precision <- diag(conf_matrix) / colSums(conf_matrix)
+accuracy <- conf_matrix$overall['Accuracy']
+cat("Accuracy: ", round(accuracy, 4), '\n')
+precision <- conf_matrix$byClass['Precision']
+cat("Precision: ", round(precision, 4), '\n')
+recall <- conf_matrix$byClass['Sensitivity']
+cat("Recall: ", round(recall, 4), '\n')
+f1_score <- 2 * (precision * recall) / (precision + recall)
+cat("F1_score: ", round(f1_score, 4), '\n','\n')
 
-roc_obj <- roc(test_set_predict$y_true, test_set_predict$y_proba)
-plot(roc_obj, main = "ROC Curve", col = "blue")
+cat('## ROC curve','\n','\n')
+
+auc_roc_score <- yardstick::roc_auc(test_set_predict, y_true, y_proba)
+roc_obj <- yardstick::roc_curve(test_set_predict, y_true, y_proba) %>% 
+ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+  geom_path(color = "blue") +
+  geom_abline(lty = 3) +
+  coord_equal() +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "ROC Curve", subtitle = paste("AUC = ", round(auc_roc_score$.estimate,3)))
+print(roc_obj)
+cat('\n','\n')
+
+cat('## Precision-Recall curve','\n','\n')
+
+auc_pr_score <- yardstick::pr_auc(test_set_predict, y_true, y_proba)
+pr_obj <- yardstick::pr_curve(test_set_predict, y_true, y_proba) %>% 
+ggplot(aes(x = recall, y = precision)) +
+  geom_path(color = "blue") +
+  coord_equal() +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "Precision-Recall curve", subtitle = paste("AUC = ", round(auc_pr_score$.estimate,3)))
+print(pr_obj)
+cat('\n','\n')
 ```
 
 
