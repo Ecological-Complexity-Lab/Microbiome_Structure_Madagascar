@@ -417,6 +417,22 @@ ggplot(aes(x = recall, y = precision)) +
   labs(title = "Precision-Recall curve", subtitle = paste("AUC = ", round(auc_pr_score$.estimate,3)))
 print(pr_obj)
 cat('\n','\n')
+
+cat('## Features importance','\n','\n')
+
+feature_imp_g <- feature_importance %>% 
+  arrange(value) %>% 
+    mutate(feature = factor(feature, levels = feature)) %>% 
+    ggplot(aes(x=feature, y=value)) +
+    geom_bar(stat = "identity") +
+  coord_flip()+
+    theme_bw() +
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(x="", y="Importance")
+print(feature_imp_g)
+cat('\n','\n')
 ```
 
 
