@@ -24,3 +24,5 @@ ape
 nlme
 picante
 psych
+caret
+yardstick

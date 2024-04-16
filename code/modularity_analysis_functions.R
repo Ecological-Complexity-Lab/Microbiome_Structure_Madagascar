@@ -240,11 +240,15 @@ fun_module_size <- function(dat) {
   g <- dat %>% 
     group_by(host_group) %>% 
     summarise(n = n_distinct(host_ID)) %>% 
-    ggplot(aes(x=n)) +
-    geom_histogram(binwidth = 1) +
+    arrange(desc(n)) %>% 
+    mutate(host_group = factor(host_group, levels = host_group)) %>% 
+    ggplot(aes(x=factor(host_group), y=n)) +
+    geom_bar(stat = "identity", width = 1) +
     theme_bw() +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
-    labs(x="Module Size", y="No. of Modules")
+    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), axis.text.x=element_blank(), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(x="Modules", y="Module Size")
   
   return(list(g))
 }
