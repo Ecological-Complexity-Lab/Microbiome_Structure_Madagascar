@@ -150,7 +150,7 @@ p1 <- nmi_summary %>%
   scale_x_continuous(limits = c(0, 20)) +
   theme_classic() +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15)) +
-  labs(x="ASVs Degree", y="Normalized Mutual Information (NMI)")
+  labs(x="Minimum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
 return(list(p1))
 }
