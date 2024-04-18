@@ -54,7 +54,8 @@ modules_pie <- data_modules_mandena %>%
   group_by(host_group, grid) %>% 
   summarise(n = n_distinct(host_ID)) %>% 
   spread(grid, n, fill = 0) %>% 
-  column_to_rownames("host_group") 
+  column_to_rownames("host_group") %>% 
+  as.matrix()
 # converting to list
 module_pie_list <- split(modules_pie, seq(nrow(modules_pie)))
 
@@ -68,32 +69,35 @@ betaNTI_final_mandena <- betaNTI_three_villages %>%
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2]) %>% 
   group_by(host_group1, host_group2) %>% 
-  summarise(mean_betaNTI = mean(betaNTI)) %>% 
-  mutate(rescale_betaNTI = 1-scales::rescale(mean_betaNTI,to=c(0,1))) %>% 
-  mutate(rescale_betaNTI = ifelse(rescale_betaNTI<0.8,0,rescale_betaNTI)) # rescale the values
+  summarise(mean_betaNTI = mean(sqrt(betaNTI))) %>%   
+  mutate(rescale_betaNTI = ifelse(mean_betaNTI>0.5, 0, mean_betaNTI)) %>% 
+  #filter(rescale_betaNTI != 0) %>% 
+  mutate(rescale_betaNTI = (1-scales::rescale(mean_betaNTI,to=c(0,1)))*10)  
+   # rescale the values
 
 # igraph
-data_for_graph <- betaNTI_final_mandena %>% select(-mean_betaNTI) %>% filter(rescale_betaNTI > 0)
+data_for_graph <- betaNTI_final_mandena %>% select(-mean_betaNTI)
 modules_graph <- graph_from_data_frame(data_for_graph, directed = FALSE)
 
 # graph color
 library("RColorBrewer")
 colo <- brewer.pal(n = 7, name = "Spectral")
+colo <- c("#f9c74f","#f94144", "#4d908e", "#277da1", "#90be6d", "#00916e", "#766153")
 V(modules_graph)$pie.color=list(colo)
 
 set.seed(123)
-par(mar=c(0,0,0,0))
-l <- layout_with_fr(modules_graph)
-l <- norm_coords(l, ymin=-1, ymax=1, xmin=-1, xmax=1)
+l <- layout_with_fr(modules_graph) 
+l <- norm_coords(l, ymin=-3, ymax=3, xmin=-3, xmax=3)
 plot(modules_graph,
-     rescale = FALSE,
-     layout=l*1.1,
+     rescale=F,
+     xlim = c(-3, 3),
+  ylim = c(-3, 3.2),
+     layout=l,
      vertex.shape="pie", 
-     #vertex.pie=module_pie_list,
+     vertex.pie=module_pie_list,
      vertex.size=modules_size$n *10, 
      edge.curved=.1,
-     vertex.label=NA,
-     margin=c(0,0,0,0))
+     vertex.label=NA)
 
 ```
 
