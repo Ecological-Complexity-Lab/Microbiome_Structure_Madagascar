@@ -30,9 +30,70 @@ rm(list=ls())
 ```
 
 ```{r, reading data}
-# reading the microbiome data
-# working only with Rattus from the three villages
-# removing the 'village' grid from the analysis
+# reading the modules data
 
-data_asv <- read_csv("../results/modules_table_three_villages.csv") 
+data_modules <- read_csv("../results/modules_table_three_villages.csv") 
 ```
+
+# Figure 1
+
+```{r}
+data_modules_mandena <- data_modules %>% 
+  filter(village=="Mandena")
+
+# modules size
+modules_size <- data_modules_mandena %>% 
+  group_by(host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  mutate(n = sqrt(n))
+
+# preparing the pie charts data
+# a list of host abundance in the 7 grids for every module
+
+modules_pie <- data_modules_mandena %>% 
+  group_by(host_group, grid) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  spread(grid, n, fill = 0) %>% 
+  column_to_rownames("host_group") 
+# converting to list
+module_pie_list <- split(modules_pie, seq(nrow(modules_pie)))
+
+# building the network
+# calculating the edges by betaNTI
+# edge between modules = mean betaNTI values between all the individuals in the two modules
+betaNTI_final_mandena <- betaNTI_three_villages %>% 
+    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
+  filter(village == "Mandena" & same_module == "Different") %>% 
+    mutate(host_group1_org = host_group1) %>% 
+  rowwise() %>%
+  mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2]) %>% 
+  group_by(host_group1, host_group2) %>% 
+  summarise(mean_betaNTI = mean(betaNTI)) %>% 
+  mutate(rescale_betaNTI = 1-scales::rescale(mean_betaNTI,to=c(0,1))) %>% 
+  mutate(rescale_betaNTI = ifelse(rescale_betaNTI<0.8,0,rescale_betaNTI)) # rescale the values
+
+# igraph
+data_for_graph <- betaNTI_final_mandena %>% select(-mean_betaNTI) %>% filter(rescale_betaNTI > 0)
+modules_graph <- graph_from_data_frame(data_for_graph, directed = FALSE)
+
+# graph color
+library("RColorBrewer")
+colo <- brewer.pal(n = 7, name = "Spectral")
+V(modules_graph)$pie.color=list(colo)
+
+set.seed(123)
+par(mar=c(0,0,0,0))
+l <- layout_with_fr(modules_graph)
+l <- norm_coords(l, ymin=-1, ymax=1, xmin=-1, xmax=1)
+plot(modules_graph,
+     rescale = FALSE,
+     layout=l*1.1,
+     vertex.shape="pie", 
+     #vertex.pie=module_pie_list,
+     vertex.size=modules_size$n *10, 
+     edge.curved=.1,
+     vertex.label=NA,
+     margin=c(0,0,0,0))
+
+```
+
