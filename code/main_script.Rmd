@@ -39,7 +39,6 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 ```{r, microbiome data}
 # reading the microbiome data
 # working only with Rattus from the three villages
-# removing the 'village' grid from the analysis
 
 data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
   filter(host_species == "Rattus rattus")
@@ -89,6 +88,7 @@ for (v in village_names) {
   # finding modules
   modules_observed <- fun_modularity_analysis(data_asv_village)
   modules_table_three_villages <- rbind(modules_table_three_villages, modules_observed)
+  #write_csv(modules_table_three_villages, "../results/modules_table_three_villages.csv")
   
   # calculating similarity in modules between grids
   modules_similarity <- fun_modules_similarity(modules_observed)

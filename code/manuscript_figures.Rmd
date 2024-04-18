@@ -1,0 +1,38 @@
+---
+title: "Land use and microbe prevalence jointly determine host-microbe network structure"
+subtitle: "Figures for paper"
+author: "Matan Markfeld"
+date: "Last edit: 2024-04-18"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    collapse: false
+    number_sections: true
+    code_folding: hide
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='40%')
+```
+
+
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(vegan)
+library(igraph)
+library(reshape2)
+
+
+rm(list=ls())
+```
+
+```{r, reading data}
+# reading the microbiome data
+# working only with Rattus from the three villages
+# removing the 'village' grid from the analysis
+
+data_asv <- read_csv("../results/modules_table_three_villages.csv") 
+```
