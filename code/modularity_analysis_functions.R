@@ -76,10 +76,10 @@ fun_nmi_calc <- function(dat, figure) {
     g <- as.data.frame(nmi_shuff) %>% 
       ggplot(aes(nmi_shuff)) + 
       geom_histogram(fill = "black") + 
-      theme_classic() +
+      theme_bw() +
       geom_vline(xintercept = nmi_obs, linetype='dashed', color="red") +
-      theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20)) +
-      labs(x="Normalized Mutual Information (NMI)", y="No. of Shuffled Networks") +
+      theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), panel.grid = element_blank()) +
+      labs(x="Normalized Mutual Information (NMI)", y="Count") +
       annotate(geom = "text", x=c((nmi_obs-0.01)), y=c(110,100), label=c(paste('NMI =',round(nmi_obs,3)), paste('p-value =',p)))
   } else {
     g <- NULL
@@ -152,7 +152,7 @@ p1 <- nmi_summary %>%
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15)) +
   labs(x="Minimum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
-return(list(p1))
+return(nmi_summary)
 }
 
 
@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 20
+  n_shuff <- 10
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
