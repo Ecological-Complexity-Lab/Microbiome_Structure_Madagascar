@@ -69,10 +69,11 @@ betaNTI_final_mandena <- betaNTI_three_villages %>%
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2]) %>% 
   group_by(host_group1, host_group2) %>% 
-  summarise(mean_betaNTI = mean(sqrt(betaNTI))) %>%   
-  mutate(rescale_betaNTI = ifelse(mean_betaNTI>0.5, 0, mean_betaNTI)) %>% 
+  summarise(mean_betaNTI = mean(betaNTI)) %>%   
+  #mutate(rescale_betaNTI = ifelse(mean_betaNTI>0.5, 0, mean_betaNTI)) %>% 
   #filter(rescale_betaNTI != 0) %>% 
-  mutate(rescale_betaNTI = (1-scales::rescale(mean_betaNTI,to=c(0,1)))*10)  
+  mutate(rescale_betaNTI = 10-(scales::rescale(mean_betaNTI,to=c(0,1)))*10)  %>% 
+  mutate(rescale_betaNTI = ifelse(rescale_betaNTI<9, NA, rescale_betaNTI)) 
    # rescale the values
 
 # igraph
@@ -80,8 +81,6 @@ data_for_graph <- betaNTI_final_mandena %>% select(-mean_betaNTI)
 modules_graph <- graph_from_data_frame(data_for_graph, directed = FALSE)
 
 # graph color
-library("RColorBrewer")
-colo <- brewer.pal(n = 7, name = "Spectral")
 colo <- c("#f9c74f","#f94144", "#4d908e", "#277da1", "#90be6d", "#00916e", "#766153")
 V(modules_graph)$pie.color=list(colo)
 
@@ -97,6 +96,7 @@ plot(modules_graph,
      vertex.pie=module_pie_list,
      vertex.size=modules_size$n *10, 
      edge.curved=.1,
+  #edge.color="white",
      vertex.label=NA)
 
 ```

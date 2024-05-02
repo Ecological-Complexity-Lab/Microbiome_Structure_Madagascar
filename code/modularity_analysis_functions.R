@@ -88,7 +88,7 @@ fun_nmi_calc <- function(dat, figure) {
   nmi_summary <- tibble(nmi = nmi_obs,
                         p = p)
   
-  return(list(nmi_summary, g))
+  return(list(nmi_summary, nmi_shuff))
 }
 
 
@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 10
+  n_shuff <- 3
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
