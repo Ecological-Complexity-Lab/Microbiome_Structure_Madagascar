@@ -205,7 +205,7 @@ for (i in 1:3) {
 
 # Phylogenetic analysis
 
-```{r, phylogenetic_analysis}
+```{r, phylogenetic_analysis, fig.width=12}
   
   # same module?
   betaNTI_final <- betaNTI_three_villages %>% 
@@ -219,8 +219,6 @@ for (i in 1:3) {
     summarise(mean_betaNTI = mean(betaNTI)) %>%
     group_by(village, same_module) %>% 
     summarise(betaNTI = mean(mean_betaNTI))
-    print(knitr::kable(betaNTI_summary))
-    cat('\n')
     
   #plotting
   betaNTI_g <- betaNTI_final %>% 
@@ -249,8 +247,7 @@ for (i in 1:3) {
     summarise(mean_raupc = mean(raupc)) %>%
     group_by(village, same_module) %>% 
     summarise(raupc = mean(mean_raupc))
-    print(knitr::kable(raupc_summary))
-    cat('\n')
+    
     
   #plotting
   raupc_g <- raupc_final %>% 
@@ -391,8 +388,6 @@ for (i in 1:3) {
                                  village = village_names[i])
   mantel_result_three_villages <- rbind(mantel_result_three_villages, mantel_result_df)
   
-  cat('r = ', mantel_result$statistic,'\n','\n')
-  cat('p-value = ', 1-mantel_result$signif,'\n','\n')
   
   # transforming to long format
   modules_similarity_m <- modules_similarity
