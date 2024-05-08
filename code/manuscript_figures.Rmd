@@ -59,6 +59,58 @@ modules_pie <- data_modules_mandena %>%
 # converting to list
 module_pie_list <- split(modules_pie, seq(nrow(modules_pie)))
 
+# making the network
+network_data <- as.data.frame(modules_pie) %>% 
+  rownames_to_column("host_group") %>% 
+  gather("grid", "weight", agriculture:village) %>% 
+  filter(weight > 0)
+
+node_type <- data.frame(name = c(colnames(modules_pie), rownames(modules_pie)),
+                        type = c(rep(1,7), rep(0,86)))
+  c(rep(1,7), rep(1,86))
+names(node_type) <- c(colnames(modules_pie), rownames(modules_pie))
+ 
+modules_graph <- graph.data.frame(network_data, vertices = node_type, directed = FALSE)
+
+# graph color
+colo <- c("#f9c74f","#f94144", "#4d908e", "#277da1", "#90be6d", "#00916e", "#766153")
+V(modules_graph)$pie.color=list(colo)
+
+par(mar=c(0,0,0,0))
+plot(modules_graph,
+     layout=layout_as_bipartite,
+     vertex.shape="pie", 
+     vertex.pie=module_pie_list,
+     #vertex.size=modules_size$n *10, 
+     edge.curved=.1,
+  #edge.color="white",
+     vertex.label=NA)
+
+```
+
+
+```{r}
+data_modules_mandena <- data_modules %>% 
+  filter(village=="Mandena")
+
+# modules size
+modules_size <- data_modules_mandena %>% 
+  group_by(host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  mutate(n = sqrt(n))
+
+# preparing the pie charts data
+# a list of host abundance in the 7 grids for every module
+
+modules_pie <- data_modules_mandena %>% 
+  group_by(host_group, grid) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  spread(grid, n, fill = 0) %>% 
+  column_to_rownames("host_group") %>% 
+  as.matrix()
+# converting to list
+module_pie_list <- split(modules_pie, seq(nrow(modules_pie)))
+
 # building the network
 # calculating the edges by betaNTI
 # edge between modules = mean betaNTI values between all the individuals in the two modules
