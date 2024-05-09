@@ -28,7 +28,7 @@ asv_degree <- data_asv_filtered %>%
   group_by(asv_ID) %>% 
   summarise(n = n_distinct(host_ID)) 
 data_asv_filtered %<>% left_join(asv_degree, by="asv_ID") %>% 
-  filter(n>1) %>% 
+  #filter(n>1) %>% 
   select(-n)
 
 #####################################################
@@ -153,5 +153,5 @@ final_table <- data_asv_filtered %>%
 
 
 # saving the final table as .csv
-write_csv(final_table, "data/data_processed/microbiome/ML_rattus_mandena.csv")
+write_csv(final_table, "ML_rattus_mandena_include_degree1.csv")
 

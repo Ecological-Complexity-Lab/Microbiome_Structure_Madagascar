@@ -429,8 +429,8 @@ library(caret)
 library(yardstick)
 
 # reading the ML results files
-test_set <- read_csv("../data/data_processed/ML/test_set.csv")
-feature_importance <- read_csv("../data/data_processed/ML/feature_importance.csv")
+test_set <- read_csv("link_prediction/test_set.csv")
+feature_importance <- read_csv("link_prediction/feature_importance.csv")
 
 # setting a threshold for prediction
 th <- 0.5
@@ -490,6 +490,7 @@ feature_imp_g <- feature_importance %>%
     ggplot(aes(x=feature, y=value)) +
     geom_bar(stat = "identity") +
   coord_flip()+
+  scale_y_continuous(limits = c(0, 1)) +
     theme_bw() +
     theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), 
           panel.grid.major = element_blank(),
