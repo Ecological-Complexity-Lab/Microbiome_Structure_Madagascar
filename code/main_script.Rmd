@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-04-16"
+date: "Last edit: 2024-05-09"
 output: 
   html_document:
     toc: true
@@ -13,7 +13,7 @@ output:
     highlight: tango
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='40%')
+knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='60%')
 ```
 
 
