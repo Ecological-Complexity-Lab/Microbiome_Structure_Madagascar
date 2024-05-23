@@ -58,4 +58,39 @@ data_asv_long_format <- dat_filtered_threshold %>%
   gather("asv_ID", "reads", starts_with("ASV")) %>% 
   filter(reads>0)
 
-write_csv(data_asv_long_format, "data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
+#write_csv(data_asv_long_format, "data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
+
+
+#####
+# adding taxonomy
+tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
+
+# setting the not allowed taxonomy:
+# not bacteria, chloroplast or mitochondria
+tax_exclude <- tax %>% 
+  filter(Kingdom != "Bacteria" | Order == "Chloroplast" | Family == "Mitochondria" | is.na(Kingdom))
+
+# finding phylogenetic distance
+# reading the phylogenetic tree
+best_tree <- readRDS(file = "results/phylo_tree_0.01_2.rds")
+phylo_tree <- best_tree$tree
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
+
+# mean distance for each ASV
+mean_phylo_dist <- rowMeans(asv_distance)
+hist(mean_phylo_dist)
+a <- names(mean_phylo_dist[mean_phylo_dist>3])
+b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
+# Not many ASVs seem very different from all the rest (dist>4). Only ASV_4819 is not in one of the categories of the not allowed taxonomy. 
+# So I remove it from the analysis. 
+
+data_asv_long_format <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv")
+
+data_asv_long_format_clean <- data_asv_long_format %>% 
+  filter(!(asv_ID %in% tax_exclude$asv_ID)) %>% 
+  filter(asv_ID != "ASV_4819")
+
+
+write_csv(data_asv_long_format_clean, "data/data_processed/microbiome/data_asv_rra0.01_th1000_clean.csv")

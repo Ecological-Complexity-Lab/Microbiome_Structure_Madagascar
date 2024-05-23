@@ -95,8 +95,8 @@ print(g)
 
 ```{r, microbiome exploration}
 # microbes taxonomy
-tax <- read_delim("../data/data_raw/data_microbiome/ASVs_all_merged_taxonomy.tsv") %>% 
-  rename(asv_ID = ASV)
+tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
 
 data_asv_tax <- data_asv %>% 
   left_join(tax, by="asv_ID")
@@ -143,7 +143,8 @@ print(g)
 ```
 
 ```{r}
-tax_cyn=tax %>% filter(Phylum == "Cyanobacteria")
+tax_cyn=tax %>% filter(Order == "Chloroplast" | Kingdom != "Bacteria")
+tax_cyn2=tax %>% filter(is.na(Phylum))
 data_asv_tax2 <- data_asv_tax %>% 
   filter(!(asv_ID %in% tax_cyn$asv_ID))
 #data_asv <- data_asv_tax2[1:8]
