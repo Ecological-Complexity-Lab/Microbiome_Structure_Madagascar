@@ -35,6 +35,43 @@ data_asv_f <- data_asv %>%
 
 dat <- left_join(data_sm, data_asv_f, by="host_ID") 
 
+########################################
+# start the filtering
+
+##### filter 1
+# filtering non-rattus host species
+dat1 <- dat %>% 
+  filter(host_species == "Rattus rattus") %>% 
+  select_if(~ any(. != 0))  # removing all ASVs not belonging to rattus (0 in all samples)
+# here I filtered 12357 ASVs
+
+##### filter 2
+# removing ASVs with very low total reads across the whole dataset
+asv_total_reads_th <- 100
+asv_total_reads <- colSums(dat1 %>% select(starts_with("ASV")))
+asv_total_reads_low <- asv_total_reads[asv_total_reads<asv_total_reads_th]
+# here (th=100) I filtered 5098 ASVs
+
+dat2 <- dat1 %>% 
+  select(!names(asv_total_reads_low))
+
+##### filter 3
+# removing singletons and doubletones ASVs
+
+# counting ASVs occurrences
+asv_occur_th <- 2
+asv_occur <- dat2 %>% 
+  summarise(across(everything(), ~ sum(. != 0))) %>% 
+  as.matrix()
+asv_occur <- asv_occur[-(1:6)]
+hist(asv_occur, 800)
+asv_occur_low <- asv_occur[asv_occur <= asv_occur_th]
+
+dat3 <- dat2 %>% 
+  select(!names(asv_occur_low))
+
+
+
 ### filtering out ASVs with less than threshold of relative abundance
 rel_reads_threshold <- 0.01
 dat_filtered_rel_abundance <- dat %>%

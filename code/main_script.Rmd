@@ -42,7 +42,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # working only with Rattus from the three villages
 
 data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.01_th1000_clean.csv") %>% 
-  filter(host_species == "Rattus rattus" & grid!="village")
+  filter(host_species == "Rattus rattus")
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
