@@ -63,7 +63,7 @@ data_asv_long_format <- dat_filtered_threshold %>%
 
 #####
 # adding taxonomy
-tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+tax <- read_delim("data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
   dplyr::rename(asv_ID = ASV)
 
 # setting the not allowed taxonomy:
