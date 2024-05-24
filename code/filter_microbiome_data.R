@@ -3,6 +3,9 @@
 library(tidyverse)
 library(dplyr)
 
+rm(list=ls())
+
+
 # reading small mammals data
 data_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
 
@@ -26,7 +29,7 @@ data_sm <- semi_join(data_mammals, data_asv, by="host_ID") %>%
 attr_SM <- data_sm %>% 
   left_join(data_mammals %>% select(host_ID,latitude,longitude,elevation.obs,sex,mass,age_repro,age_dental), by="host_ID")
 # writing to a csv file
-write_csv(attr_SM, "data/data_processed/small_mammals/small_mammals_attributes.csv")
+#write_csv(attr_SM, "data/data_processed/small_mammals/small_mammals_attributes.csv")
 
 
 # combining asv data and SM data
@@ -56,19 +59,91 @@ dat2 <- dat1 %>%
   select(!names(asv_total_reads_low))
 
 ##### filter 3
-# removing singletons and doubletones ASVs
+# removing ASVs based on taxonomy
 
-# counting ASVs occurrences
-asv_occur_th <- 2
-asv_occur <- dat2 %>% 
-  summarise(across(everything(), ~ sum(. != 0))) %>% 
-  as.matrix()
-asv_occur <- asv_occur[-(1:6)]
-hist(asv_occur, 800)
-asv_occur_low <- asv_occur[asv_occur <= asv_occur_th]
+# adding taxonomy
+tax <- read_delim("data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
+
+# setting the not allowed taxonomy:
+# not bacteria, chloroplast or mitochondria
+tax_exclude <- tax %>% 
+  filter(asv_ID %in% colnames(dat2)) %>% 
+  filter(Kingdom != "Bacteria" | Order == "Chloroplast" | Family == "Mitochondria" | is.na(Kingdom))
+# here I filtered 19 ASVs
 
 dat3 <- dat2 %>% 
-  select(!names(asv_occur_low))
+  select(-all_of(tax_exclude$asv_ID))
+
+
+##### filter 4
+# removing singletons and doubletones ASVs
+
+# transforming to long format
+dat3_long <- dat3 %>% 
+  gather("asv_ID", "reads", starts_with("ASV")) %>% 
+  filter(reads>0)
+
+# number of hosts in each village
+n_host_village <- dat3_long %>% 
+  group_by(village) %>% summarise(n_host = n_distinct(host_ID))
+
+# ASVs occurrence by village
+asv_occur_village <- dat3_long %>% 
+  count(village, asv_ID) %>% 
+  left_join(n_host_village, by="village") %>% 
+  mutate(host_p = n/n_host)
+
+# plotting
+asv_occur_village %>% 
+  ggplot(aes(x=n)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~village)+
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+  labs(x="No. of occurrences", y="Count")
+
+# finding the best filter
+asv_unique <- NULL
+for (i in seq(0,1, by=0.01)) {
+  asv_unique_i <- asv_occur_village %>% 
+    filter(host_p>i) %>% 
+    group_by(village) %>% 
+    summarise(asv_n = n_distinct(asv_ID)) %>% 
+    mutate(i=i)
+  
+  asv_unique <- rbind(asv_unique, asv_unique_i)
+}
+
+asv_unique %>% 
+  ggplot(aes(x=i, y=asv_n)) + 
+  geom_line() +
+  geom_point() +
+  facet_wrap(~village) +
+  #scale_y_continuous(limits = c(0, 0.35)) +
+  #scale_x_continuous(limits = c(0, 20)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
+  labs(x="ASV Prevalence", y="No. of ASVs")
+
+# filtering the ASVs
+asv_occur_th <- 0.05
+
+dat4 <- asv_occur_village %>% 
+  filter(host_p > asv_occur_th) %>% 
+  select(village, asv_ID) %>% 
+  left_join(dat3_long, by=c("village","asv_ID"))
+
+# how many ASVs?
+length(unique(dat4$asv_ID))
+dat4 %>% group_by(village) %>% summarise(n_distinct(asv_ID))
+
+
+
+##### filter 5
+# removing samples with low total reads
+
+
 
 
 
