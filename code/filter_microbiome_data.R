@@ -163,6 +163,11 @@ dat4 <- asv_occur_village %>%
   select(village, asv_ID) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
+# calculating the new final total reads per sample
+host_total_reads <- dat4 %>% 
+  group_by(host_ID) %>% 
+  summarise(total_reads = sum(reads))
+
 dat4 %<>% left_join(host_total_reads, by="host_ID") %>% 
   select(-unfiltered_reads) %>% 
   mutate(reads_p = reads/total_reads)
@@ -175,29 +180,52 @@ dat4 %>% group_by(village) %>% summarise(n_distinct(asv_ID))
 host_richness <- dat4 %>% group_by(host_ID) %>% summarise(n=n_distinct(asv_ID))
 hist(host_richness$n)
 
-# calculating the new final total reads per sample
-host_total_reads <- dat4 %>% 
-  group_by(host_ID) %>% 
-  summarise(total_reads = sum(reads))
 
 
 ##### filter 5
 # removing samples with low total reads
 
+dat4 %>% 
+  distinct(host_ID, total_reads) %>% 
+ggplot(aes(x=total_reads)) +
+  geom_histogram(binwidth = 1000) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+  labs(x="Total Reaads", y="Count")
+
+# accumulation curve
 # transforming to matrix
 dat4_mat <- dat4 %>% 
-  filter(village=="Mandena") %>% 
+  filter(total_reads < 10000) %>% 
   select(host_ID, asv_ID, reads) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
   column_to_rownames("host_ID") %>% 
-  select_if(~ any(. != 0)) %>%
-  as.matrix() %>% 
-  t()
+  select_if(~ any(. != 0)) %>% 
+  as.matrix()
+
+ dat4_list <- split(dat4_mat, seq(nrow(dat4_mat)))
 
 #calculating accumulation curve
-accum_curve2 <- iNEXT(dat4_mat)
+accum_curve2 <- iNEXT(dat4_list)
+accum_curve <- iNEXT(dat4_list) #long
 plot(accum_curve2)
 
+# removing samples with less than 5000 total reads
+total_reads_th <- 5000
+dat5 <- dat4 %>% 
+  filter(total_reads > total_reads_th) %>% 
+  mutate(reads = reads_p) %>% 
+  select(-reads_p)
+
+# how many hosts we lose?
+length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
+
+# saving the data
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p0.02_th5000.csv")
+
+
+
+######################################## old
 ### filtering out ASVs with less than threshold of relative abundance
 rel_reads_threshold <- 0.01
 dat_filtered_rel_abundance <- dat %>%
