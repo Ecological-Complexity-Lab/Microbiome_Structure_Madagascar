@@ -102,10 +102,14 @@ data_asv_tax <- data_asv %>%
   left_join(tax, by="asv_ID")
 
 cat("## Relative abundance", '\n','\n')
+total_reads_village_grid <- data_asv_tax %>% group_by(village, grid) %>% summarise(n_total = sum(total_reads))
 g <- data_asv_tax %>% 
+  mutate(reads_a = reads*total_reads) %>% 
   group_by(village, grid, Phylum) %>% 
-  summarise(n= mean(reads)) %>% 
-  ggplot(aes(fill=Phylum, x=grid, y=n)) +
+  summarise(n= sum(reads_a)) %>% 
+  left_join(total_reads_village_grid, by=c("village","grid")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=Phylum, x=grid, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~village) +
   theme_bw() +
@@ -113,10 +117,10 @@ g <- data_asv_tax %>%
   labs(x="Land Use", y="Relative abundance")
 print(g)
 
-cat("## Rare", '\n','\n')
+cat("## No. of species", '\n','\n')
 g <- data_asv_tax %>% 
   count(village, grid, asv_ID, Phylum) %>%
-  filter(n < 2) %>% 
+  #filter(n < 2) %>% 
   group_by(village, grid, Phylum) %>% 
   summarise(n_asv= n_distinct(asv_ID)) %>% 
   ggplot(aes(fill=Phylum, x=grid, y=n_asv)) +
