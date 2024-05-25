@@ -72,7 +72,7 @@ dat2 <- dat1 %>%
 
 ##### filter 3
 # removing ASVs with very low relative read abundance in each sample
-asv_rel_reads_th <- 0.001
+asv_rel_reads_th <- 0.005
 dat3 <- dat2 %>%
   mutate(across(starts_with("ASV"),~ ./unfiltered_reads)) %>% 
   mutate(across(starts_with("ASV"), ~ifelse(.<asv_rel_reads_th,0,.))) %>% 
@@ -142,10 +142,10 @@ asv_unique %>%
   labs(x="ASV Prevalence", y="No. of ASVs")
 
 # filtering the ASVs
-asv_occur_th <- 0.02
+asv_occur_th <- 0.01
 
 dat4 <- asv_occur_village %>% 
-  filter(host_p > asv_occur_th) %>% 
+  filter(n > 2) %>% 
   select(village, asv_ID) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
@@ -161,12 +161,13 @@ asv_names <- tibble(asv_ID = unique(dat4$asv_ID))
 asv_names %<>% mutate(ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", asv_ID))) %>% arrange(ID)
 seq_fa2 <- seq_fa[names(seq_fa) %in% asv_names$asv_ID]
 names(seq_fa2) <- asv_names$asv_ID
-#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_filtered_new.fa") # writing the filtered fasta file
+#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_filtered_new2.fa") # writing the filtered fasta file
 
 # aligning the sequences
-seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_new.fa")
+seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_new2.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
+# calculating distance
 asv_distance <- as.matrix(ape::dist.dna(seq_aligned2, model = "TN93"))
 
 
@@ -176,10 +177,9 @@ hist(mean_phylo_dist)
 quantile(mean_phylo_dist,0.99)
 a <- names(mean_phylo_dist[mean_phylo_dist>0.35])
 b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
-# Not many ASVs seem very different from all the rest (dist>4). Only ASV_4819 is not in one of the categories of the not allowed taxonomy. 
-# So I remove it from the analysis. 
+# the most far 1% seem fine according to the taxonomy. 
 
-dat3 %<>% select(-ASV_4819)
+dat4 %<>% select(-ASV_4819)
 
 
 ###
@@ -240,7 +240,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p0.02_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.005_p2_th5000.csv")
 
 
 

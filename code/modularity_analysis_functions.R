@@ -31,7 +31,7 @@ fun_modularity_analysis <- function(dat) {
     as.matrix()
   
   # building the network
-  network_object <- infomapecology::create_monolayer_object(data_asv_mat, directed = FALSE, bipartite = TRUE, group_names = c("ASV", "Host"))
+  network_object <- create_monolayer_network(data_asv_mat, directed = FALSE, bipartite = TRUE, group_names = c("ASV", "Host"))
   
   # modularity analysis
   infomap_object <- run_infomap_monolayer(network_object,
@@ -309,7 +309,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   diag(betaNTI_mat2) <- NA
   betaNTI <- melt(betaNTI_mat2) %>% 
     filter(!(is.na(value))) %>% 
-    rename(host1 = Var1, host2 = Var2, betaNTI = value)
+    dplyr::rename(host1 = Var1, host2 = Var2, betaNTI = value)
   
   return(betaNTI)
 }
