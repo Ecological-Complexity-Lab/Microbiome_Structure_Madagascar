@@ -51,14 +51,32 @@ dat1 <- dat %>%
 # here I filtered 12357 ASVs
 
 ##### filter 2
+# removing ASVs based on taxonomy
+
+# adding taxonomy
+tax <- read_delim("data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
+
+# setting the not allowed taxonomy:
+# not bacteria, chloroplast or mitochondria
+tax_exclude <- tax %>% 
+  filter(asv_ID %in% colnames(dat1)) %>% 
+  filter(Kingdom != "Bacteria" | Order == "Chloroplast" | Family == "Mitochondria" | is.na(Kingdom))
+# here I filtered 68 ASVs
+
+dat2 <- dat1 %>% 
+  select(-all_of(tax_exclude$asv_ID))
+
+
+##### filter 3
 # removing ASVs with very low relative read abundance in each sample
 asv_rel_reads_th <- 0.001
-dat2 <- dat1 %>%
+dat3 <- dat2 %>%
   mutate(across(starts_with("ASV"),~ ./unfiltered_reads)) %>% 
   mutate(across(starts_with("ASV"), ~ifelse(.<asv_rel_reads_th,0,.))) %>% 
   mutate(across(starts_with("ASV"),~ .*unfiltered_reads)) %>%
   select_if(~ any(. != 0))
-# here (th=100) I filtered 8546 ASVs
+# here I filtered 8546 ASVs
 
 
 # asv_total_reads_th <- 0.01
@@ -69,40 +87,6 @@ dat2 <- dat1 %>%
 # dat2 <- dat1 %>% 
 #   select(!names(asv_total_reads_low))
 
-##### filter 3
-# removing ASVs based on taxonomy
-
-# adding taxonomy
-tax <- read_delim("data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
-  dplyr::rename(asv_ID = ASV)
-
-# setting the not allowed taxonomy:
-# not bacteria, chloroplast or mitochondria
-tax_exclude <- tax %>% 
-  filter(asv_ID %in% colnames(dat2)) %>% 
-  filter(Kingdom != "Bacteria" | Order == "Chloroplast" | Family == "Mitochondria" | is.na(Kingdom))
-# here I filtered 8 ASVs
-
-dat3 <- dat2 %>% 
-  select(-all_of(tax_exclude$asv_ID))
-
-# removing very phylogeneticly different ASVs 
-# finding phylogenetic distance
-# reading the phylogenetic tree
-best_tree <- readRDS(file = "results/phylo_tree_0.01_2.rds")
-phylo_tree <- best_tree$tree
-# ASVs phylogenetic distance
-asv_distance <- ape::cophenetic.phylo(phylo_tree)
-
-# mean distance for each ASV
-mean_phylo_dist <- rowMeans(asv_distance)
-hist(mean_phylo_dist)
-a <- names(mean_phylo_dist[mean_phylo_dist>3])
-b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
-# Not many ASVs seem very different from all the rest (dist>4). Only ASV_4819 is not in one of the categories of the not allowed taxonomy. 
-# So I remove it from the analysis. 
-
-dat3 %<>% select(-ASV_4819)
 
 
 ##### filter 4
@@ -163,6 +147,44 @@ dat4 <- asv_occur_village %>%
   select(village, asv_ID) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
+
+
+##### filter 5
+# removing very phylogeneticly different ASVs
+
+# finding phylogenetic distance
+# reading the full dna sequences (fasta file)
+seq_fa <- read.FASTA(file="data/data_raw/data_microbiome/ASV_merged_full.fa")
+asv_names <- tibble(asv_ID = unique(dat4$asv_ID))
+asv_names %<>% mutate(ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", asv_ID))) %>% arrange(ID)
+seq_fa2 <- seq_fa[names(seq_fa) %in% asv_names$asv_ID]
+names(seq_fa2) <- asv_names$asv_ID
+#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_filtered_new.fa") # writing the filtered fasta file
+
+# aligning the sequences
+seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_new.fa")
+aligned <- DECIPHER::AlignSeqs(seq_aligned)
+seq_aligned2 <- as.DNAbin(aligned)
+asv_distance <- ape::dist.dna(seq_fa2)
+
+# reading the phylogenetic tree
+best_tree <- readRDS(file = "results/phylo_tree_0.01_2.rds")
+phylo_tree <- best_tree$tree
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
+
+# mean distance for each ASV
+mean_phylo_dist <- rowMeans(asv_distance)
+hist(mean_phylo_dist)
+a <- names(mean_phylo_dist[mean_phylo_dist>3])
+b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
+# Not many ASVs seem very different from all the rest (dist>4). Only ASV_4819 is not in one of the categories of the not allowed taxonomy. 
+# So I remove it from the analysis. 
+
+dat3 %<>% select(-ASV_4819)
+
+
+###
 # calculating the new final total reads per sample
 host_total_reads <- dat4 %>% 
   group_by(host_ID) %>% 
@@ -181,8 +203,7 @@ host_richness <- dat4 %>% group_by(host_ID) %>% summarise(n=n_distinct(asv_ID))
 hist(host_richness$n)
 
 
-
-##### filter 5
+##### filter 6
 # removing samples with low total reads
 
 dat4 %>% 

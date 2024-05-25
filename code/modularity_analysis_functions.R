@@ -25,7 +25,7 @@ fun_modularity_analysis <- function(dat) {
   
   # transforming to matrix
   data_asv_mat <- dat %>% select(-village,-host_species,-grid,-season,-asv_degree,-total_reads) %>% 
-    mutate(reads = 1) %>% 
+    #mutate(reads = 1) %>% 
     spread(asv_ID, reads, fill = 0) %>% 
     column_to_rownames("host_ID") %>% 
     as.matrix()
@@ -116,30 +116,30 @@ for (i in core_seq) {
 }
 
 #####
-# running for non-core microbiome
-nmi_summary_noncore <- NULL
-for (j in core_seq) {
-  
-  # filtering out ASVs with lower degree than the threshold
-  data_asv_filtered_noncore <- dat %>% filter(asv_degree <= j)
-  
-  # modularity
-  modules <- fun_modularity_analysis(data_asv_filtered_noncore)
-  
-  # NMI
-  nmi_mid <- fun_nmi_calc(modules, FALSE)
-  nmi_mid <- nmi_mid[[1]] %>% 
-    mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(modules$host_group)))
-  
-  nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
-}
+# # running for non-core microbiome
+# nmi_summary_noncore <- NULL
+# for (j in core_seq) {
+#   
+#   # filtering out ASVs with lower degree than the threshold
+#   data_asv_filtered_noncore <- dat %>% filter(asv_degree <= j)
+#   
+#   # modularity
+#   modules <- fun_modularity_analysis(data_asv_filtered_noncore)
+#   
+#   # NMI
+#   nmi_mid <- fun_nmi_calc(modules, FALSE)
+#   nmi_mid <- nmi_mid[[1]] %>% 
+#     mutate(degree = j, type = "non-core", sig = ifelse(p <= 0.05, 1, 0), n_module = length(unique(modules$host_group)))
+#   
+#   nmi_summary_noncore <- rbind(nmi_summary_noncore, nmi_mid)
+# }
 
 #####
-# plotting the results
-nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
 
-p1 <- nmi_summary %>% 
-  filter(type == "core") %>% 
+#nmi_summary <- rbind(nmi_summary_core, nmi_summary_noncore)
+
+p1 <- nmi_summary_core %>% 
+  #filter(type == "core") %>% 
   mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
   ggplot(aes(x=degree, y=nmi)) + 
   geom_hline(yintercept = nmi_observed[[1]]$nmi, linetype = "dashed") +
@@ -152,7 +152,7 @@ p1 <- nmi_summary %>%
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15)) +
   labs(x="Minimum ASVs Degree", y="Normalized Mutual Information (NMI)")
 
-return(nmi_summary)
+return(nmi_summary_core)
 }
 
 

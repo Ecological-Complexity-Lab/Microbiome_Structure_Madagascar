@@ -153,7 +153,7 @@ print(g)
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(1,1, by=1)
+core_seq <- seq(1,100, by=5)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
