@@ -72,7 +72,7 @@ dat2 <- dat1 %>%
 
 ##### filter 3
 # removing ASVs with very low relative read abundance in each sample
-asv_rel_reads_th <- 0.005
+asv_rel_reads_th <- 0.001
 dat3 <- dat2 %>%
   mutate(across(starts_with("ASV"),~ ./unfiltered_reads)) %>% 
   mutate(across(starts_with("ASV"), ~ifelse(.<asv_rel_reads_th,0,.))) %>% 
@@ -240,7 +240,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.01_p2_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p2_th5000.csv")
 
 
 
