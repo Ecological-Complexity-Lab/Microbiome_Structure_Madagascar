@@ -142,7 +142,7 @@ asv_unique %>%
   labs(x="ASV Prevalence", y="No. of ASVs")
 
 # filtering the ASVs
-asv_occur_th <- 0.01
+asv_occur_th <- 0.05
 
 dat4 <- asv_occur_village %>% 
   filter(n > 2) %>% 
@@ -240,7 +240,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.005_p2_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.01_p2_th5000.csv")
 
 
 
