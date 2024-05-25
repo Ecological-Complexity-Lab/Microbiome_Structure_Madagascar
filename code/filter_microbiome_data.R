@@ -4,6 +4,8 @@ library(tidyverse)
 library(dplyr)
 library(magrittr)
 library(iNEXT)
+library(Biostrings)
+library(DECIPHER)
 
 rm(list=ls())
 
@@ -165,18 +167,14 @@ names(seq_fa2) <- asv_names$asv_ID
 seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_new.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
-asv_distance <- ape::dist.dna(seq_fa2)
+asv_distance <- as.matrix(ape::dist.dna(seq_aligned2, model = "TN93"))
 
-# reading the phylogenetic tree
-best_tree <- readRDS(file = "results/phylo_tree_0.01_2.rds")
-phylo_tree <- best_tree$tree
-# ASVs phylogenetic distance
-asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
 # mean distance for each ASV
 mean_phylo_dist <- rowMeans(asv_distance)
 hist(mean_phylo_dist)
-a <- names(mean_phylo_dist[mean_phylo_dist>3])
+quantile(mean_phylo_dist,0.99)
+a <- names(mean_phylo_dist[mean_phylo_dist>0.35])
 b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
 # Not many ASVs seem very different from all the rest (dist>4). Only ASV_4819 is not in one of the categories of the not allowed taxonomy. 
 # So I remove it from the analysis. 
