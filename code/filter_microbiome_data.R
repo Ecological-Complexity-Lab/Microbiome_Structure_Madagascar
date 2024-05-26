@@ -72,7 +72,7 @@ dat2 <- dat1 %>%
 
 ##### filter 3
 # removing ASVs with very low relative read abundance in each sample
-asv_rel_reads_th <- 0.001
+asv_rel_reads_th <- 0.005
 dat3 <- dat2 %>%
   mutate(across(starts_with("ASV"),~ ./unfiltered_reads)) %>% 
   mutate(across(starts_with("ASV"), ~ifelse(.<asv_rel_reads_th,0,.))) %>% 

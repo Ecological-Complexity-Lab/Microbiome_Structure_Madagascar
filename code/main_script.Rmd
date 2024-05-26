@@ -41,7 +41,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.02_th5000.csv") %>% filter(reads>0.1)
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.005_p2_th5000.csv") %>% filter(grid!="semi-intact_forest")
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
@@ -152,7 +152,7 @@ print(g)
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(1,1, by=5)
+core_seq <- seq(1,21, by=5)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
