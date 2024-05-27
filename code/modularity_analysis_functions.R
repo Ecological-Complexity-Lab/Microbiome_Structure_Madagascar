@@ -62,7 +62,7 @@ fun_nmi_calc <- function(dat, figure) {
   for(i in 1:1000) {
     # shuffling the grid attribute
     hosts_shuff <- hosts %>% 
-      mutate(grid = sample(grid,nrow(hosts)))
+      mutate(host_group = sample(host_group,nrow(hosts)))
     
     # calculating nmi
     nmi_shuff[i] <- aricode::NMI(hosts_shuff$grid, hosts_shuff$host_group, "sum")
@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 10
+  n_shuff <- 1
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
