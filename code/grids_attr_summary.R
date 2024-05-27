@@ -226,7 +226,7 @@ habitat.raw <- read_csv("data/data_raw/data_small_mammals/Trap_Plots.csv")
 plots_location <- read_csv("data/data_raw/data_small_mammals/plots_location.csv")
 small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
 
-village_names <- unique(plots_location$village)
+village_names <- sort(unique(plots_location$village))
 village_summary <- NULL
 grid_distance_three_villages <- NULL
 
