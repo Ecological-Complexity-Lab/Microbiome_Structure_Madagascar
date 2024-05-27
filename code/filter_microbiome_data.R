@@ -145,7 +145,7 @@ asv_unique %>%
 asv_occur_th <- 0.05
 
 dat4 <- asv_occur_village %>% 
-  filter(n > 2) %>% 
+  filter(n > 1) %>% 
   select(village, asv_ID) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
@@ -240,7 +240,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p2_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.005_p1_th5000.csv")
 
 
 
