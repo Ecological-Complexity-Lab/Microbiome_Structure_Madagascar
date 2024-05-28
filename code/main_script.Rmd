@@ -41,7 +41,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.1-0.3_th1000.csv")
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.2_th1000.csv")
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
