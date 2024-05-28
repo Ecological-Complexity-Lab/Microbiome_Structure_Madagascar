@@ -72,7 +72,7 @@ dat2 <- dat1 %>%
 
 ##### filter 3
 # removing ASVs with very low relative read abundance in each sample
-asv_rel_reads_th <- 0.005
+asv_rel_reads_th <- 0.001
 dat3 <- dat2 %>%
   mutate(across(starts_with("ASV"),~ ./unfiltered_reads)) %>% 
   mutate(across(starts_with("ASV"), ~ifelse(.<asv_rel_reads_th,0,.))) %>% 
@@ -142,10 +142,10 @@ asv_unique %>%
   labs(x="ASV Prevalence", y="No. of ASVs")
 
 # filtering the ASVs
-asv_occur_th <- 0.05
+asv_occur_th <- 0.1
 
 dat4 <- asv_occur_village %>% 
-  filter(n > 1) %>% 
+  filter(host_p > 0.1 & host_p<0.3) %>% 
   select(village, asv_ID) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
@@ -161,7 +161,7 @@ asv_names <- tibble(asv_ID = unique(dat4$asv_ID))
 asv_names %<>% mutate(ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", asv_ID))) %>% arrange(ID)
 seq_fa2 <- seq_fa[names(seq_fa) %in% asv_names$asv_ID]
 names(seq_fa2) <- asv_names$asv_ID
-#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_filtered_new2.fa") # writing the filtered fasta file
+#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_filtered_new4.fa") # writing the filtered fasta file
 
 # aligning the sequences
 seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_new2.fa")
@@ -230,7 +230,7 @@ accum_curve <- iNEXT(dat4_list) #long
 plot(accum_curve2)
 
 # removing samples with less than 5000 total reads
-total_reads_th <- 5000
+total_reads_th <- 1000
 dat5 <- dat4 %>% 
   filter(total_reads > total_reads_th) %>% 
   mutate(reads = reads_p) %>% 
@@ -240,7 +240,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.005_p1_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p0.1-0.3_th1000.csv")
 
 
 

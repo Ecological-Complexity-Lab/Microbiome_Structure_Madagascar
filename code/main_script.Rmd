@@ -41,7 +41,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.005_p1_th5000.csv") %>% filter(reads>0.01)
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.1-0.3_th1000.csv")
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
@@ -167,7 +167,7 @@ betaNTI_three_villages <- NULL
 raupc_three_villages <- NULL
 
 # reading the phylogenetic tree
-seq_aligned <- readDNAStringSet("../data/data_raw/data_microbiome/ASV_filtered_new2.fa")
+seq_aligned <- readDNAStringSet("../data/data_raw/data_microbiome/ASV_filtered_new4.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
 # calculating distance
