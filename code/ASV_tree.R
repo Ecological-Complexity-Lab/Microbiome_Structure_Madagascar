@@ -34,7 +34,7 @@ nrow(asv_names)
 
 # align the sequences
 # method 1
-seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_merged_full_0.01.fa")
+seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_rra0.001_p0.01.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
 # method 2
@@ -58,7 +58,7 @@ mt2 <- modelTest(dnaphydatAll,
 best_tree <- pml_bb(mt2) 
 
 # save the optimized tree. this is a pml object. to get the tree call: fit$tree
-#saveRDS(best_tree, file = "results/phylo_tree_0.01_2.rds")
+saveRDS(best_tree, file = "results/phylo_tree_rra0.001_p0.01.rds")
 #best_tree <- readRDS(file = "output/phylogenetic_tree/phylo_tree_0.01.rds")
 
 # plot the tree

@@ -102,7 +102,7 @@ nmi_summary_core <- NULL
 for (i in core_seq) {
   
   # filtering out ASVs with lower degree than the threshold
-  data_asv_filtered_core <- dat %>% filter(asv_degree >= i)
+  data_asv_filtered_core <- dat %>% filter(host_p >= i)
   
   # modularity
   modules <- fun_modularity_analysis(data_asv_filtered_core)
@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 10
+  n_shuff <- 5
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
