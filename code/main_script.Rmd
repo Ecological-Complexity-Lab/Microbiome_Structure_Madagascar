@@ -41,7 +41,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% 
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(host_p>0.1)
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
@@ -366,6 +366,33 @@ for (i in 1:3) {
 p <- betaNTI_g + raupc_g
 print(p)
 cat('\n','\n')
+```
+
+```{r}
+# combining final results
+assembly_final <- betaNTI_final %>% 
+  left_join(raupc_final %>% select(host1,host2,raupc), by=c("host1","host2"))
+
+# calculating the process
+assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
+                                               betaNTI<(-2) ~ "Homogeneous Selection",
+                                               (betaNTI<2 & betaNTI>(-2) & raupc>0.95) ~ "Dispersal Limitation",
+                                               (betaNTI<2 & betaNTI>(-2) & raupc<(-0.95)) ~ "Dispersal Limitation",
+                                               .default = "Drift"))
+
+# summary
+assembly_summary <- assembly_final %>% 
+  count(village, same_module, process)
+
+#plotting
+g <- assembly_summary %>% 
+  ggplot(aes(fill=process, x=same_module, y=n)) +
+  geom_bar(position="fill", stat="identity") +
+  facet_wrap(~village) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="", y="Proportion")
+print(g)
 ```
 
 
