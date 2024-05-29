@@ -137,7 +137,7 @@ asv_occur_th <- 0.01
 
 dat4 <- asv_occur_village %>% 
   filter(host_p > asv_occur_th) %>% 
-  select(village, asv_ID) %>% 
+  select(village, asv_ID, host_p) %>% 
   left_join(dat3_long, by=c("village","asv_ID"))
 
 
