@@ -115,12 +115,13 @@ tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>%
 cat("## Relative abundance", '\n','\n')
 total_reads_village_grid <- data_asv_tax %>% group_by(village, grid) %>% summarise(n_total = sum(total_reads))
 g <- data_asv_tax %>% 
+  filter(village=="Mandena") %>% 
   mutate(reads_a = reads*total_reads) %>% 
-  group_by(village, grid, Phylum) %>% 
+  group_by(village, grid, Order) %>% 
   summarise(n= sum(reads_a)) %>% 
   left_join(total_reads_village_grid, by=c("village","grid")) %>% 
   mutate(n_p = n/n_total) %>% 
-  ggplot(aes(fill=Phylum, x=grid, y=n_p)) +
+  ggplot(aes(fill=Order, x=grid, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~village) +
   theme_bw() +
