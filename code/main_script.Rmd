@@ -41,7 +41,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv")
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(host_p>0.2)
 
 group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
 ```
@@ -133,7 +133,6 @@ print(g)
 cat("## Common", '\n','\n')
 g <- data_asv_tax %>% 
   count(village, grid, asv_ID, Genus) %>%
-  filter(n > 9) %>% 
   group_by(village, grid, Genus) %>% 
   summarise(n_asv= n_distinct(asv_ID)) %>% 
   ggplot(aes(fill=Genus, x=grid, y=n_asv)) +
@@ -152,7 +151,7 @@ print(g)
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(0.01,0.2, by=0.01)
+core_seq <- seq(0.01,0.01, by=0.01)
 
 village_names <- unique(data_asv$village)
 nmi_observed_three_villages <- NULL
@@ -167,11 +166,10 @@ betaNTI_three_villages <- NULL
 raupc_three_villages <- NULL
 
 # reading the phylogenetic tree
-seq_aligned <- readDNAStringSet("../data/data_raw/data_microbiome/ASV_filtered_rra0.001_p0.01.fa")
-aligned <- DECIPHER::AlignSeqs(seq_aligned)
-seq_aligned2 <- as.DNAbin(aligned)
-# calculating distance
-asv_distance <- as.matrix(ape::dist.dna(seq_aligned2, model = "TN93"))
+best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
+phylo_tree <- best_tree$tree 
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
 # for loop for three villages
 for (v in village_names) {
@@ -374,10 +372,10 @@ assembly_final <- betaNTI_final %>%
   left_join(raupc_final %>% select(host1,host2,raupc), by=c("host1","host2"))
 
 # calculating the process
-assembly_final %<>% mutate(process = case_when(betaNTI>1.96 ~ "Heterogeneous Selection",
-                                               betaNTI<(-1.96) ~ "Homogeneous Selection",
-                                               (betaNTI<1.96 & betaNTI>(-1.96) & raupc>0.95) ~ "Dispersal Limitation",
-                                               (betaNTI<1.96 & betaNTI>(-1.96 ) & raupc<(-0.95)) ~ "Homogenizing Dispersal",
+assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
+                                               betaNTI<(-2) ~ "Homogeneous Selection",
+                                               (betaNTI<=2 & betaNTI>=(-2) & raupc>0.95) ~ "Dispersal Limitation",
+                                               (betaNTI<=2 & betaNTI>=(-2) & raupc<(-0.95)) ~ "Homogenizing Dispersal",
                                                .default = "Drift"))
 
 # summary

@@ -161,12 +161,17 @@ seq_aligned2 <- as.DNAbin(aligned)
 # calculating distance
 asv_distance <- as.matrix(ape::dist.dna(seq_aligned2, model = "TN93"))
 
+# reading the phylogenetic tree
+best_tree <- readRDS(file = "results/phylo_tree_rra0.001_p0.01.rds")
+phylo_tree <- best_tree$tree 
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
 # mean distance for each ASV
 mean_phylo_dist <- rowMeans(asv_distance)
 hist(mean_phylo_dist)
 quantile(mean_phylo_dist,0.99)
-a <- names(mean_phylo_dist[mean_phylo_dist>0.35])
+a <- names(mean_phylo_dist[mean_phylo_dist>3])
 b <- tax %>% filter(!(asv_ID %in% tax_exclude$asv_ID) & asv_ID %in% a)
 # the most far 1% seem fine according to the taxonomy. 
 
