@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 10
+  n_shuff <- 2
   
   # calculating observed MNTD
   mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
@@ -288,7 +288,8 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   # loop for shuffling
   for (i in 1:n_shuff) {
     # randomly sampling ASVs from the ASV pool
-    shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, prob = asv_pool$p, replace = FALSE)
+    shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, replace = FALSE)
+    #prob = asv_pool$p,
     # changing the cols names
     dat_mat_shuff <- dat_mat
     colnames(dat_mat_shuff) <- shuff_asv_names

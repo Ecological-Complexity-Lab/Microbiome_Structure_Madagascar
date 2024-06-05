@@ -317,38 +317,22 @@ for (i in 1:3) {
   
   # beta-NTI same module?
   betaNTI_final <- betaNTI_three_groups %>% 
-    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
-    mutate(host_group1_org = host_group1) %>% 
-  rowwise() %>%
-  mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
-    
-  betaNTI_summary <- betaNTI_final %>% 
-    group_by(asv_core, same_module, host_group1, host_group2) %>% 
-    summarise(mean_betaNTI = mean(betaNTI)) %>%
-    group_by(asv_core, same_module) %>% 
-    summarise(betaNTI = mean(mean_betaNTI))
+    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) 
     
   
   
   # Raup-Crick same module?
   raupc_final <- raupc_three_groups %>% 
-    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
-    mutate(host_group1_org = host_group1) %>% 
-  rowwise() %>%
-  mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
-  
-  raupc_summary <- raupc_final %>% 
-    group_by(asv_core, same_module, host_group1, host_group2) %>% 
-    summarise(mean_raupc = mean(raupc)) %>%
-    group_by(asv_core, same_module) %>% 
-    summarise(raupc = mean(mean_raupc))
+    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
     
 ```
 
 ```{r}
 # combining final results
 assembly_final <- betaNTI_final %>% 
-  left_join(raupc_final %>% select(host1,host2,raupc), by=c("host1","host2"))
+  full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core), by=c("host1","host2","asv_core"))
+
+a=assembly_final %>% filter(is.na(betaNTI))
 
 # calculating the process
 assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
@@ -373,7 +357,7 @@ print(g)
 ```
 
 
-# Normalized Mutual Information (NMI) {.tabset}
+# Normalized Mutual Information (NMI) 
 
 ```{r, nmi, height=5}
 cat('## Observed NMI','\n')
