@@ -41,9 +41,9 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(host_p>0.2)
-
-group.colors <- c(Andatsakala = "#e76f51", Mandena = "#2b9348", Sarahandrano = "#0077b6")
+# villages: Andatsakala, Mandena, Sarahandrano
+vil <- "Mandena"
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(village == vil)
 ```
 
 # Exploration {.tabset}
@@ -164,19 +164,24 @@ print(g)
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_seq <- seq(0.01,0.01, by=0.01)
+core_th <- c(0.02, 0.2)
+data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
+                                               host_p>core_th[2] ~ "Core",
+                                               .default = "Non_core"))
 
-village_names <- unique(data_asv$village)
-nmi_observed_three_villages <- NULL
-nmi_diff_core_three_villages <- NULL
-modules_similarity_three_villages <- NULL
-asv_degree_distribution_three_villages <- NULL
-modules_three_villages <- NULL
-modules_size_three_villages <- NULL
-modules_grid_three_villages <- NULL
-modules_table_three_villages <- NULL
-betaNTI_three_villages <- NULL
-raupc_three_villages <- NULL
+group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
+
+core_names <- unique(data_asv$asv_core)
+nmi_observed_three_groups <- NULL
+#nmi_diff_core_three_groups <- NULL
+modules_similarity_three_groups <- NULL
+asv_degree_distribution_three_groups <- NULL
+modules_three_groups <- NULL
+modules_size_three_groups <- NULL
+modules_grid_three_groups <- NULL
+modules_table_three_groups <- NULL
+betaNTI_three_groups <- NULL
+raupc_three_groups <- NULL
 
 # reading the phylogenetic tree
 best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
@@ -184,66 +189,60 @@ phylo_tree <- best_tree$tree
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
-# for loop for three villages
-for (v in village_names) {
+# loop for three villages
+for (v in core_names) {
   
-  data_asv_village <- data_asv %>% 
-    filter(village == v)
+  data_asv_group <- data_asv %>% 
+    filter(asv_core == v)
   
-  # calculating ASVs degree 
-  asv_degree <- data_asv_village %>% 
-    group_by(asv_ID) %>% 
-    summarise(n = n_distinct(host_ID)) %>% 
+  # calculating ASVs degree
+  asv_degree <- data_asv_group %>%
+    group_by(asv_ID) %>%
+    summarise(n = n_distinct(host_ID)) %>%
     dplyr::rename(asv_degree = n)
-  data_asv_village %<>% left_join(asv_degree, by="asv_ID")
+  data_asv_group %<>% left_join(asv_degree, by="asv_ID")
   
   ##### observed network
   # finding modules
-  modules_observed <- fun_modularity_analysis(data_asv_village)
-  modules_table_three_villages <- rbind(modules_table_three_villages, modules_observed)
-  #write_csv(modules_table_three_villages, "../results/modules_table_three_villages.csv")
+  modules_observed <- fun_modularity_analysis(data_asv_group)
+  modules_table_three_groups <- rbind(modules_table_three_groups, modules_observed)
+  #write_csv(modules_table_three_groups, "../results/modules_table_three_villages.csv")
   
   # calculating similarity in modules between grids
   modules_similarity <- fun_modules_similarity(modules_observed)
   # saving results in one table
-  modules_similarity_three_villages <- append(modules_similarity_three_villages, modules_similarity)
+  modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
   # ASVs degree distribution
-  asv_degree_distribution <- fun_asv_degree_distribution(data_asv_village)
-  asv_degree_distribution_three_villages <- append(asv_degree_distribution_three_villages, asv_degree_distribution)
+  asv_degree_distribution <- fun_asv_degree_distribution(data_asv_group)
+  asv_degree_distribution_three_groups <- append(asv_degree_distribution_three_groups, asv_degree_distribution)
   
   # figure of modules 
   modules <- fun_modules(modules_observed)
-  modules_three_villages <- append(modules_three_villages, modules)
+  modules_three_groups <- append(modules_three_groups, modules)
   
   # modules size
   modules_size <- fun_module_size(modules_observed)
-  modules_size_three_villages <- append(modules_size_three_villages, modules_size)
+  modules_size_three_groups <- append(modules_size_three_groups, modules_size)
   
   # Number of land uses per module
   modules_grid <- fun_module_grid(modules_observed)
-  modules_grid_three_villages <- append(modules_grid_three_villages, modules_grid)
+  modules_grid_three_groups <- append(modules_grid_three_groups, modules_grid)
   
   # calculating NMI
   nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
   # saving results in one list
-  nmi_observed_three_villages <- append(nmi_observed_three_villages, nmi_observed)
+  nmi_observed_three_groups <- append(nmi_observed_three_groups, nmi_observed)
   
-  ##### NMI for different values of core microbiome
-  # calling the function
-  nmi_diff_core <- fun_modularity_diff_core(data_asv_village, nmi_observed, core_seq) %>% 
-    mutate(village = v)
-  # saving results in one list
-  nmi_diff_core_three_villages <- rbind(nmi_diff_core_three_villages, nmi_diff_core) 
   
   ##### phylogenetic analysis
   # ASVs pool
-asv_pool <- data_asv_village %>% 
+asv_pool <- data_asv_group %>% 
   distinct(asv_ID, asv_degree) %>% 
-  mutate(p = asv_degree/length(unique(data_asv_village$asv_ID)))
+  mutate(p = asv_degree/length(unique(data_asv_group$asv_ID)))
 
 # calculating betaNTI
-data_betaNTI <- data_asv_village %>% 
+data_betaNTI <- data_asv_group %>% 
   distinct(host_ID, asv_ID) %>% 
   mutate(reads = 1) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
@@ -253,8 +252,8 @@ data_betaNTI <- data_asv_village %>%
 betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
   left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
   left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-  mutate(village = v)
-betaNTI_three_villages <- rbind(betaNTI_three_villages, betaNTI)
+  mutate(asv_core = v)
+betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
 
 # raup-crick
 raupc <- raupcrick(data_betaNTI)
@@ -266,8 +265,8 @@ raupc2_m <- melt(raupc2) %>%
   dplyr::rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
   left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
   left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-  mutate(village = v)
-raupc_three_villages <- rbind(raupc_three_villages, raupc2_m)
+  mutate(asv_core = v)
+raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
 }
 ```
 
@@ -279,16 +278,16 @@ raupc_three_villages <- rbind(raupc_three_villages, raupc2_m)
 # loop for three villages
 for (i in 1:3) {
   
-  cat('##',village_names[i],'{.tabset}','\n','\n')
+  cat('##',core_names[i],'{.tabset}','\n','\n')
   
   cat('### ASVs degree distribution','\n')
   
-  print(asv_degree_distribution_three_villages[[i]])
+  print(asv_degree_distribution_three_groups[[i]])
   cat('\n','\n')
   
   # calculating connectance
-  connectance_data <- modules_table_three_villages %>% 
-    filter(village == village_names[i])
+  connectance_data <- modules_table_three_groups %>% 
+    filter(asv_core == core_names[i])
   
   cat('No. of hosts: ', length(unique(connectance_data$host_ID)) ,'\n','\n')
   cat('No. of ASVs: ', length(unique(connectance_data$asv_ID)) ,'\n','\n')
@@ -298,15 +297,15 @@ for (i in 1:3) {
   cat('### Modules','\n')
   cat('The color indicates number of host individuals in the module / total number of hosts in the whole grid [%]','\n','\n')
   
-  print(modules_three_villages[[i]])
+  print(modules_three_groups[[i]])
   cat('\n','\n')
   
   cat('### Modules size','\n')
-  print(modules_size_three_villages[[i]])
+  print(modules_size_three_groups[[i]])
   cat('\n','\n')
   
   cat('### No. of land uses','\n')
-  print(modules_grid_three_villages[[i]])
+  print(modules_grid_three_groups[[i]])
   cat('\n','\n')
   
 }
@@ -315,68 +314,36 @@ for (i in 1:3) {
 
 # Phylogenetic analysis
 
-```{r, phylogenetic_analysis, fig.width=12}
+```{r, phylogenetic_analysis}
   
-  # same module?
-  betaNTI_final <- betaNTI_three_villages %>% 
+  # beta-NTI same module?
+  betaNTI_final <- betaNTI_three_groups %>% 
     mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
     mutate(host_group1_org = host_group1) %>% 
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
     
   betaNTI_summary <- betaNTI_final %>% 
-    group_by(village, same_module, host_group1, host_group2) %>% 
+    group_by(asv_core, same_module, host_group1, host_group2) %>% 
     summarise(mean_betaNTI = mean(betaNTI)) %>%
-    group_by(village, same_module) %>% 
+    group_by(asv_core, same_module) %>% 
     summarise(betaNTI = mean(mean_betaNTI))
     
-  #plotting
-  betaNTI_g <- betaNTI_final %>% 
-    group_by(village, same_module, host_group1, host_group2) %>% 
-    summarise(mean_betaNTI = mean(betaNTI)) %>% 
-  ggplot(aes(x=same_module, y=mean_betaNTI, fill=village)) + 
-  geom_boxplot(outlier.shape = NA, alpha=0.8) + 
-  geom_label(data = betaNTI_summary, aes(label = sprintf("%.2f", betaNTI), y = betaNTI), position = position_dodge(width = 0.75), size = 4,color="white",alpha=0.8, show.legend=F) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme_bw() +
-  scale_y_continuous(limits = c(-2, 4), breaks = seq(-2,4, by=2)) +
-  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), panel.grid = element_blank(), legend.position = "none") +
-    scale_fill_manual(values=group.colors) +
-  labs(x="", y=paste("\u03B2","NTI", sep = ""))
   
   
-  # same module?
-  raupc_final <- raupc_three_villages %>% 
+  # Raup-Crick same module?
+  raupc_final <- raupc_three_groups %>% 
     mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) %>% 
     mutate(host_group1_org = host_group1) %>% 
   rowwise() %>%
   mutate(host_group1 = sort(c(host_group1, host_group2))[1], host_group2 = sort(c(host_group1_org, host_group2))[2])
   
   raupc_summary <- raupc_final %>% 
-    group_by(village, same_module, host_group1, host_group2) %>% 
+    group_by(asv_core, same_module, host_group1, host_group2) %>% 
     summarise(mean_raupc = mean(raupc)) %>%
-    group_by(village, same_module) %>% 
+    group_by(asv_core, same_module) %>% 
     summarise(raupc = mean(mean_raupc))
     
-    
-  #plotting
-  raupc_g <- raupc_final %>% 
-    group_by(village, same_module, host_group1, host_group2) %>% 
-    summarise(mean_raupc = mean(raupc)) %>% 
-  ggplot(aes(x=same_module, y=mean_raupc, fill=village)) + 
-  geom_boxplot(outlier.shape = NA, alpha=0.8) + 
-  geom_label(data = raupc_summary, aes(label = sprintf("%.2f", raupc), y = raupc), position = position_dodge(width = 0.75), size = 4, color="white",alpha=0.8, show.legend=F) +
-  theme_bw() +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(0,1, by=0.2)) +
-  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), panel.grid = element_blank()) +
-    scale_fill_manual(values=group.colors) +
-  labs(x="", y="Raup-Crick", fill="Village")
-  
-
-# plotting the final figure
-# p <- betaNTI_g + raupc_g
-# print(p)
-# cat('\n','\n')
 ```
 
 ```{r}
@@ -393,13 +360,13 @@ assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Select
 
 # summary
 assembly_summary <- assembly_final %>% 
-  count(village, same_module, process)
+  count(asv_core, same_module, process)
 
 #plotting
 g <- assembly_summary %>% 
   ggplot(aes(fill=process, x=same_module, y=n)) +
   geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
+  facet_wrap(~asv_core) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
   labs(x="", y="Proportion")
@@ -416,24 +383,24 @@ cat('## Observed NMI','\n')
 # loop for three villages
 nmi_observed_df_tv <- NULL
 for (j in 1:3) {
-  nmi_observed_df <- data_frame(nmi = nmi_observed_three_villages[[j*2]]) %>% 
-  mutate(village = village_names[j])
+  nmi_observed_df <- data_frame(nmi = nmi_observed_three_groups[[j*2]]) %>% 
+  mutate(asv_core = core_names[j])
   nmi_observed_df_tv <- rbind(nmi_observed_df_tv, nmi_observed_df)
 }
 
 # making a data frame out of the observed results
-nmi_observed_three_villages_df <- nmi_observed_three_villages[[1]] %>% 
-  bind_rows(nmi_observed_three_villages[[3]]) %>% 
-  bind_rows(nmi_observed_three_villages[[5]]) %>% 
-  mutate(village = village_names)
+nmi_observed_three_groups_df <- nmi_observed_three_groups[[1]] %>% 
+  bind_rows(nmi_observed_three_groups[[3]]) %>% 
+  bind_rows(nmi_observed_three_groups[[5]]) %>% 
+  mutate(asv_core = core_names)
 
 g <- nmi_observed_df_tv %>% 
-      ggplot(aes(nmi, fill=village)) + 
+      ggplot(aes(nmi, fill=asv_core)) + 
       geom_histogram(alpha=0.8, color="white") + 
-      facet_wrap(~village, scales="free") +
+      facet_wrap(~asv_core, scales="free") +
     scale_y_continuous(limits = c(0, 100)) +
-  geom_vline(data=nmi_observed_three_villages_df, aes(xintercept = nmi), linetype='dashed', color="black") +
-      geom_label(data = nmi_observed_three_villages_df, aes(label = paste("NMI =", round(nmi,2)), x = Inf, y = Inf),
+  geom_vline(data=nmi_observed_three_groups_df, aes(xintercept = nmi), linetype='dashed', color="black") +
+      geom_label(data = nmi_observed_three_groups_df, aes(label = paste("NMI =", round(nmi,2)), x = Inf, y = Inf),
             vjust = 1.5,hjust = 1.1, size = 4, color = "black", fill="white") +
       theme_bw() +
       
@@ -442,34 +409,6 @@ g <- nmi_observed_df_tv %>%
   scale_fill_manual(values=group.colors) +
       labs(x="Normalized Mutual Information (NMI)", y="Count")
 print(g)
-cat('\n','\n')
-
-
-
-cat('## NMI for common microbes','\n')
-
-nmi_observed_df <- nmi_diff_core_three_villages %>% 
-  filter(type=="core", degree==1) %>% 
-  arrange(village)
-
-p1 <- nmi_diff_core_three_villages %>% 
-  filter(type == "core") %>% 
-  mutate(nmi = ifelse(is.na(nmi),0,nmi)) %>% 
-  ggplot(aes(x=degree, y=nmi, color = village)) + 
-  #geom_hline(yintercept=nmi_observed_df$nmi, linetype = "dashed", color=group.colors) +
-  geom_line() +
-  geom_point(aes(shape = as.factor(sig), size = n_module)) +
-  scale_size_continuous( breaks = c(1,10,40,60)) +
-  scale_shape_manual(values = c(1, 16), guide="none") +
-  scale_y_continuous(limits = c(0, 0.35)) +
-  scale_x_continuous(limits = c(0, 0.2)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), panel.grid = element_blank(), panel.border = element_rect(color = "black"), legend.title = element_text(size = 12)) +
-  scale_color_manual(values=group.colors) +
-  guides(size = guide_legend(order = 2), color = guide_legend(order = 1)) +
-  labs(x="Minimum ASVs Degree", y="Normalized Mutual Information (NMI)", size = "No. of Modules", color = "Village")
-print(p1)
-#legend.position = c(.95, .95), legend.justification = c("right", "top"),
 cat('\n','\n')
 
 ```
@@ -488,12 +427,8 @@ grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
 # correlations between variables
 # loop for three villages
 library(psych)
-for (j in village_names) {
-  
-  cat('###',j,'\n','\n')
-  print(psych::pairs.panels(grids_similarity_attr %>% filter(village == j) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+  print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
   cat('\n','\n')
-}
 ```
 
 
@@ -506,17 +441,17 @@ for (j in village_names) {
 # distance between grids matrices
 load("../data/data_processed/distance_three_villages.RData")
 names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
-grid_distance_three_villages <- grid_distance_three_villages[c("Andatsakala", "Mandena", "Sarahandrano")]
+grid_distance <- grid_distance_three_villages[vil]
 
-mantel_result_three_villages <- NULL
-final_data_three_villages <- NULL
+mantel_result_three_groups <- NULL
+final_data_three_groups <- NULL
 
 # loop for three villages
 for (i in 1:3) {
   
-  modules_similarity <- modules_similarity_three_villages[[i]]
+  modules_similarity <- modules_similarity_three_groups[[i]]
   grid_names <- rownames(modules_similarity)
-  grid_distance <- grid_distance_three_villages[[i]]
+  grid_distance <- grid_distance[[i]]
   # filtering the distance matrix to the existing grids
   grid_distance <- grid_distance[grid_names, grid_names]
 
@@ -524,8 +459,8 @@ for (i in 1:3) {
   mantel_result <- vegan::mantel(modules_similarity, grid_distance)
   mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
                                  pvalue = round(1-mantel_result$signif,4),
-                                 village = village_names[i])
-  mantel_result_three_villages <- rbind(mantel_result_three_villages, mantel_result_df)
+                                 asv_core = core_names[i])
+  mantel_result_three_groups <- rbind(mantel_result_three_groups, mantel_result_df)
   
   
   # transforming to long format
@@ -535,22 +470,22 @@ for (i in 1:3) {
   final_data <- melt(modules_similarity_m) %>% 
   filter(!is.na(value)) %>% 
   dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) %>% 
-    left_join(grids_similarity_attr %>% filter(village == village_names[i]), by=c("grid1","grid2"))
+    left_join(grids_similarity_attr %>% filter(village == vil), by=c("grid1","grid2"))
   
-  final_data_three_villages <- rbind(final_data_three_villages, final_data)
+  final_data_three_groups <- rbind(final_data_three_groups, final_data)
   
 }
 
 # plotting
-    g <- final_data_three_villages %>% 
-      ggplot(aes(y=module_similarity, x=grid_dist, color = village)) +
+    g <- final_data_three_groups %>% 
+      ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
   geom_point(alpha = 0.8) +
-  facet_wrap(~village, scales="free")+
+  facet_wrap(~asv_core, scales="free")+
   scale_y_continuous(limits = c(0.0, 1)) +
   geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
-  geom_text(data = mantel_result_three_villages, aes(label = paste("r =", r), x = Inf, y = Inf),
+  geom_text(data = mantel_result_three_groups, aes(label = paste("r =", r), x = Inf, y = Inf),
             hjust = 1.3, vjust = 1.5, size = 4, color = "black") +
-      geom_text(data = mantel_result_three_villages, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
+      geom_text(data = mantel_result_three_groups, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
             hjust = 1.1, vjust = 3, size = 4, color = "black") +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12),
