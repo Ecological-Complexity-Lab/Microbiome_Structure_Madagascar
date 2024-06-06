@@ -48,114 +48,6 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 
 # Exploration {.tabset}
 
-```{r, sm exploration}
-# small mammals data
-small_mammals <- read_csv("../data/data_raw/data_small_mammals/Terrestrial_Mammals.csv") %>% 
-  mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) %>% 
-  mutate(age_repro = as_factor(age_repro)) %>% 
-  rename(grid = habitat_type) %>% 
-  filter(host_ID %in% data_asv$host_ID)
-
-cat("## Abundance", '\n','\n')
-g <- small_mammals %>% 
-  count(village, grid) %>% 
-  ggplot(aes(fill=village, x=grid, y=n)) +
-  geom_bar(position="dodge", stat="identity") +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  scale_fill_manual(values=group.colors) +
-  labs(x="Land Use", y="Small-Mammals Abundance")
-print(g)
-
-cat("## Sex ratio", '\n','\n')
-g <- small_mammals %>% 
-  count(village, grid, sex) %>% 
-  ggplot(aes(fill=sex, x=grid, y=n)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
-  geom_hline(yintercept = 0.5, linetype = "dashed") +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Proportion")
-print(g)
-
-cat("## Age ratio", '\n','\n')
-g <- small_mammals %>% 
-  count(village, grid, age_repro) %>% 
-  ggplot(aes(fill=age_repro, x=grid, y=n)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Proportion")
-print(g)
-```
-
-
-```{r, microbiome exploration}
-
-# relative abundance
-s <- data_asv %>% 
-  group_by(village, asv_ID) %>% 
-  summarise(n=mean(reads)) %>% 
-  group_by(village) %>% 
-  summarise(mean=mean(n), median=median(n), sd=sd(n), max=max(n))
-
-# microbes taxonomy
-tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
-  dplyr::rename(asv_ID = ASV)
-
-data_asv_tax <- data_asv %>% 
-  left_join(tax, by="asv_ID")
-
-tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>% 
-  count(Phylum,Family)
-
-
-cat("## Relative abundance", '\n','\n')
-total_reads_village_grid <- data_asv_tax %>% group_by(village, grid) %>% summarise(n_total = sum(total_reads))
-g <- data_asv_tax %>% 
-  filter(village=="Mandena") %>% 
-  mutate(reads_a = reads*total_reads) %>% 
-  group_by(village, grid, Order) %>% 
-  summarise(n= sum(reads_a)) %>% 
-  left_join(total_reads_village_grid, by=c("village","grid")) %>% 
-  mutate(n_p = n/n_total) %>% 
-  ggplot(aes(fill=Order, x=grid, y=n_p)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Relative abundance")
-print(g)
-
-cat("## No. of species", '\n','\n')
-g <- data_asv_tax %>% 
-  count(village, grid, asv_ID, Phylum) %>%
-  #filter(n < 2) %>% 
-  group_by(village, grid, Phylum) %>% 
-  summarise(n_asv= n_distinct(asv_ID)) %>% 
-  ggplot(aes(fill=Phylum, x=grid, y=n_asv)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Proportion No. of ASVs")
-print(g)
-
-cat("## Common", '\n','\n')
-g <- data_asv_tax %>% 
-  count(village, grid, asv_ID, Genus) %>%
-  group_by(village, grid, Genus) %>% 
-  summarise(n_asv= n_distinct(asv_ID)) %>% 
-  ggplot(aes(fill=Genus, x=grid, y=n_asv)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~village) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Proportion No. of ASVs")
-print(g)
-```
 
 ```{r, main analysis, include=FALSE, results='hide'}
 # first of all, run this chunk of code.
@@ -168,6 +60,16 @@ core_th <- c(0.02, 0.2)
 data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                                host_p>core_th[2] ~ "Core",
                                                .default = "Non_core"))
+
+# # updating reads per core group
+# reads_new <- data_asv %>% 
+#   group_by(host_ID, asv_core) %>% 
+#   summarise(total_reads = sum(reads*total_reads))
+# 
+# data_asv2 = data_asv %>%  mutate(reads = reads*total_reads) %>% 
+#   select(-total_reads) %>% 
+#   left_join(reads_new, by=c("host_ID","asv_core")) %>% 
+#   mutate(reads = reads/total_reads)
 
 group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
@@ -269,6 +171,117 @@ raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
 }
 ```
 
+```{r, sm exploration}
+# small mammals data
+small_mammals <- read_csv("../data/data_raw/data_small_mammals/Terrestrial_Mammals.csv") %>% 
+  mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) %>% 
+  mutate(age_repro = as_factor(age_repro)) %>% 
+  rename(grid = habitat_type) %>% 
+  filter(host_ID %in% data_asv$host_ID)
+
+cat("## Abundance", '\n','\n')
+g <- small_mammals %>% 
+  count(grid) %>% 
+  ggplot(aes(x=grid, y=n)) +
+  geom_bar(position="dodge", stat="identity") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Small-Mammals Abundance")
+print(g)
+
+cat("## Sex ratio", '\n','\n')
+g <- small_mammals %>% 
+  count(grid, sex) %>% 
+  ggplot(aes(fill=sex, x=grid, y=n)) +
+  geom_bar(position="fill", stat="identity") +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Proportion")
+print(g)
+
+cat("## Age ratio", '\n','\n')
+g <- small_mammals %>% 
+  count(grid, age_repro) %>% 
+  ggplot(aes(fill=age_repro, x=grid, y=n)) +
+  geom_bar(position="fill", stat="identity") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Proportion")
+print(g)
+```
+
+
+```{r, microbiome exploration}
+
+# relative abundance
+s <- data_asv %>% 
+  group_by(village, asv_ID) %>% 
+  summarise(n=mean(reads)) %>% 
+  group_by(village) %>% 
+  summarise(mean=mean(n), median=median(n), sd=sd(n), max=max(n))
+
+# microbes taxonomy
+tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
+
+data_asv_tax <- data_asv %>% 
+  left_join(tax, by="asv_ID")
+
+tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>% 
+  count(Phylum,Family)
+
+
+cat("## Relative abundance", '\n','\n')
+total_reads_groups_grid <- data_asv_tax %>% group_by(asv_core, grid) %>% summarise(n_total = sum(total_reads))
+g <- data_asv_tax %>% 
+  mutate(reads_a = reads*total_reads) %>% 
+  group_by(asv_core, grid, Phylum) %>% 
+  summarise(n= sum(reads_a)) %>% 
+  left_join(total_reads_groups_grid, by=c("asv_core","grid")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=Phylum, x=grid, y=n_p)) +
+  geom_bar(position="fill", stat="identity") +
+  facet_wrap(~asv_core) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Relative abundance")
+print(g)
+
+cat("## No. of species", '\n','\n')
+g <- data_asv_tax %>% 
+  count(asv_core, grid, asv_ID, Phylum) %>%
+  group_by(asv_core, grid, Phylum) %>% 
+  summarise(n_asv= n_distinct(asv_ID)) %>% 
+  ggplot(aes(fill=Phylum, x=grid, y=n_asv)) +
+  geom_bar(position="fill", stat="identity") +
+  facet_wrap(~asv_core) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Proportion No. of ASVs")
+print(g)
+
+
+cat("## Relative abundance Family", '\n','\n')
+total_reads_groups <- data_asv_tax %>% group_by(asv_core) %>% summarise(n_total = sum(total_reads))
+most_abu_family <- data_asv_tax %>% 
+  mutate(reads_a = reads*total_reads) %>% 
+  group_by(asv_core, Family) %>% 
+  summarise(n= sum(reads_a)) %>% 
+  left_join(total_reads_groups, by="asv_core") %>% 
+  mutate(n_p = n/n_total) %>% 
+  ungroup() %>% 
+  slice_max(by = asv_core, order_by = n_p, n = 10)
+  
+  ggplot(aes(fill=Family, x=asv_core, y=n_p)) +
+  geom_bar(position="fill", stat="identity") +
+  #facet_wrap(~asv_core) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Relative abundance")
+print(most_abu_family)
+```
+
 
 # Network exploration {.tabset}
 
@@ -313,7 +326,7 @@ for (i in 1:3) {
 
 # Phylogenetic analysis
 
-```{r, phylogenetic_analysis}
+```{r}
   
   # beta-NTI same module?
   betaNTI_final <- betaNTI_three_groups %>% 
@@ -327,7 +340,7 @@ for (i in 1:3) {
     
 ```
 
-```{r}
+```{r, assembly_processes}
 # combining final results
 assembly_final <- betaNTI_final %>% 
   full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core), by=c("host1","host2","asv_core"))
@@ -359,7 +372,7 @@ print(g)
 
 # Normalized Mutual Information (NMI) 
 
-```{r, nmi, height=5}
+```{r, nmi}
 cat('## Observed NMI','\n')
 
 # making a data frame out of the shuffled results
@@ -464,7 +477,7 @@ for (i in 1:3) {
       ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
   geom_point(alpha = 0.8) +
   facet_wrap(~asv_core, scales="free")+
-  scale_y_continuous(limits = c(0.0, 1)) +
+  scale_y_continuous(limits = c(0.0, 0.9)) +
   geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
   geom_text(data = mantel_result_three_groups, aes(label = paste("r =", r), x = Inf, y = Inf),
             hjust = 1.3, vjust = 1.5, size = 4, color = "black") +
@@ -481,7 +494,7 @@ for (i in 1:3) {
 
 # Link prediction {.tabset}
 
-```{r}
+```{r, include=FALSE}
 library(caret)
 library(yardstick)
 
