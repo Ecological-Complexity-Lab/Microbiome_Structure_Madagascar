@@ -279,7 +279,7 @@ fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool) {
   
   n_modules <- nrow(dat_mat)
   n_asv <- ncol(dat_mat)
-  n_shuff <- 10
+  n_shuff <- 20
   seeds <- seq(1, n_shuff*100, length.out=n_shuff)
   
   # calculating observed MNTD

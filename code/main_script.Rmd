@@ -232,7 +232,7 @@ tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>%
 
 
 cat("## Relative abundance", '\n','\n')
-total_reads_groups_grid <- data_asv_tax %>% distinct(host_ID,asv_core,grid) %>%  group_by(asv_core, grid) %>% summarise(n_total = sum(total_reads))
+total_reads_groups_grid <- data_asv_tax %>% mutate(reads_a = reads*total_reads) %>%  group_by(asv_core, grid) %>% summarise(n_total = sum(reads_a))
 g <- data_asv_tax %>% 
   mutate(reads_a = reads*total_reads) %>% 
   group_by(asv_core, grid, Phylum) %>% 
