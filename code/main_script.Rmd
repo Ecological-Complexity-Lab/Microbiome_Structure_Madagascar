@@ -55,8 +55,8 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 # setting thresholds for core
 core_th <- c(0.02, 0.2)
 data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
-                                               host_p>core_th[2] ~ "Core",
-                                               .default = "Non_core"))
+                                          host_p>core_th[2] ~ "Core",
+                                          .default = "Non_core"))
 
 # # updating reads per core group
 # reads_new <- data_asv %>% 
@@ -135,36 +135,36 @@ for (v in core_names) {
   
   ##### phylogenetic analysis
   # ASVs pool
-asv_pool <- data_asv_group %>% 
-  distinct(asv_ID, asv_degree) %>% 
-  mutate(p = asv_degree/length(unique(data_asv_group$asv_ID)))
-
-# calculating betaNTI
-data_betaNTI <- data_asv_group %>% 
-  distinct(host_ID, asv_ID) %>% 
-  mutate(reads = 1) %>% 
-  spread(asv_ID, reads, fill = 0) %>% 
-  column_to_rownames("host_ID") %>% 
-  as.matrix()
-
-betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
-  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
-  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-  mutate(asv_core = v)
-betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
-
-# raup-crick
-raupc <- raupcrick(data_betaNTI)
-raupc2 <- as.matrix(raupc) 
-raupc2[upper.tri(raupc2)] <- NA
-diag(raupc2) <- NA
-raupc2_m <- melt(raupc2) %>% 
-  filter(!(is.na(value)))%>% 
-  dplyr::rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
-  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
-  left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-  mutate(asv_core = v)
-raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
+  asv_pool <- data_asv_group %>% 
+    distinct(asv_ID, asv_degree) %>% 
+    mutate(p = asv_degree/length(unique(data_asv_group$asv_ID)))
+  
+  # calculating betaNTI
+  data_betaNTI <- data_asv_group %>% 
+    distinct(host_ID, asv_ID) %>% 
+    mutate(reads = 1) %>% 
+    spread(asv_ID, reads, fill = 0) %>% 
+    column_to_rownames("host_ID") %>% 
+    as.matrix()
+  
+  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    mutate(asv_core = v)
+  betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
+  
+  # raup-crick
+  raupc <- raupcrick(data_betaNTI)
+  raupc2 <- as.matrix(raupc) 
+  raupc2[upper.tri(raupc2)] <- NA
+  diag(raupc2) <- NA
+  raupc2_m <- melt(raupc2) %>% 
+    filter(!(is.na(value)))%>% 
+    dplyr::rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    mutate(asv_core = v)
+  raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
 }
 ```
 
@@ -261,24 +261,38 @@ g <- data_asv_tax %>%
 print(g)
 
 
-# cat("## Relative abundance Family", '\n','\n')
-# total_reads_groups <- data_asv_tax %>% distinct(host_ID, asv_core) %>% group_by(asv_core) %>% summarise(n_total = sum(total_reads))
-# most_abu_family <- data_asv_tax %>% 
-#   mutate(reads_a = reads*total_reads) %>% 
-#   group_by(asv_core, Family) %>% 
-#   summarise(n= sum(reads_a)) %>% 
-#   left_join(total_reads_groups, by="asv_core") %>% 
-#   mutate(n_p = n/n_total) %>% 
-#   ungroup() %>% 
-#   slice_max(by = asv_core, order_by = n_p, n = 10)
-#   
-#   ggplot(aes(fill=Family, x=asv_core, y=n_p)) +
-#   geom_bar(position="fill", stat="identity") +
-#   #facet_wrap(~asv_core) +
-#   theme_bw() +
-#   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-#   labs(x="Land Use", y="Relative abundance")
-# print(most_abu_family)
+cat("## Relative abundance Family", '\n','\n')
+total_reads_groups <- data_asv_tax %>% distinct(host_ID, asv_core, total_reads) %>% group_by(asv_core) %>% summarise(n_total = sum(total_reads))
+most_abu_family <- data_asv_tax %>%
+  mutate(reads_a = reads*total_reads) %>%
+  group_by(asv_core, Family, grid) %>%
+  summarise(n= sum(reads_a)) %>%
+  left_join(total_reads_groups, by="asv_core") %>%
+  mutate(n_p = n/n_total) 
+
+  most_abu_family_8 <- most_abu_family %>% 
+    filter(!is.na(Family)) %>% 
+    ungroup() %>% 
+    slice_max(by = asv_core, order_by = n_p, n = 8) %>% 
+    mutate(p = "top") %>% 
+    select(asv_core, Family, p)
+  
+  most_abu_family_p <- most_abu_family %>% 
+    left_join(most_abu_family_8, by=c("asv_core","Family")) %>% 
+    mutate(p = case_when(p=="top" ~ Family,
+                         is.na(Family) ~ "NA",
+                         is.na(p) ~ "Other"))
+
+  most_abu_family_p %>% 
+    group_by(asv_core,  p) %>% 
+    summarise(n_p = sum(n_p)) %>% 
+ggplot(aes(fill=p, x=asv_core, y=n_p)) +
+  geom_bar(position="fill", stat="identity") +
+  #facet_wrap(~asv_core) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  labs(x="Land Use", y="Relative abundance")
+print(most_abu_family)
 ```
 
 
@@ -326,17 +340,17 @@ for (i in 1:3) {
 # Phylogenetic analysis
 
 ```{r}
-  
-  # beta-NTI same module?
-  betaNTI_final <- betaNTI_three_groups %>% 
-    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) 
-    
-  
-  
-  # Raup-Crick same module?
-  raupc_final <- raupc_three_groups %>% 
-    mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
-    
+
+# beta-NTI same module?
+betaNTI_final <- betaNTI_three_groups %>% 
+  mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) 
+
+
+
+# Raup-Crick same module?
+raupc_final <- raupc_three_groups %>% 
+  mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
+
 ```
 
 ```{r, assembly_processes}
@@ -379,7 +393,7 @@ cat('## Observed NMI','\n')
 nmi_observed_df_tv <- NULL
 for (j in 1:3) {
   nmi_observed_df <- data_frame(nmi = nmi_observed_three_groups[[j*2]]) %>% 
-  mutate(asv_core = core_names[j])
+    mutate(asv_core = core_names[j])
   nmi_observed_df_tv <- rbind(nmi_observed_df_tv, nmi_observed_df)
 }
 
@@ -390,19 +404,19 @@ nmi_observed_three_groups_df <- nmi_observed_three_groups[[1]] %>%
   mutate(asv_core = core_names)
 
 g <- nmi_observed_df_tv %>% 
-      ggplot(aes(nmi, fill=asv_core)) + 
-      geom_histogram(alpha=0.8, color="white") + 
-      facet_wrap(~asv_core, scales="free") +
-    scale_y_continuous(limits = c(0, 100)) +
+  ggplot(aes(nmi, fill=asv_core)) + 
+  geom_histogram(alpha=0.8, color="white") + 
+  facet_wrap(~asv_core, scales="free") +
+  scale_y_continuous(limits = c(0, 100)) +
   geom_vline(data=nmi_observed_three_groups_df, aes(xintercept = nmi), linetype='dashed', color="black") +
-      geom_label(data = nmi_observed_three_groups_df, aes(label = paste("NMI =", round(nmi,2)), x = Inf, y = Inf),
-            vjust = 1.5,hjust = 1.1, size = 4, color = "black", fill="white") +
-      theme_bw() +
-      
-      theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text = element_text(size=12), panel.grid = element_blank(), legend.position="none") +
+  geom_label(data = nmi_observed_three_groups_df, aes(label = paste("NMI =", round(nmi,2)), x = Inf, y = Inf),
+             vjust = 1.5,hjust = 1.1, size = 4, color = "black", fill="white") +
+  theme_bw() +
+  
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text = element_text(size=12), panel.grid = element_blank(), legend.position="none") +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.01))) +
   scale_fill_manual(values=group.colors) +
-      labs(x="Normalized Mutual Information (NMI)", y="Count")
+  labs(x="Normalized Mutual Information (NMI)", y="Count")
 print(g)
 cat('\n','\n')
 
@@ -422,8 +436,8 @@ grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
 # correlations between variables
 # loop for three villages
 library(psych)
-  print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
-  cat('\n','\n')
+print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+cat('\n','\n')
 ```
 
 
@@ -448,7 +462,7 @@ for (i in 1:3) {
   grid_names <- rownames(modules_similarity)
   # filtering the distance matrix to the existing grids
   grid_distance <- grid_distance[grid_names, grid_names]
-
+  
   # calculating mantel test
   mantel_result <- vegan::mantel(modules_similarity, grid_distance)
   mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
@@ -462,9 +476,9 @@ for (i in 1:3) {
   modules_similarity_m[lower.tri(modules_similarity_m)] <- NA
   diag(modules_similarity_m) <- NA
   final_data <- melt(modules_similarity_m) %>% 
-  filter(!is.na(value)) %>% 
+    filter(!is.na(value)) %>% 
     mutate(asv_core = core_names[i]) %>% 
-  dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) %>% 
+    dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) %>% 
     left_join(grids_similarity_attr %>% filter(village == vil), by=c("grid1","grid2"))
   
   final_data_three_groups <- rbind(final_data_three_groups, final_data)
@@ -472,23 +486,23 @@ for (i in 1:3) {
 }
 
 # plotting
-    g <- final_data_three_groups %>% 
-      ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
+g <- final_data_three_groups %>% 
+  ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
   geom_point(alpha = 0.8) +
   facet_wrap(~asv_core, scales="free")+
   scale_y_continuous(limits = c(0.0, 0.9)) +
   geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
   geom_text(data = mantel_result_three_groups, aes(label = paste("r =", r), x = Inf, y = Inf),
             hjust = 1.3, vjust = 1.5, size = 4, color = "black") +
-      geom_text(data = mantel_result_three_groups, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
+  geom_text(data = mantel_result_three_groups, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
             hjust = 1.1, vjust = 3, size = 4, color = "black") +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12),
         panel.grid = element_blank(), legend.position = "none", panel.border = element_rect(color = "black")) +
-      scale_color_manual(values=group.colors) +
+  scale_color_manual(values=group.colors) +
   labs(x = "Distance Between Land Uses [m]", y = "Modules Similarity [Bray-Curtis]")
-    print(g)
-  cat('\n','\n')
+print(g)
+cat('\n','\n')
 ```
 
 # Link prediction {.tabset}
@@ -528,7 +542,7 @@ cat('## ROC curve','\n','\n')
 
 auc_roc_score <- yardstick::roc_auc(test_set_predict, y_true, y_proba)
 roc_obj <- yardstick::roc_curve(test_set_predict, y_true, y_proba) %>% 
-ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+  ggplot(aes(x = 1 - specificity, y = sensitivity)) +
   geom_path(color = "blue") +
   geom_abline(lty = 3) +
   coord_equal() +
@@ -542,7 +556,7 @@ cat('## Precision-Recall curve','\n','\n')
 
 auc_pr_score <- yardstick::pr_auc(test_set_predict, y_true, y_proba)
 pr_obj <- yardstick::pr_curve(test_set_predict, y_true, y_proba) %>% 
-ggplot(aes(x = recall, y = precision)) +
+  ggplot(aes(x = recall, y = precision)) +
   geom_path(color = "blue") +
   coord_equal() +
   theme_bw() +
@@ -555,16 +569,16 @@ cat('## Features importance','\n','\n')
 
 feature_imp_g <- feature_importance %>% 
   arrange(value) %>% 
-    mutate(feature = factor(feature, levels = feature)) %>% 
-    ggplot(aes(x=feature, y=value)) +
-    geom_bar(stat = "identity") +
+  mutate(feature = factor(feature, levels = feature)) %>% 
+  ggplot(aes(x=feature, y=value)) +
+  geom_bar(stat = "identity") +
   coord_flip()+
   scale_y_continuous(limits = c(0, 1)) +
-    theme_bw() +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), 
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()) +
-    labs(x="", y="Importance")
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(x="", y="Importance")
 print(feature_imp_g)
 cat('\n','\n')
 ```
