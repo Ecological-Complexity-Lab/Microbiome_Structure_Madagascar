@@ -474,14 +474,23 @@ assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Select
 assembly_summary <- assembly_final %>% 
   count(asv_core, same_module, process)
 
+assembly_summary_total <- assembly_summary %>% 
+  group_by(asv_core, same_module) %>% 
+  summarise(n_total = sum(n))
+
 #plotting
 g <- assembly_summary %>% 
-  ggplot(aes(fill=process, x=same_module, y=n)) +
+  left_join(assembly_summary_total, by=c("asv_core","same_module")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=process, x=same_module, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~asv_core) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
+            position = position_stack(vjust = 0.5), size = 3)+
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="", y="Proportion")
+  labs(x="", y="Percentage")
 print(g)
 ```
 
