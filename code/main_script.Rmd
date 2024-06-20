@@ -365,6 +365,81 @@ print(g)
 
 ```
 
+```{r, groups_modules}
+host_module_partners <- function(dat, hosts) {
+  
+  group_similarity_all <- NULL
+  for (h in hosts) {
+    
+    # the modules of the focal host
+    h_module <- dat %>% filter(host_ID==h) %>% select(-host_ID) %>% mutate(s=T)
+    # taking only the module partners of the focal host
+    dat_module <- dat %>% 
+      left_join(h_module, by=c("asv_core","host_group")) %>% 
+      filter(s) %>% 
+      select(asv_core, host_ID) %>% 
+      mutate(n=1, host_ID = as.character(host_ID)) %>% 
+      spread(host_ID, n, fill=0) %>% 
+      column_to_rownames("asv_core") %>% 
+      as.matrix()
+    
+    # removing the focal host from the table
+    #dat_module <- dat_module[, colnames(dat_module)!=h]
+    
+    # calculating similarity
+    group_similarity <- as.matrix(1-vegdist(dat_module, method = "jaccard"))
+    group_similarity[upper.tri(group_similarity)] <- NA
+    diag(group_similarity) <- NA
+    group_similarity_m <- melt(group_similarity) %>% 
+    filter(!(is.na(value))) %>% 
+      mutate(host_ID = h)
+    
+    group_similarity_all <- rbind(group_similarity_all, group_similarity_m)
+  }
+  
+  # calculating the mean
+  group_similarity_mean <- group_similarity_all %>% 
+    unite("groups", Var1:Var2) %>%
+    group_by(groups) %>% 
+    summarise(mean = mean(value), median = median(value), sd = sd(value))
+    
+  return(group_similarity_mean)
+}
+
+
+host_modules <- modules_table_three_groups %>% 
+  distinct(asv_core, host_ID, host_group)
+
+host_list <- unique(host_modules$host_ID)
+
+# observed results
+groups_sim_obs <- host_module_partners(host_modules, host_list)
+
+# shuffle modules membership
+groups_sim_shuff_all <- NULL
+for(i in 1:20) {
+host_modules_shuff <- host_modules %>% 
+      group_by(asv_core) %>%
+      mutate(host_group = sample(host_group))
+
+groups_sim_shuff <- host_module_partners(host_modules_shuff, host_list)
+groups_sim_shuff_all <- rbind(groups_sim_shuff_all, groups_sim_shuff)
+}
+
+# plotting
+g <- groups_sim_shuff_all %>% 
+  ggplot(aes(x=mean, group=groups, fill=groups)) +
+    geom_histogram() +
+  geom_vline(data=groups_sim_obs, aes(xintercept = mean), linetype='dashed', color="black") +
+    facet_wrap(~groups) +
+   theme_bw() +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines")
+    )
+print(g)
+```
+
 # Phylogenetic analysis
 
 ```{r}
