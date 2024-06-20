@@ -87,7 +87,7 @@ phylo_tree <- best_tree$tree
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
-# loop for three villages
+# loop for three groups
 for (v in core_names) {
   
   data_asv_group <- data_asv %>% 
@@ -300,7 +300,7 @@ print(most_abu_family)
 
 
 ```{r, network_exploration}
-# loop for three villages
+# loop for three groups
 for (i in 1:3) {
   
   cat('##',core_names[i],'{.tabset}','\n','\n')
@@ -334,6 +334,34 @@ for (i in 1:3) {
   cat('\n','\n')
   
 }
+
+cat('## Modules size','{.tabset}','\n','\n')
+
+g <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_violin() +
+  theme_classic() +
+  #scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="Module Size")
+print(g)
+
+cat('## Modules grid','{.tabset}','\n','\n')
+
+g <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(grid)) %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_violin() +
+  theme_classic() +
+  #scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="No. of Land uses")
+print(g)
 
 ```
 
