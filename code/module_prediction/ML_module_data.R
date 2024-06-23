@@ -76,36 +76,10 @@ host_distance_m <- melt(host_dist2) %>%
 final_table <- host_distance_m %>% 
   left_join(data_host_filtered, by=c("host_ID.x"="host_ID")) %>% 
   left_join(data_host_filtered, by=c("host_ID.y"="host_ID")) %>% 
-  left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2"))
-
-
-
-
-
-
-
-
-final_table <- data_asv_filtered %>% 
-  mutate(link = 1) %>% 
-  spread(asv_ID, link, fill = 0)  %>% 
-  gather("asv_ID","Link", starts_with("ASV")) %>% 
-  left_join(grid_attributes, by="grid") %>% 
-  left_join(data_mammals_full_mat, by="grid") %>% 
-  left_join(asv_taxa, by=c("asv_ID"="ASV")) %>% 
-  left_join(host_centrality, by="host_ID") %>% 
-  left_join(asv_centrality, by="asv_ID") %>% 
-  left_join(modules_host, by="host_ID") %>% 
-  left_join(modules_asv, by="asv_ID") %>% 
-  left_join(short_path, by=c("host_ID", "asv_ID")) %>% 
-  mutate(pref_attach = host_degree*asv_degree) %>% 
-  select(host_ID, asv_ID, Link, grid, pca_grid_attr, pca_grid_sm, season,
-         elevation.obs, mass, sex, age_repro, Phylum, Class,
-         host_degree, host_betweenness, host_closeness, host_module,
-         asv_degree, asv_betweenness, asv_closeness, asv_module,
-         shortest_path, pref_attach)
-
-
-
+  left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2")) %>% 
+  mutate(grid_attr = ifelse(grid.x==grid.y, 0, grid_attr), sm_community = ifelse(grid.x==grid.y, 0, sm_community)) %>% 
+  mutate(module = ifelse(host_group.x==host_group.y, 1, 0)) %>% 
+  select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y)
 
 
 # saving the final table as .csv
