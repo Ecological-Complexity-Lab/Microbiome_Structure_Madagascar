@@ -228,7 +228,11 @@ data_asv_tax <- data_asv %>%
   left_join(tax, by="asv_ID")
 
 tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>% 
-  count(Phylum,Family)
+  count(Phylum,Genus)
+no_na <- tax_uni %>% 
+  mutate(na = is.na(Genus)) %>% 
+  group_by(na) %>% 
+  summarise(n = sum(n))
 
 
 cat("## Relative abundance", '\n','\n')
