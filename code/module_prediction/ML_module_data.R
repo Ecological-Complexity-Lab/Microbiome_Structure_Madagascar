@@ -2,17 +2,25 @@
 
 library(tidyverse)
 library(magrittr)
+library(vegan)
+library(reshape2)
 
 
 rm(list=ls())
+
+
+vil <- "Mandena"
+group <- "Core"
 
 #####################################################
 # reading the data
 
 # small mammals (hosts)
-data_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
-data_mammals %<>% mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) %>% 
-  select(host_ID, elevation.obs, sex, mass, age_repro) %>% 
+data_mammals_full <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv") %>% 
+ mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) 
+
+ data_mammals <- data_mammals_full %>% 
+   select(host_ID, elevation.obs, sex, mass, age_repro) %>% 
   mutate(sex = as.factor(sex), age_repro = as.factor(age_repro)) 
 
 # host modules
@@ -23,53 +31,59 @@ host_richness <- data_host %>%
   summarise(richness = n_distinct(asv_ID))
 
 data_host_filtered <- data_host %>% 
-  filter(asv_core == "Core") %>% 
+  filter(asv_core == group) %>% 
   distinct(host_ID, grid, season, host_group, asv_core) %>% 
   left_join(data_mammals, by="host_ID") %>% 
   left_join(host_richness, by=c("asv_core","host_ID")) %>% 
   mutate(season = factor(season))
 
 
+#####################################################
+# vegetation attributes and small mammals community *dis-similarity*
 
+grid_similarity <- read_csv("data/data_processed/village_summary.csv") %>% 
+  filter(village == vil) %>% 
+  select(grid1, grid2, grid_attr, sm_community)
+
+grid_similarity2 <- grid_similarity %>% rename(grid1=grid2, grid2=grid1)
+grid_similarity <- rbind(grid_similarity, grid_similarity2)
 
 
 #####################################################
-# PCA for grid attributes
+# distance between hosts
 
-grid_attributes <- read_csv("data/data_processed/village_attributes.csv") %>% 
-  rename(grid=grid_name) %>% 
-  filter(village == "Mandena")
+data_host_dist <- data_host_filtered %>% 
+  select(host_ID) %>% 
+  left_join(data_mammals_full %>% select(host_ID, longitude, latitude), by="host_ID")
 
-grid_attr_pca <- prcomp(grid_attributes[3:10], scale=TRUE)
-# taking the value of pca1
-attr_pca1 <- grid_attr_pca$x[,1]
-grid_attributes %<>% mutate(pca_grid_attr = attr_pca1) %>% 
-  select(grid, pca_grid_attr)
+# calculating distance
+library(geosphere)
+host_dist <- geosphere::distm(data_host_dist[2:3] , fun = distHaversine)
+rownames(host_dist) <- data_host_dist$host_ID
+colnames(host_dist) <- data_host_dist$host_ID
 
-#####################################################
-# PCA for small mammals community
-data_mammals_full <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv")
-
-data_mammals_full_mat <- data_mammals_full %>% 
-  filter(grepl("TMR", animal_id)) %>% 
-  rename(host_species = field_identification, grid = habitat_type) %>% 
-  filter(host_species != "Rattus rattus", grid != "village") %>% 
-  select(host_species, grid) %>% 
-  count(grid, host_species) %>% 
-  spread(host_species, n, fill = 0) 
-
-grid_sm_pca <- prcomp(data_mammals_full_mat[-1], scale=TRUE)
-# taking the value of pca1
-sm_pca1 <- grid_sm_pca$x[,1]
-
-data_mammals_full_mat %<>% mutate(pca_grid_sm = sm_pca1) %>% 
-  select(grid, pca_grid_sm)
-
-
-
+# transforming to long format
+host_dist2 <- host_dist
+host_dist2[upper.tri(host_dist2)] <- NA
+diag(host_dist2) <- NA
+host_distance_m <- melt(host_dist2) %>% 
+  rename(host_ID.x=Var1, host_ID.y=Var2, distance=value) %>% 
+  filter(!(is.na(distance))) 
 
 #####################################################
 # making the full table
+
+final_table <- host_distance_m %>% 
+  left_join(data_host_filtered, by=c("host_ID.x"="host_ID")) %>% 
+  left_join(data_host_filtered, by=c("host_ID.y"="host_ID")) %>% 
+  left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2"))
+
+
+
+
+
+
+
 
 final_table <- data_asv_filtered %>% 
   mutate(link = 1) %>% 
