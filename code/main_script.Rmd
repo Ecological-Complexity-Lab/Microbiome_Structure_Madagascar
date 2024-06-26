@@ -735,7 +735,7 @@ tax_pca <- prcomp(data_tax_mat)
 
 # explained variance
 ex_var <- tax_pca$sdev ^2 
-prop_ex_var <- ex_var/sum(ex_var)
+prop_ex_var <- ex_var/sum(ex_var)*100
 
 loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Genus") %>% 
   mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
@@ -744,9 +744,8 @@ tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>
   left_join(data_tax_meta2, by="sample") 
 
 loading_top <- loadings %>% 
-  slice_max(n = 10, order_by = PC1_abs) %>% 
-  bind_rows(loadings %>% slice_max(n = 10, order_by = PC2_abs)) %>% 
-  ungroup()
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
 
 #plotting
 # library(ggfortify)
@@ -757,10 +756,12 @@ loading_top <- loadings %>%
 tax_scores %>% 
   ggplot(aes(PC1, PC2, color=asv_core)) +
   geom_point() +
-  geom_segment(data = loading_top, aes(x = 0, y = 0, xend = PC1*5, yend = PC2*5), 
-                 arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
+                 arrow = arrow(length = unit(0.15, "cm"))) +
+  annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
+     label = loading_top$Genus, size=3.5, label.size=0.15, label.padding=unit(0.1, "lines")) +
   theme_bw() +
-  labs(x = "X-axis", y = "Y-axis")
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""))
 ```
 
 
