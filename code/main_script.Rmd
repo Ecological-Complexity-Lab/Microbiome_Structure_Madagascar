@@ -104,7 +104,7 @@ for (v in core_names) {
   # finding modules
   modules_observed <- fun_modularity_analysis(data_asv_group)
   modules_table_three_groups <- rbind(modules_table_three_groups, modules_observed)
-  #write_csv(modules_table_three_groups, "../results/modules_table_mandena.csv")
+  #write_csv(modules_table_three_groups, "../results/modules_table_sarahandrano.csv")
   
   # calculating similarity in modules between grids
   modules_similarity <- fun_modules_similarity(modules_observed)
