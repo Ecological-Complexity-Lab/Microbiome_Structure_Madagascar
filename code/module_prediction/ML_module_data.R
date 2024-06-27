@@ -78,10 +78,11 @@ final_table <- host_distance_m %>%
   left_join(data_host_filtered, by=c("host_ID.y"="host_ID")) %>% 
   left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2")) %>% 
   mutate(grid_attr = ifelse(grid.x==grid.y, 0, grid_attr), sm_community = ifelse(grid.x==grid.y, 0, sm_community)) %>% 
+  mutate(elevation = abs(elevation.obs.x-elevation.obs.y)) %>% 
   mutate(module = ifelse(host_group.x==host_group.y, 1, 0)) %>% 
-  select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y)
+  select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y,-elevation.obs.x,-elevation.obs.y)
 
 
 # saving the final table as .csv
-write_csv(final_table, "ML_rattus_mandena_include_degree1.csv")
+write_csv(final_table, "data/data_processed/ML_module/ML_rattus_mandena_core.csv")
 
