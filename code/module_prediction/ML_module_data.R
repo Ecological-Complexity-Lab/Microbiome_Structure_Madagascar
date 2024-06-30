@@ -9,8 +9,10 @@ library(reshape2)
 rm(list=ls())
 
 
+# villages: Andatsakala, Mandena, Sarahandrano
 vil <- "Mandena"
 group <- "Core"
+final_table_three_villages <- NULL
 
 #####################################################
 # reading the data
@@ -83,6 +85,10 @@ final_table <- host_distance_m %>%
   select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y,-elevation.obs.x,-elevation.obs.y)
 
 
+
+# saving table for three villages
+final_table_three_villages <- rbind(final_table_three_villages, final_table)
+
 # saving the final table as .csv
-write_csv(final_table, "data/data_processed/ML_module/ML_rattus_mandena_core.csv")
+write_csv(final_table_three_villages, "data/data_processed/ML_module/ML_rattus_three_villages_core.csv")
 
