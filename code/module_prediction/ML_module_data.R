@@ -91,5 +91,7 @@ final_table <- host_distance_m %>%
 final_table_three_villages <- rbind(final_table_three_villages, final_table)
 
 # saving the final table as .csv
-write_csv(final_table_three_villages, "data/data_processed/ML_module/ML_rattus_three_villages_core.csv")
+write_csv(final_table_three_villages, "data/data_processed/ML_module/ML_rattus_three_villages_rare.csv")
 
+a = read_csv("data/data_processed/ML_module/ML_rattus_three_villages_rare.csv")
+a = a %>% mutate(age_repro.x = ifelse(is.na(age_repro.x), 1, age_repro.x), age_repro.y = ifelse(is.na(age_repro.y), 1, age_repro.y))
