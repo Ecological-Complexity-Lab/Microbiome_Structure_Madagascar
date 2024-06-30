@@ -114,12 +114,12 @@ grid_sum_mat <- grid_sum %>%
   ungroup() %>% 
   select(-village) %>%
   as.matrix() %>% 
-  decostand(method = "standardize")
+  decostand(method = "range")
 
 #write_csv(grid_sum, "data/data_processed/village_attributes.csv")
 
 ## calculating *dis-similarity* between grids
-distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "euclidean"))
+distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray"))
 
 # long format
 # removing duplicated values

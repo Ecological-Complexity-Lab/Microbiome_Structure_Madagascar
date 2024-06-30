@@ -10,7 +10,7 @@ rm(list=ls())
 
 
 # villages: Andatsakala, Mandena, Sarahandrano
-vil <- "Mandena"
+vil <- "Sarahandrano"
 group <- "Rare"
 final_table_three_villages <- NULL
 
@@ -26,7 +26,7 @@ data_mammals_full <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mamm
   mutate(sex = as.factor(sex), age_repro = as.factor(age_repro)) 
 
 # host modules
-data_host <- read_csv("results/modules_table_mandena.csv")
+data_host <- read_csv("results/modules_table_sarahandrano.csv")
 
 host_richness <- data_host %>% 
   group_by(host_ID, asv_core) %>% 
