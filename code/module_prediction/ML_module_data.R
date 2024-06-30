@@ -10,8 +10,8 @@ rm(list=ls())
 
 
 # villages: Andatsakala, Mandena, Sarahandrano
-vil <- "Sarahandrano"
-group <- "Rare"
+vil <- "Andatsakala"
+group <- "Core"
 final_table_three_villages <- NULL
 
 #####################################################
@@ -26,7 +26,7 @@ data_mammals_full <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mamm
   mutate(sex = as.factor(sex), age_repro = as.factor(age_repro)) 
 
 # host modules
-data_host <- read_csv("results/modules_table_sarahandrano.csv")
+data_host <- read_csv("results/modules_table_andatsakala.csv")
 
 host_richness <- data_host %>% 
   group_by(host_ID, asv_core) %>% 
@@ -91,5 +91,5 @@ final_table <- host_distance_m %>%
 final_table_three_villages <- rbind(final_table_three_villages, final_table)
 
 # saving the final table as .csv
-write_csv(final_table_three_villages, "data/data_processed/ML_module/ML_rattus_three_villages_rare.csv")
+write_csv(final_table_three_villages, "data/data_processed/ML_module/ML_rattus_three_villages_core.csv")
 
