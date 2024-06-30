@@ -4,7 +4,7 @@ library(tidyverse)
 library(magrittr)
 library(vegan)
 library(reshape2)
-
+library(geosphere)
 
 rm(list=ls())
 
@@ -45,7 +45,9 @@ data_host_filtered <- data_host %>%
 
 grid_similarity <- read_csv("data/data_processed/village_summary.csv") %>% 
   filter(village == vil) %>% 
-  select(grid1, grid2, grid_attr, sm_community)
+  select(grid1, grid2, grid_attr, sm_community) %>% 
+  mutate(grid_attr = 1-grid_attr, sm_community = 1-sm_community) %>% 
+  mutate(grid_attr = ifelse(is.na(grid_attr), 0, grid_attr))
 
 grid_similarity2 <- grid_similarity %>% rename(grid1=grid2, grid2=grid1)
 grid_similarity <- rbind(grid_similarity, grid_similarity2)
@@ -59,7 +61,6 @@ data_host_dist <- data_host_filtered %>%
   left_join(data_mammals_full %>% select(host_ID, longitude, latitude), by="host_ID")
 
 # calculating distance
-library(geosphere)
 host_dist <- geosphere::distm(data_host_dist[2:3] , fun = distHaversine)
 rownames(host_dist) <- data_host_dist$host_ID
 colnames(host_dist) <- data_host_dist$host_ID
@@ -79,7 +80,7 @@ final_table <- host_distance_m %>%
   left_join(data_host_filtered, by=c("host_ID.x"="host_ID")) %>% 
   left_join(data_host_filtered, by=c("host_ID.y"="host_ID")) %>% 
   left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2")) %>% 
-  mutate(grid_attr = ifelse(grid.x==grid.y, 0, grid_attr), sm_community = ifelse(grid.x==grid.y, 0, sm_community)) %>% 
+  mutate(grid_attr = ifelse(grid.x==grid.y, 1, grid_attr), sm_community = ifelse(grid.x==grid.y, 1, sm_community)) %>% 
   mutate(elevation = abs(elevation.obs.x-elevation.obs.y)) %>% 
   mutate(module = ifelse(host_group.x==host_group.y, 1, 0)) %>% 
   select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y,-elevation.obs.x,-elevation.obs.y)
