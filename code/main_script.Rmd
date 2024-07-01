@@ -628,8 +628,8 @@ library(caret)
 library(yardstick)
 
 # reading the ML results files
-test_set <- read_csv("module_prediction/test_set_rare.csv")
-feature_importance <- read_csv("module_prediction/feature_importance_rare.csv")
+test_set <- read_csv("module_prediction/test_set_non_core.csv")
+feature_importance <- read_csv("module_prediction/feature_importance_non_core.csv")
 
 # setting a threshold for prediction
 th <- 0.5
