@@ -623,25 +623,25 @@ cat('\n','\n')
 
 # Link prediction {.tabset}
 
-```{r, eval=FALSE, include=FALSE}
+```{r, eval=TRUE, include=TRUE}
 library(caret)
 library(yardstick)
 
 # reading the ML results files
-test_set <- read_csv("link_prediction/test_set.csv")
-feature_importance <- read_csv("link_prediction/feature_importance.csv")
+test_set <- read_csv("module_prediction/test_set_rare.csv")
+feature_importance <- read_csv("module_prediction/feature_importance_rare.csv")
 
 # setting a threshold for prediction
 th <- 0.5
 test_set_predict <- test_set %>% 
-  select(y_true, y_proba) %>% 
+  select(module, y_proba) %>% 
   mutate(y_proba_th = ifelse(y_proba >= th, 1, 0)) %>% 
-  mutate(predict = ifelse(y_true == y_proba_th, 1, 0)) %>% 
-  mutate(y_proba_th = factor(y_proba_th, levels = c(1,0)), y_true = factor(y_true, levels = c(1,0)))
+  mutate(predict = ifelse(module == y_proba_th, 1, 0)) %>% 
+  mutate(y_proba_th = factor(y_proba_th, levels = c(1,0)), module = factor(module, levels = c(1,0)))
 
 cat('## Metrics','\n','\n')
 
-conf_matrix <- caret::confusionMatrix(data=test_set_predict$y_proba_th, reference = test_set_predict$y_true, dnn = c("Prediction", "Reference"))
+conf_matrix <- caret::confusionMatrix(data=test_set_predict$y_proba_th, reference = test_set_predict$module, dnn = c("Prediction", "Reference"))
 print(knitr::kable(conf_matrix$table))
 cat('\n','\n')
 
@@ -656,8 +656,8 @@ cat("F1_score: ", round(f1_score, 4), '\n','\n')
 
 cat('## ROC curve','\n','\n')
 
-auc_roc_score <- yardstick::roc_auc(test_set_predict, y_true, y_proba)
-roc_obj <- yardstick::roc_curve(test_set_predict, y_true, y_proba) %>% 
+auc_roc_score <- yardstick::roc_auc(test_set_predict, module, y_proba)
+roc_obj <- yardstick::roc_curve(test_set_predict, module, y_proba) %>% 
   ggplot(aes(x = 1 - specificity, y = sensitivity)) +
   geom_path(color = "blue") +
   geom_abline(lty = 3) +
@@ -670,8 +670,8 @@ cat('\n','\n')
 
 cat('## Precision-Recall curve','\n','\n')
 
-auc_pr_score <- yardstick::pr_auc(test_set_predict, y_true, y_proba)
-pr_obj <- yardstick::pr_curve(test_set_predict, y_true, y_proba) %>% 
+auc_pr_score <- yardstick::pr_auc(test_set_predict, module, y_proba)
+pr_obj <- yardstick::pr_curve(test_set_predict, module, y_proba) %>% 
   ggplot(aes(x = recall, y = precision)) +
   geom_path(color = "blue") +
   coord_equal() +
