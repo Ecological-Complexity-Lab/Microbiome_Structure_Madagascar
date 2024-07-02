@@ -701,7 +701,7 @@ cat('\n','\n')
 
 # Taxonomy
 
-```{r}
+```{r, taxonomy}
 # taking only ASVs with known Genus
 data_tax <- data_asv_tax %>% 
   distinct(host_ID, asv_core, Genus) %>% 
@@ -763,6 +763,64 @@ tax_scores %>%
   theme_bw() +
   scale_fill_manual(values=group.colors) +
   labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""))
+```
+```{r, asv_associations}
+
+# taking only ASVs with known Genus
+data_tax <- data_asv_tax %>% 
+  distinct(host_ID, grid, asv_core, Genus) %>% 
+  filter(!is.na(Genus))
+
+# how many hosts in every grid
+n_grid_host <- data_asv %>% 
+  group_by(grid, asv_core) %>% 
+  summarise(n_host = n_distinct(host_ID))
+
+hosts <- data_asv %>% distinct(host_ID, grid, asv_core)
+
+# loop for 3 groups
+for(i in core_names) {
+  
+# calculating observed prevalence
+data_tax_pre_obs <- data_tax %>% 
+  filter(asv_core == i) %>% 
+  count(Genus, asv_core, grid) %>% 
+  left_join(n_grid_host, by=c("grid","asv_core")) %>% 
+  mutate(prevalence = n/n_host)
+
+summary_shuff <- NULL
+for(n in 1:200) {
+# shuffle hosts' land use
+hosts_shuff <- hosts %>% 
+  filter(asv_core == i) %>% 
+  mutate(grid = sample(grid)) %>% 
+  select(-asv_core)
+
+# calculating shuffeled prevalence
+data_tax_pre_shuff <- data_tax %>% 
+  filter(asv_core == i) %>%
+  select(-grid) %>% 
+  left_join(hosts_shuff, by="host_ID") %>% 
+  count(Genus, asv_core, grid) %>% 
+  left_join(n_grid_host, by=c("grid","asv_core")) %>% 
+  mutate(prevalence = n/n_host)
+
+summary_shuff <- rbind(summary_shuff, data_tax_pre_shuff)
+}
+
+# calculating mean and sd
+results_summary <- summary_shuff %>% 
+  group_by(Genus, grid) %>% 
+  summarise(mean = mean(prevalence), sd = sd(prevalence))
+
+# calculating z-scores and p-values
+summary_z <- data_tax_pre_obs %>% 
+  left_join(results_summary, by=c("Genus","grid")) %>% 
+  mutate(z = (prevalence-mean)/sd) %>% 
+  mutate(p = 2 * pnorm(-abs(z))) %>% 
+  mutate(p_c = p.adjust(p, method = "BH")) %>% 
+  mutate(sig = case_when((z>0 & p_c<0.05) ~ T, .default = F))
+}
 ```
 
 
