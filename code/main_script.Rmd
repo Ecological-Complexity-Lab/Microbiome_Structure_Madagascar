@@ -288,11 +288,11 @@ most_abu_family <- data_asv_tax %>%
                          is.na(p) ~ "Other"))
 
   most_abu_family_p %>% 
-    group_by(asv_core,  p) %>% 
+    group_by(asv_core,grid,  p) %>% 
     summarise(n_p = sum(n_p)) %>% 
-ggplot(aes(fill=p, x=asv_core, y=n_p)) +
+ggplot(aes(fill=p, x=grid, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
-  #facet_wrap(~asv_core) +
+  facet_wrap(~asv_core) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
   labs(x="Land Use", y="Relative abundance")
@@ -789,7 +789,7 @@ data_tax_pre_obs <- data_tax %>%
   mutate(prevalence = n/n_host)
 
 summary_shuff <- NULL
-for(n in 1:200) {
+for(n in 1:500) {
 # shuffle hosts' land use
 hosts_shuff <- hosts %>% 
   filter(asv_core == i) %>% 
