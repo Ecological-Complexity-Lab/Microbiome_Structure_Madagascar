@@ -341,31 +341,60 @@ for (i in 1:3) {
 
 cat('## Modules size','{.tabset}','\n','\n')
 
+library(ggridges)
+g <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  ggplot(aes(x=n, y=asv_core, fill=asv_core)) + 
+  geom_density_ridges(alpha=0.6, stat="binline", bins=50) +
+  theme_ridges() +
+  #scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="Module Size", y="Density")
+print(g)
+cat('\n','\n')
+
 g <- modules_table_three_groups %>% 
   group_by(asv_core, host_group) %>% 
   summarise(n = n_distinct(host_ID)) %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_violin() +
+  geom_boxplot(outliers = FALSE) +
   theme_classic() +
   #scale_y_continuous(limits = c(0, 50)) +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="Module Size")
 print(g)
+cat('\n','\n')
 
 cat('## Modules grid','{.tabset}','\n','\n')
 
 g <- modules_table_three_groups %>% 
   group_by(asv_core, host_group) %>% 
   summarise(n = n_distinct(grid)) %>% 
+  ggplot(aes(x=n, y=asv_core, fill=asv_core)) + 
+  geom_density_ridges(alpha=0.6, stat="binline", bins=7) +
+  theme_ridges() +
+  #scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="No. of Land Uses", y="Density")
+print(g)
+cat('\n','\n')
+
+g <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(grid)) %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_violin() +
+  geom_boxplot() +
   theme_classic() +
   #scale_y_continuous(limits = c(0, 50)) +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="No. of Land uses")
+  labs(x="ASV Group", y="No. of Land Uses")
 print(g)
+cat('\n','\n')
 
 ```
 
