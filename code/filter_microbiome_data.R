@@ -112,7 +112,7 @@ asv_occur_village %>%
 # finding the best filter
 asv_unique <- NULL
 for (i in seq(0,1, by=0.01)) {
-  asv_unique_i <- asv_occur_village %>% 
+  asv_unique_i <- dat4 %>% 
     filter(host_p>i) %>% 
     group_by(village) %>% 
     summarise(asv_n = n_distinct(asv_ID)) %>% 
@@ -126,6 +126,7 @@ asv_unique %>%
   geom_line() +
   geom_point() +
   facet_wrap(~village) +
+  geom_vline(xintercept=c(0.02,0.2), linetype='dashed', color="black") +
   #scale_y_continuous(limits = c(0, 0.35)) +
   #scale_x_continuous(limits = c(0, 20)) +
   theme_bw() +
