@@ -396,6 +396,18 @@ g <- modules_table_three_groups %>%
 print(g)
 cat('\n','\n')
 
+g <- modules_table_three_groups %>% 
+  group_by(asv_core, grid) %>% 
+  summarise(n = n_distinct(host_group)) %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_boxplot() +
+  theme_classic() +
+  #scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="No. of Modules per Land Use")
+print(g)
+cat('\n','\n')
 ```
 
 ```{r, groups_modules, eval=FALSE, include=FALSE}
