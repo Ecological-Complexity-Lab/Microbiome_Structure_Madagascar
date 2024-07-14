@@ -541,6 +541,7 @@ g <- assembly_summary %>%
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
   labs(x="", y="Percentage")
 print(g)
+
 ```
 
 
@@ -941,5 +942,22 @@ summary_z <- data_tax_pre_obs %>%
 }
 ```
 
+```{r, prediction}
+library(caret)
+library(yardstick)
+library(randomForest)
+
+# taking only ASVs with known Genus
+data_tax <- data_asv_tax %>% 
+  distinct(host_ID, Genus) %>% 
+  filter(!is.na(Genus))
+
+# transforming to matrix
+data_tax_mat <- data_tax %>% 
+  mutate(n=1) %>% 
+  spread(Genus, n, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
+```
 
 
