@@ -848,6 +848,9 @@ data_tax_mat <- data_tax_meta %>%
   column_to_rownames("sample") %>% 
   as.matrix()
 
+# Perform PERMANOVA
+permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, permutations = 999)
+permanova_result
 
 # PCA
 tax_pca <- prcomp(data_tax_mat)
@@ -883,6 +886,7 @@ tax_scores %>%
   scale_fill_manual(values=group.colors) +
   labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""))
 ```
+
 ```{r, asv_associations, eval=FALSE, include=FALSE}
 
 # taking only ASVs with known Genus
@@ -962,7 +966,7 @@ data_tax_mat <- data_tax %>%
 
 ```{r}
 data_asv_mat <- data_asv %>% 
-  filter(asv_core == "Rare") %>% 
+  filter(asv_core == "Non_core") %>% 
   select(host_ID, asv_ID, reads) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
   column_to_rownames("host_ID") %>% 
@@ -976,32 +980,33 @@ hosts <- small_mammals %>%
 distance_matrix <- vegdist(data_asv_mat, method = "bray")
 
 # Perform PERMANOVA
-permanova_result <- adonis2(distance_matrix ~ grid+season+mass+sex+age_dental+elevation.obs, data = hosts, permutations = 999)
+permanova_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
+permanova_result
 
 # PERMANOVA post-hoc
-beta_post_jaccard <- RVAideMemoire::pairwise.perm.manova(dist_jaccard, fact = dat_beta$grid, 
+perm_post_grid <- RVAideMemoire::pairwise.perm.manova(distance_matrix, fact = hosts$grid, 
     test = "bonferroni", nperm = 999, progress = FALSE)$p.value %>% as.data.frame()
-print(knitr::kable(beta_post_jaccard))
-cat('\n')
-# Tukey test to check pairwise dispersion comparisons
-disp_tuk_jaccard <- TukeyHSD(disp_jaccard)$group %>% as.data.frame() %>% dplyr::select("p adj")
-print(knitr::kable(disp_tuk_jaccard))
+print(knitr::kable(perm_post_grid))
 cat('\n')
 
 #NMDS
 nmds_result <- metaMDS(distance_matrix, distance = "bray", k = 2, trace = F)
+
+
 # plotting
-NMDS1<-nmds_result$points[,1]
-NMDS2<-nmds_result$points[,2]
-nmds_plot <- cbind(hosts, NMDS1, NMDS2)
+nmds_plot <- nmds_result$points %>% 
+  as.data.frame() %>%  
+  rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
+  left_join(hosts, by="host_ID")
 
 # plotting
 g <- nmds_plot %>% 
-  ggplot( aes(NMDS1, NMDS2, color=grid)) +
-  geom_point(position=position_jitter(.1)) +
+  ggplot( aes(MDS1, MDS2, color=grid)) +
+  geom_point(position=position_jitter(.01)) +
   #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
-  theme_minimal() +
-  annotate("text", x=0, y=max(abs(NMDS2)), label=paste('Stress =',round(nmds_result$stress,3))) # adding stress
+  theme_bw() +
+  annotate("text", x=0, y=max(abs(nmds_plot$MDS2)), label=paste('Stress =',round(nmds_result$stress,3))) # adding stress
 print(g)
 cat('\n')
 
