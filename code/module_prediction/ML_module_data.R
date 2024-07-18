@@ -10,7 +10,7 @@ rm(list=ls())
 
 
 # villages: Andatsakala, Mandena, Sarahandrano
-vil <- "Mandena"
+vil <- "Sarahandrano"
 group <- "Rare"
 final_table_three_villages <- NULL
 
@@ -22,22 +22,30 @@ data_mammals_full <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mamm
  mutate(host_ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", animal_id))) 
 
  data_mammals <- data_mammals_full %>% 
-   select(host_ID, elevation.obs, sex, mass, age_repro) %>% 
-  mutate(sex = as.factor(sex), age_repro = as.factor(age_repro)) 
+   select(host_ID, elevation.obs, sex, mass, age_repro, month) %>% 
+  mutate(sex = as.factor(sex)) 
 
 # host modules
-data_host <- read_csv("results/modules_table_mandena.csv")
+data_host <- read_csv("results/modules_table_sarahandrano.csv") %>% 
+  filter(asv_core == group)
+
+# filtering modules of size 1
+module_size <- data_host %>% 
+  group_by(host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  filter(n > 1)
 
 host_richness <- data_host %>% 
-  group_by(host_ID, asv_core) %>% 
+  group_by(host_ID) %>% 
   summarise(richness = n_distinct(asv_ID))
 
 data_host_filtered <- data_host %>% 
-  filter(asv_core == group) %>% 
+  filter(host_group %in% module_size$host_group) %>%
   distinct(host_ID, grid, season, host_group, asv_core) %>% 
   left_join(data_mammals, by="host_ID") %>% 
-  left_join(host_richness, by=c("asv_core","host_ID")) %>% 
-  mutate(season = factor(season))
+  left_join(host_richness, by="host_ID") %>% 
+  mutate(season = factor(season)) %>% 
+  mutate(age_repro = ifelse(is.na(age_repro), 1, age_repro))
 
 
 #####################################################
@@ -49,7 +57,7 @@ grid_similarity <- read_csv("data/data_processed/village_summary.csv") %>%
   mutate(grid_attr = 1-grid_attr, sm_community = 1-sm_community) %>% 
   mutate(grid_attr = ifelse(is.na(grid_attr), 0, grid_attr))
 
-grid_similarity2 <- grid_similarity %>% rename(grid1=grid2, grid2=grid1)
+grid_similarity2 <- grid_similarity %>% dplyr::rename(grid1=grid2, grid2=grid1)
 grid_similarity <- rbind(grid_similarity, grid_similarity2)
 
 
@@ -70,7 +78,7 @@ host_dist2 <- host_dist
 host_dist2[upper.tri(host_dist2)] <- NA
 diag(host_dist2) <- NA
 host_distance_m <- melt(host_dist2) %>% 
-  rename(host_ID.x=Var1, host_ID.y=Var2, distance=value) %>% 
+  dplyr::rename(host_ID.x=Var1, host_ID.y=Var2, distance=value) %>% 
   filter(!(is.na(distance))) 
 
 #####################################################
@@ -82,8 +90,15 @@ final_table <- host_distance_m %>%
   left_join(grid_similarity %>% select(grid1,grid2,grid_attr,sm_community), by=c("grid.x"="grid1", "grid.y"="grid2")) %>% 
   mutate(grid_attr = ifelse(grid.x==grid.y, 1, grid_attr), sm_community = ifelse(grid.x==grid.y, 1, sm_community)) %>% 
   mutate(elevation = abs(elevation.obs.x-elevation.obs.y)) %>% 
+  mutate(month = abs(month.x-month.y)) %>%
+  mutate(richness = abs(richness.x-richness.y)) %>%
+  mutate(mass = abs(mass.x-mass.y)) %>%
+  mutate(age = abs(age_repro.x-age_repro.y)) %>%
+  mutate(grid = ifelse(grid.x==grid.y, 1, 0)) %>%
+  mutate(season = ifelse(season.x==season.y, 1, 0)) %>%
+  mutate(sex = ifelse(sex.x==sex.y, 1, 0)) %>%
   mutate(module = ifelse(host_group.x==host_group.y, 1, 0)) %>% 
-  select(-host_ID.x,-host_ID.y,-grid.x,-grid.y, -asv_core.x,-asv_core.y,-host_group.x,-host_group.y,-elevation.obs.x,-elevation.obs.y)
+  select(host_ID.x,host_ID.y,module,grid,grid_attr,sm_community,elevation,season,month,sex,mass,age,distance,richness)
 
 
 # saving table for three villages
