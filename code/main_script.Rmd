@@ -56,7 +56,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 core_th <- c(0.02, 0.2)
 data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                           host_p>core_th[2] ~ "Core",
-                                          .default = "Non_core"))
+                                          .default = "Non-core"))
 
 # # updating reads per core group
 # reads_new <- data_asv %>% 
@@ -68,7 +68,7 @@ data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
 #   left_join(reads_new, by=c("host_ID","asv_core")) %>% 
 #   mutate(reads = reads/total_reads)
 
-group.colors <- c(Core = "#f4a261", Non_core = "#2b9348", Rare = "#0077b6")
+group.colors <- c(Core = "#f4a261", Non-core = "#2b9348", Rare = "#0077b6")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv$asv_core)
@@ -458,14 +458,12 @@ cat('\n')
   geom_jitter(color="black", size=1) +
   theme_classic() +
   #scale_y_continuous(limits = c(0, 145)) +
-  scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
-  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
-              annotations = c("***","***","ns"),  y_position = c(125,130,30), tip_length = 0) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  #scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
+  geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
+              annotations = c("***","***","ns"),  y_position = c(90,100,80), tip_length = 0) +
+  theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="Module Size")
-print(g1)
-cat('\n','\n')
+  labs(x="ASV Group", y="Module Size", title = "(A)")
 ```
 
 ## Modules No. of Grids
@@ -507,13 +505,11 @@ cat('\n')
   geom_jitter(color="black", size=1) +
   theme_classic() +
   scale_y_continuous(limits = c(0, 9), breaks = seq(0,8,by=2)) +
-  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
+  geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
               annotations = c("***","***","ns"),  y_position = c(7.7,8.5,7), tip_length = 0) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="No. of Land Uses")
-print(g2)
-cat('\n','\n')
+  labs(x="ASV Group", y="No. of Land Uses", title = "(B)")
 ```
 
 ## No. of Modules
@@ -552,16 +548,19 @@ cat('\n')
   g3 <- modules_per_grid %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
   geom_boxplot(outliers = FALSE, alpha = 0.8) +
-  geom_jitter(color="black", size=2) +
+  geom_jitter(color="black", size=1) +
   theme_classic() +
   scale_y_continuous(limits = c(0, 60)) +
-  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
+  geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
               annotations = c("***","***","ns"),  y_position = c(45,55,50), tip_length = 0) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="No. of Modules per Land Use")
-print(g3)
-cat('\n','\n')
+  labs(x="ASV Group", y="No. of Modules per Land Use", title = "(C)")
+```
+
+```{r, modules_exploration}
+# plotting
+g1+g2+g3 + plot_layout(axis_titles = "collect_x")
 ```
 
 
@@ -693,7 +692,8 @@ g <- assembly_summary %>%
   geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
             position = position_stack(vjust = 0.5), size = 3)+
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        panel.grid = element_blank(), panel.border = element_rect(colour = "black", size=1)) +
   scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
   labs(x="", y="Percentage")
 print(g)
@@ -1045,6 +1045,7 @@ g1 <- tax_scores %>%
   annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
      label = loading_top$Genus, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
   theme_bw() +
+  theme(panel.border = element_rect(colour = "black", size=1))+
   scale_fill_manual(values=group.colors) +
   labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
        title = "(A) Genus", color = "ASV Group")
@@ -1120,6 +1121,7 @@ g2 <- tax_scores %>%
      label = loading_top$Family, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
   scale_x_continuous(limits = c(-2, 2.7)) +
   theme_bw() +
+  theme(panel.border = element_rect(colour = "black", size=1))+
   scale_fill_manual(values=group.colors) +
   labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
        title = "(B) Family", color = "ASV Group")
