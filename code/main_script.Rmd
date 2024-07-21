@@ -421,21 +421,146 @@ cat('\n','\n')
 library(ggsignif)
 library(ggbreak)
 
-g1 <- modules_table_three_groups %>% 
+modules_sizes <- modules_table_three_groups %>% 
   group_by(asv_core, host_group) %>% 
-  summarise(n = n_distinct(host_ID)) %>% 
+  summarise(n = n_distinct(host_ID)) 
+
+# summary
+cat('Summary','\n')
+modules_size_summary <- modules_sizes %>% 
+  group_by(asv_core) %>% 
+  summarise(mean = mean(n), sd = sd(n))
+print(knitr::kable(modules_size_summary))
+cat('\n')
+# ANOVA between groups
+cat('ANOVA','\n')
+anova_result <- aov(n ~ asv_core, data = modules_sizes)
+print(paste("F =", summary(anova_result)[[1]][["F value"]][1]))
+cat('\n')
+print(paste("p-value =", summary(anova_result)[[1]][["Pr(>F)"]][1]))
+cat('\n')
+
+# Perform Tukey's HSD post hoc test
+cat('Tukey post-hoc','\n')
+tukey_result <- TukeyHSD(anova_result)
+# Extract the test statistics (q values) from the Tukey HSD results
+tukey_q <- tukey_result$asv_core[, "diff"] / tukey_result$asv_core[, "lwr"]
+tukey_result <- cbind(tukey_result$asv_core, q_value = tukey_q) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("comp")
+print(knitr::kable(tukey_result))
+cat('\n')
+ 
+
+  g1 <- modules_sizes %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
   geom_boxplot(outliers = FALSE, alpha = 0.8) +
   geom_jitter(color="black", size=1) +
   theme_classic() +
   #scale_y_continuous(limits = c(0, 145)) +
   scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
-  geom_signif(comparisons = list(c("Core", "Non_core")), test = "t.test",
-              map_signif_level=TRUE) +
+  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
+              annotations = c("***","***","ns"),  y_position = c(125,130,30), tip_length = 0) +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="Module Size")
 print(g1)
+cat('\n','\n')
+```
+
+## Modules No. of Grids
+
+```{r}
+modules_grids <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(grid)) 
+
+# summary
+cat('Summary','\n')
+modules_grids_summary <- modules_grids %>% 
+  group_by(asv_core) %>% 
+  summarise(mean = mean(n), sd = sd(n))
+print(knitr::kable(modules_grids_summary))
+cat('\n')
+# ANOVA between groups
+cat('ANOVA','\n')
+anova_result <- aov(n ~ asv_core, data = modules_grids)
+print(paste("F =", summary(anova_result)[[1]][["F value"]][1]))
+cat('\n')
+print(paste("p-value =", summary(anova_result)[[1]][["Pr(>F)"]][1]))
+cat('\n')
+
+# Perform Tukey's HSD post hoc test
+cat('Tukey post-hoc','\n')
+tukey_result <- TukeyHSD(anova_result)
+# Extract the test statistics (q values) from the Tukey HSD results
+tukey_q <- tukey_result$asv_core[, "diff"] / tukey_result$asv_core[, "lwr"]
+tukey_result <- cbind(tukey_result$asv_core, q_value = tukey_q) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("comp")
+print(knitr::kable(tukey_result))
+cat('\n')
+
+  g2 <- modules_grids %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_jitter(color="black", size=1) +
+  theme_classic() +
+  scale_y_continuous(limits = c(0, 9), breaks = seq(0,8,by=2)) +
+  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
+              annotations = c("***","***","ns"),  y_position = c(7.7,8.5,7), tip_length = 0) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="No. of Land Uses")
+print(g2)
+cat('\n','\n')
+```
+
+## No. of Modules
+
+```{r}
+modules_per_grid <- modules_table_three_groups %>% 
+  group_by(asv_core, grid) %>% 
+  summarise(n = n_distinct(host_group)) 
+
+# summary
+cat('Summary','\n')
+modules_per_grid_summary <- modules_per_grid %>% 
+  group_by(asv_core) %>% 
+  summarise(mean = mean(n), sd = sd(n))
+print(knitr::kable(modules_per_grid_summary))
+cat('\n')
+# ANOVA between groups
+cat('ANOVA','\n')
+anova_result <- aov(n ~ asv_core, data = modules_per_grid)
+print(paste("F =", summary(anova_result)[[1]][["F value"]][1]))
+cat('\n')
+print(paste("p-value =", summary(anova_result)[[1]][["Pr(>F)"]][1]))
+cat('\n')
+
+# Perform Tukey's HSD post hoc test
+cat('Tukey post-hoc','\n')
+tukey_result <- TukeyHSD(anova_result)
+# Extract the test statistics (q values) from the Tukey HSD results
+tukey_q <- tukey_result$asv_core[, "diff"] / tukey_result$asv_core[, "lwr"]
+tukey_result <- cbind(tukey_result$asv_core, q_value = tukey_q) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("comp")
+print(knitr::kable(tukey_result))
+cat('\n')
+
+  g3 <- modules_per_grid %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_jitter(color="black", size=2) +
+  theme_classic() +
+  scale_y_continuous(limits = c(0, 60)) +
+  geom_signif(comparisons = list(c("Core", "Non_core"),c("Core", "Rare"),c("Non_core", "Rare")), 
+              annotations = c("***","***","ns"),  y_position = c(45,55,50), tip_length = 0) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="No. of Modules per Land Use")
+print(g3)
 cat('\n','\n')
 ```
 
