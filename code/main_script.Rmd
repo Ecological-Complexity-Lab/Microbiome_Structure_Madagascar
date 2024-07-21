@@ -68,7 +68,8 @@ data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
 #   left_join(reads_new, by=c("host_ID","asv_core")) %>% 
 #   mutate(reads = reads/total_reads)
 
-group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
+group.colors <- c(Core = "#f4a261", Non_core = "#2b9348", Rare = "#0077b6")
+#group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv$asv_core)
 nmi_observed_three_groups <- NULL
@@ -304,6 +305,7 @@ print(most_abu_family)
 
 
 ```{r, network_exploration}
+
 # loop for three groups
 for (i in 1:3) {
   
@@ -359,9 +361,11 @@ g <- modules_table_three_groups %>%
   group_by(asv_core, host_group) %>% 
   summarise(n = n_distinct(host_ID)) %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot(outliers = FALSE) +
+  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_jitter(color="black", size=1) +
   theme_classic() +
-  #scale_y_continuous(limits = c(0, 50)) +
+  scale_y_continuous(limits = c(0, 145)) +
+  scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="Module Size")
@@ -409,6 +413,32 @@ g <- modules_table_three_groups %>%
 print(g)
 cat('\n','\n')
 ```
+# Modular Structure Exploration {.tabset}
+
+## Modules size
+
+```{r}
+library(ggsignif)
+library(ggbreak)
+
+g1 <- modules_table_three_groups %>% 
+  group_by(asv_core, host_group) %>% 
+  summarise(n = n_distinct(host_ID)) %>% 
+  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
+  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_jitter(color="black", size=1) +
+  theme_classic() +
+  #scale_y_continuous(limits = c(0, 145)) +
+  scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
+  geom_signif(comparisons = list(c("Core", "Non_core")), test = "t.test",
+              map_signif_level=TRUE) +
+  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
+  scale_fill_manual(values=group.colors) +
+  labs(x="ASV Group", y="Module Size")
+print(g1)
+cat('\n','\n')
+```
+
 
 ```{r, groups_modules, eval=FALSE, include=FALSE}
 host_module_partners <- function(dat, hosts) {
@@ -539,6 +569,7 @@ g <- assembly_summary %>%
             position = position_stack(vjust = 0.5), size = 3)+
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
+  scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
   labs(x="", y="Percentage")
 print(g)
 
@@ -818,7 +849,9 @@ print(feature_imp_g)
 cat('\n','\n')
 ```
 
-# Taxonomy Genus
+# Taxonomy {.tabset}
+
+## Genus
 
 ```{r, taxonomy_genus}
 # taking only ASVs with known Genus
@@ -879,17 +912,102 @@ loading_top <- loadings %>%
   slice_max(n = 5, order_by = PC1_abs) %>% 
   bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
 
-tax_scores %>% 
+g1 <- tax_scores %>% 
   ggplot(aes(PC1, PC2, color=asv_core)) +
   geom_point() +
   geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
                  arrow = arrow(length = unit(0.15, "cm"))) +
   annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
-     label = loading_top$Genus, size=3.5, label.size=0.15, label.padding=unit(0.1, "lines")) +
+     label = loading_top$Genus, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
   theme_bw() +
   scale_fill_manual(values=group.colors) +
-  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), color = "ASV Group")
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
+       title = "(A) Genus", color = "ASV Group")
 ```
+
+## Family
+
+```{r, taxonomy_family}
+# taking only ASVs with known Family
+data_tax <- data_asv_tax %>% 
+  distinct(host_ID, asv_core, Family) %>% 
+  filter(!is.na(Family))
+
+# known ASVs
+asv_genus <- data_asv_tax %>% 
+  distinct(asv_ID, Family) %>%
+  mutate(name = is.na(Family)) 
+  print(paste("Percentege of known ASVs:", round(table(asv_genus$name)[1]/nrow(asv_genus)*100, 2)))
+  cat('\n')
+# how many Family?
+print(paste("Number of families:", length(unique(data_tax$Family))))
+cat('\n')
+
+# making unique samples (host_ID+asv_core)
+data_tax_meta <- data_tax %>% 
+  arrange(host_ID) %>% 
+  unite(col="sample", host_ID:asv_core, remove = FALSE)
+  
+data_tax_meta2 <- data_tax_meta %>% distinct(sample, asv_core) 
+
+data_tax_summary <- data_tax %>% 
+  count(asv_core, Family) %>% 
+  spread(Family, n, fill = 0)
+
+# transforming to matrix
+data_tax_mat <- data_tax_meta %>% 
+  select(sample, Family) %>% 
+  mutate(n=1) %>% 
+  spread(Family, n, fill = 0) %>% 
+  column_to_rownames("sample") %>% 
+  as.matrix()
+
+# Perform PERMANOVA
+permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, method = "jaccard", permutations = 999)
+print(paste("F =", permanova_result$F[1]))
+cat('\n')
+print(paste("p-value =", permanova_result$`Pr(>F)`[1]))
+cat('\n')
+
+# PCA
+tax_pca <- prcomp(data_tax_mat)
+
+# explained variance
+ex_var <- tax_pca$sdev ^2 
+prop_ex_var <- ex_var/sum(ex_var)*100
+
+loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Family") %>% 
+  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
+
+tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>% 
+  left_join(data_tax_meta2, by="sample") 
+
+loading_top <- loadings %>% 
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
+
+g2 <- tax_scores %>% 
+  ggplot(aes(PC1, PC2, color=asv_core)) +
+  geom_point() +
+  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*4, yend = PC2*4), 
+                 arrow = arrow(length = unit(0.15, "cm"))) +
+  annotate("label", x = (loading_top$PC1*4), y = (loading_top$PC2*4),
+     label = loading_top$Family, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
+  scale_x_continuous(limits = c(-2, 2.7)) +
+  theme_bw() +
+  scale_fill_manual(values=group.colors) +
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
+       title = "(B) Family", color = "ASV Group")
+```
+## Figure
+
+```{r, taxonomy}
+# plotting
+g1 + g2 + plot_layout(guides='collect') &
+  theme(legend.position='bottom')
+cat('\n','\n')
+```
+
 
 ```{r, asv_associations, eval=FALSE, include=FALSE}
 
