@@ -248,9 +248,9 @@ ggplot(aes(fill=p, x=grid, y=n_p)) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), legend.key.size = unit(0.5, "cm")) +
   scale_fill_manual(values=colors) +
-  labs(x="Land Use", y="Relative Abundance")
+  labs(x="Land Use", y="Relative Abundance", fill = "Family")
 print(g)
 cat('\n','\n')
 ```
@@ -350,7 +350,7 @@ g2 <- nmds_plot2 %>%
 ```{r, permanova}
 # plotting
 g1 + g2 + plot_layout(guides='collect') &
-  theme(legend.position='bottom')
+  theme(legend.position='bottom', legend.spacing.x=unit(0.1, 'cm'))
 cat('\n','\n')
 ```
 
