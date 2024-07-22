@@ -28,5 +28,7 @@ ape
 nlme
 picante
 patchwork
-ggridges
+RColorBrewer
+GUniFrac
+ggsignif
 psych

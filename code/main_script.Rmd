@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Analysis and results"
 author: "Matan Markfeld"
-date: "Last edit: 2024-06-09"
+date: "Last edit: 2024-07-22"
 output: 
   html_document:
     toc: true
@@ -346,6 +346,7 @@ g2 <- nmds_plot2 %>%
 
 ```
 
+## Figure 
 ```{r, permanova}
 # plotting
 g1 + g2 + plot_layout(guides='collect') &
@@ -703,6 +704,8 @@ cat('\n')
   labs(x="ASV Group", y="No. of Modules per Land Use", title = "(C)")
 ```
 
+## Figure
+
 ```{r, modules_exploration}
 # plotting
 g1+g2+g3 + plot_layout(axis_titles = "collect_x")
@@ -975,8 +978,6 @@ print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  
 cat('\n','\n')
 ```
 
-
-
 ## Mantel test
 
 ```{r, mantel_test}
@@ -1041,7 +1042,7 @@ print(g)
 cat('\n','\n')
 ```
 
-# Link prediction {.tabset}
+# Link prediction 
 
 ```{r, eval=FALSE, include=FALSE}
 library(caret)
@@ -1178,7 +1179,7 @@ summary_z <- data_tax_pre_obs %>%
 }
 ```
 
-```{r, prediction eval=FALSE, include=FALSE}
+```{r, prediction, eval=FALSE, include=FALSE}
 library(caret)
 library(yardstick)
 library(randomForest)
