@@ -58,17 +58,7 @@ data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                           host_p>core_th[2] ~ "Core",
                                           .default = "Non-core"))
 
-# # updating reads per core group
-# reads_new <- data_asv %>% 
-#   group_by(host_ID, asv_core) %>% 
-#   summarise(total_reads = sum(reads*total_reads))
-# 
-# data_asv2 = data_asv %>%  mutate(reads = reads*total_reads) %>% 
-#   select(-total_reads) %>% 
-#   left_join(reads_new, by=c("host_ID","asv_core")) %>% 
-#   mutate(reads = reads/total_reads)
-
-group.colors <- c(Core = "#f4a261", Non-core = "#2b9348", Rare = "#0077b6")
+group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv$asv_core)
@@ -211,15 +201,8 @@ g <- small_mammals %>%
 print(g)
 ```
 
-
 ```{r, microbiome exploration}
-
-# relative abundance
-s <- data_asv %>% 
-  group_by(village, asv_ID) %>% 
-  summarise(n=mean(reads)) %>% 
-  group_by(village) %>% 
-  summarise(mean=mean(n), median=median(n), sd=sd(n), max=max(n))
+# relative abundance of the 10 most abundant Family of each group
 
 # microbes taxonomy
 tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
@@ -228,49 +211,11 @@ tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>%
 data_asv_tax <- data_asv %>% 
   left_join(tax, by="asv_ID")
 
-tax_uni <- tax %>% filter(asv_ID %in% unique(data_asv$asv_ID)) %>% 
-  count(Phylum,Genus)
-no_na <- tax_uni %>% 
-  mutate(na = is.na(Genus)) %>% 
-  group_by(na) %>% 
-  summarise(n = sum(n))
-
-
-cat("## Relative abundance", '\n','\n')
-total_reads_groups_grid <- data_asv_tax %>% mutate(reads_a = reads*total_reads) %>%  group_by(asv_core, grid) %>% summarise(n_total = sum(reads_a))
-g <- data_asv_tax %>% 
-  mutate(reads_a = reads*total_reads) %>% 
-  group_by(asv_core, grid, Phylum) %>% 
-  summarise(n= sum(reads_a)) %>% 
-  left_join(total_reads_groups_grid, by=c("asv_core","grid")) %>% 
-  mutate(n_p = n/n_total) %>% 
-  ggplot(aes(fill=Phylum, x=grid, y=n_p)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~asv_core) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Relative abundance")
-print(g)
-
-cat("## No. of species", '\n','\n')
-g <- data_asv_tax %>% 
-  count(asv_core, grid, asv_ID, Phylum) %>%
-  group_by(asv_core, grid, Phylum) %>% 
-  summarise(n_asv= n_distinct(asv_ID)) %>% 
-  ggplot(aes(fill=Phylum, x=grid, y=n_asv)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_wrap(~asv_core) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Proportion No. of ASVs")
-print(g)
-
-
 cat("## Relative abundance Family", '\n','\n')
 total_reads_groups <- data_asv_tax %>% distinct(host_ID, asv_core, total_reads) %>% group_by(asv_core) %>% summarise(n_total = sum(total_reads))
 most_abu_family <- data_asv_tax %>%
   mutate(reads_a = reads*total_reads) %>%
-  group_by(asv_core, Family, grid) %>%
+  group_by(asv_core, Family) %>%
   summarise(n= sum(reads_a)) %>%
   left_join(total_reads_groups, by="asv_core") %>%
   mutate(n_p = n/n_total) 
@@ -278,31 +223,299 @@ most_abu_family <- data_asv_tax %>%
   most_abu_family_8 <- most_abu_family %>% 
     filter(!is.na(Family)) %>% 
     ungroup() %>% 
-    slice_max(by = asv_core, order_by = n_p, n = 8) %>% 
+    slice_max(by = asv_core, order_by = n_p, n = 10) %>% 
     mutate(p = "top") %>% 
     select(asv_core, Family, p)
   
-  most_abu_family_p <- most_abu_family %>% 
+  most_abu_family_p <- data_asv_tax %>%
+  mutate(reads_a = reads*total_reads) %>%
+  group_by(asv_core, Family, grid) %>%
+  summarise(n= sum(reads_a)) %>%
+  left_join(total_reads_groups, by="asv_core") %>%
+  mutate(n_p = n/n_total) %>% 
     left_join(most_abu_family_8, by=c("asv_core","Family")) %>% 
     mutate(p = case_when(p=="top" ~ Family,
-                         is.na(Family) ~ "NA",
-                         is.na(p) ~ "Other"))
-
-  most_abu_family_p %>% 
+                         is.na(Family) ~ ".NA",
+                         is.na(p) ~ ".Other"))
+library("RColorBrewer")
+colors <- c("grey40","grey80","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
+  g <- most_abu_family_p %>% 
     group_by(asv_core,grid,  p) %>% 
     summarise(n_p = sum(n_p)) %>% 
 ggplot(aes(fill=p, x=grid, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~asv_core) +
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14)) +
-  labs(x="Land Use", y="Relative abundance")
-print(most_abu_family)
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+  scale_fill_manual(values=colors) +
+  labs(x="Land Use", y="Relative Abundance")
+print(g)
+cat('\n','\n')
 ```
 
+# PERMANOVA {.tabset}
+
+## Bray-Curtis
+```{r}
+set.seed(123)
+data_asv_mat <- data_asv %>% 
+  #filter(asv_core == "Rare") %>% 
+  select(host_ID, asv_ID, reads) %>% 
+  spread(asv_ID, reads, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
+
+hosts <- small_mammals %>% 
+  filter(host_ID %in% rownames(data_asv_mat)) %>% 
+  select(host_ID,grid,season,month,mass, sex,age_repro,age_dental,elevation.obs) %>% 
+  mutate(grid=as.factor(grid), season=as.factor(season),month=as.factor(month), sex=as.factor(sex), age_dental=as.factor(age_dental))
+
+distance_matrix <- vegdist(data_asv_mat, method = "bray")
+
+# Perform PERMANOVA
+permanova_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
+print(knitr::kable(permanova_result[,4:5]))
+cat('\n')
+
+# PERMANOVA post-hoc
+# perm_post_grid <- RVAideMemoire::pairwise.perm.manova(distance_matrix, fact = hosts$grid, 
+#     test = "bonferroni", nperm = 999, progress = FALSE)$p.value %>% as.data.frame()
+# print(knitr::kable(perm_post_grid))
+# cat('\n')
+
+#NMDS
+nmds_result <- metaMDS(distance_matrix, distance = "bray", k = 2, trace = F)
+
+# preparing data for plotting
+nmds_plot <- nmds_result$points %>% 
+  as.data.frame() %>%  
+  rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
+  left_join(hosts, by="host_ID")
+
+# plotting
+g1 <- nmds_plot %>% 
+  ggplot( aes(MDS1, MDS2, color=grid, shape=season)) +
+  geom_point(size = 2, position=position_jitter(.01)) +
+  #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
+  theme_bw() +
+  annotate("text", x=min(nmds_plot$MDS1)+0.04, size=3, y=max(nmds_plot$MDS2), label=paste('Stress =',round(nmds_result$stress,3))) +
+  labs(x = "NMDS1", y = "NMDS2", title = "(A) Bray-Curtis")
+
+```
+
+## UniFrac
+```{r}
+set.seed(123)
+library(GUniFrac)
+
+rooted_phylo_tree <- phangorn::midpoint(phylo_tree)
+distance_matrix <- GUniFrac(data_asv_mat, rooted_phylo_tree, verbose = F)$unifracs[, , "d_UW"]
+
+# Perform weighted UniFrac
+unifrac_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
+print(knitr::kable(unifrac_result[,4:5]))
+cat('\n')
+
+# PERMANOVA post-hoc
+# perm_post_grid <- RVAideMemoire::pairwise.perm.manova(distance_matrix, fact = hosts$grid, 
+#     test = "bonferroni", nperm = 999, progress = FALSE)$p.value %>% as.data.frame()
+# print(knitr::kable(perm_post_grid))
+# cat('\n')
+
+#NMDS
+nmds_result2 <- metaMDS(distance_matrix, k = 2, trace = F)
+
+# preparing data for plotting
+nmds_plot2 <- nmds_result2$points %>% 
+  as.data.frame() %>%  
+  rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
+  left_join(hosts, by="host_ID")
+
+# plotting
+g2 <- nmds_plot2 %>% 
+  ggplot( aes(MDS1, MDS2, color=grid, shape=season)) +
+  geom_point(size = 2, position=position_jitter(.05)) +
+  #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
+  theme_bw() +
+  annotate("text", x=min(nmds_plot2$MDS1)+0.15, size=3, y=max(nmds_plot2$MDS2), label=paste('Stress =',round(nmds_result2$stress,3))) +
+  labs(x = "NMDS1", y = "NMDS2", title = "(B) Weighted UniFrac")
+
+```
+
+```{r, permanova}
+# plotting
+g1 + g2 + plot_layout(guides='collect') &
+  theme(legend.position='bottom')
+cat('\n','\n')
+```
+
+# Microbial Groups {.tabset}
+
+## Genus
+
+```{r, taxonomy_genus}
+# taking only ASVs with known Genus
+data_tax <- data_asv_tax %>% 
+  distinct(host_ID, asv_core, Genus) %>% 
+  filter(!is.na(Genus))
+
+# known ASVs
+asv_genus <- data_asv_tax %>% 
+  distinct(asv_ID, Genus) %>%
+  mutate(name = is.na(Genus)) 
+  print(paste("Percentege of known ASVs:", round(table(asv_genus$name)[1]/nrow(asv_genus)*100, 2)))
+  cat('\n')
+# how many Genus?
+print(paste("Number of genera:", length(unique(data_tax$Genus))))
+cat('\n')
+
+# making unique samples (host_ID+asv_core)
+data_tax_meta <- data_tax %>% 
+  arrange(host_ID) %>% 
+  unite(col="sample", host_ID:asv_core, remove = FALSE)
+  
+data_tax_meta2 <- data_tax_meta %>% distinct(sample, asv_core) 
+
+data_tax_summary <- data_tax %>% 
+  count(asv_core, Genus) %>% 
+  spread(Genus, n, fill = 0)
+
+# transforming to matrix
+data_tax_mat <- data_tax_meta %>% 
+  select(sample, Genus) %>% 
+  mutate(n=1) %>% 
+  spread(Genus, n, fill = 0) %>% 
+  column_to_rownames("sample") %>% 
+  as.matrix()
+
+# Perform PERMANOVA
+permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, method = "jaccard", permutations = 999)
+print(paste("F =", permanova_result$F[1]))
+cat('\n')
+print(paste("p-value =", permanova_result$`Pr(>F)`[1]))
+cat('\n')
+
+# PCA
+tax_pca <- prcomp(data_tax_mat)
+
+# explained variance
+ex_var <- tax_pca$sdev ^2 
+prop_ex_var <- ex_var/sum(ex_var)*100
+
+loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Genus") %>% 
+  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
+
+tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>% 
+  left_join(data_tax_meta2, by="sample") 
+
+loading_top <- loadings %>% 
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
+
+g1 <- tax_scores %>% 
+  ggplot(aes(PC1, PC2, color=asv_core)) +
+  geom_point() +
+  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
+                 arrow = arrow(length = unit(0.15, "cm"))) +
+  annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
+     label = loading_top$Genus, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
+  theme_bw() +
+  theme(panel.border = element_rect(colour = "black", size=1))+
+  scale_fill_manual(values=group.colors) +
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
+       title = "(A) Genus", color = "ASV Group")
+```
+
+## Family
+
+```{r, taxonomy_family}
+# taking only ASVs with known Family
+data_tax <- data_asv_tax %>% 
+  distinct(host_ID, asv_core, Family) %>% 
+  filter(!is.na(Family))
+
+# known ASVs
+asv_genus <- data_asv_tax %>% 
+  distinct(asv_ID, Family) %>%
+  mutate(name = is.na(Family)) 
+  print(paste("Percentege of known ASVs:", round(table(asv_genus$name)[1]/nrow(asv_genus)*100, 2)))
+  cat('\n')
+# how many Family?
+print(paste("Number of families:", length(unique(data_tax$Family))))
+cat('\n')
+
+# making unique samples (host_ID+asv_core)
+data_tax_meta <- data_tax %>% 
+  arrange(host_ID) %>% 
+  unite(col="sample", host_ID:asv_core, remove = FALSE)
+  
+data_tax_meta2 <- data_tax_meta %>% distinct(sample, asv_core) 
+
+data_tax_summary <- data_tax %>% 
+  count(asv_core, Family) %>% 
+  spread(Family, n, fill = 0)
+
+# transforming to matrix
+data_tax_mat <- data_tax_meta %>% 
+  select(sample, Family) %>% 
+  mutate(n=1) %>% 
+  spread(Family, n, fill = 0) %>% 
+  column_to_rownames("sample") %>% 
+  as.matrix()
+
+# Perform PERMANOVA
+permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, method = "jaccard", permutations = 999)
+print(paste("F =", permanova_result$F[1]))
+cat('\n')
+print(paste("p-value =", permanova_result$`Pr(>F)`[1]))
+cat('\n')
+
+# PCA
+tax_pca <- prcomp(data_tax_mat)
+
+# explained variance
+ex_var <- tax_pca$sdev ^2 
+prop_ex_var <- ex_var/sum(ex_var)*100
+
+loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Family") %>% 
+  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
+
+tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>% 
+  left_join(data_tax_meta2, by="sample") 
+
+loading_top <- loadings %>% 
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
+
+g2 <- tax_scores %>% 
+  ggplot(aes(PC1, PC2, color=asv_core)) +
+  geom_point() +
+  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*4, yend = PC2*4), 
+                 arrow = arrow(length = unit(0.15, "cm"))) +
+  annotate("label", x = (loading_top$PC1*4), y = (loading_top$PC2*4),
+     label = loading_top$Family, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
+  scale_x_continuous(limits = c(-2, 2.7)) +
+  theme_bw() +
+  theme(panel.border = element_rect(colour = "black", size=1))+
+  scale_fill_manual(values=group.colors) +
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
+       title = "(B) Family", color = "ASV Group")
+```
+
+## Figure
+
+```{r, taxonomy}
+# plotting
+g1 + g2 + plot_layout(guides='collect') &
+  theme(legend.position='bottom')
+cat('\n','\n')
+```
 
 # Network exploration {.tabset}
-
 
 ```{r, network_exploration}
 
@@ -340,86 +553,15 @@ for (i in 1:3) {
   cat('\n','\n')
   
 }
-
-cat('## Modules size','{.tabset}','\n','\n')
-
-library(ggridges)
-g <- modules_table_three_groups %>% 
-  group_by(asv_core, host_group) %>% 
-  summarise(n = n_distinct(host_ID)) %>% 
-  ggplot(aes(x=n, y=asv_core, fill=asv_core)) + 
-  geom_density_ridges(alpha=0.6, stat="binline", bins=50) +
-  theme_ridges() +
-  #scale_y_continuous(limits = c(0, 50)) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
-  scale_fill_manual(values=group.colors) +
-  labs(x="Module Size", y="Density")
-print(g)
-cat('\n','\n')
-
-g <- modules_table_three_groups %>% 
-  group_by(asv_core, host_group) %>% 
-  summarise(n = n_distinct(host_ID)) %>% 
-  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot(outliers = FALSE, alpha = 0.8) +
-  geom_jitter(color="black", size=1) +
-  theme_classic() +
-  scale_y_continuous(limits = c(0, 145)) +
-  scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
-  scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="Module Size")
-print(g)
-cat('\n','\n')
-
-cat('## Modules grid','{.tabset}','\n','\n')
-
-g <- modules_table_three_groups %>% 
-  group_by(asv_core, host_group) %>% 
-  summarise(n = n_distinct(grid)) %>% 
-  ggplot(aes(x=n, y=asv_core, fill=asv_core)) + 
-  geom_density_ridges(alpha=0.6, stat="binline", bins=7) +
-  theme_ridges() +
-  #scale_y_continuous(limits = c(0, 50)) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
-  scale_fill_manual(values=group.colors) +
-  labs(x="No. of Land Uses", y="Density")
-print(g)
-cat('\n','\n')
-
-g <- modules_table_three_groups %>% 
-  group_by(asv_core, host_group) %>% 
-  summarise(n = n_distinct(grid)) %>% 
-  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot() +
-  theme_classic() +
-  #scale_y_continuous(limits = c(0, 50)) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
-  scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="No. of Land Uses")
-print(g)
-cat('\n','\n')
-
-g <- modules_table_three_groups %>% 
-  group_by(asv_core, grid) %>% 
-  summarise(n = n_distinct(host_group)) %>% 
-  ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot() +
-  theme_classic() +
-  #scale_y_continuous(limits = c(0, 50)) +
-  theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), legend.position = "none") +
-  scale_fill_manual(values=group.colors) +
-  labs(x="ASV Group", y="No. of Modules per Land Use")
-print(g)
-cat('\n','\n')
 ```
+
 # Modular Structure Exploration {.tabset}
 
 ## Modules size
 
 ```{r}
 library(ggsignif)
-library(ggbreak)
+#library(ggbreak)
 
 modules_sizes <- modules_table_three_groups %>% 
   group_by(asv_core, host_group) %>% 
@@ -454,13 +596,14 @@ cat('\n')
 
   g1 <- modules_sizes %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_boxplot(outliers = FALSE, alpha = 0.9) +
   geom_jitter(color="black", size=1) +
   theme_classic() +
   #scale_y_continuous(limits = c(0, 145)) +
   #scale_y_break(c(50,130), space=0.4, ticklabels = c(130,140))+
   geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
               annotations = c("***","***","ns"),  y_position = c(90,100,80), tip_length = 0) +
+  geom_point(data = modules_size_summary, aes(x=asv_core, y = mean), position = position_dodge(width = 0.75), size = 2, color="#d62828",alpha=0.8, show.legend=F) +
   theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="Module Size", title = "(A)")
@@ -501,12 +644,13 @@ cat('\n')
 
   g2 <- modules_grids %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_boxplot(outliers = FALSE, alpha = 0.9) +
   geom_jitter(color="black", size=1) +
   theme_classic() +
   scale_y_continuous(limits = c(0, 9), breaks = seq(0,8,by=2)) +
   geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
               annotations = c("***","***","ns"),  y_position = c(7.7,8.5,7), tip_length = 0) +
+  geom_point(data = modules_grids_summary, aes(x=asv_core, y = mean), position = position_dodge(width = 0.75), size = 2, color="#d62828",alpha=0.8, show.legend=F) +
   theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="No. of Land Uses", title = "(B)")
@@ -547,12 +691,13 @@ cat('\n')
 
   g3 <- modules_per_grid %>% 
   ggplot(aes(x=asv_core, y=n, fill=asv_core)) + 
-  geom_boxplot(outliers = FALSE, alpha = 0.8) +
+  geom_boxplot(outliers = FALSE, alpha = 0.9) +
   geom_jitter(color="black", size=1) +
   theme_classic() +
   scale_y_continuous(limits = c(0, 60)) +
   geom_signif(comparisons = list(c("Core", "Non-core"),c("Core", "Rare"),c("Non-core", "Rare")), 
               annotations = c("***","***","ns"),  y_position = c(45,55,50), tip_length = 0) +
+  geom_point(data = modules_per_grid_summary, aes(x=asv_core, y = mean), position = position_dodge(width = 0.75), size = 2, color="#d62828",alpha=0.8, show.legend=F) +
   theme(axis.text = element_text(size = 11, color = 'black'), title = element_text(size = 15), legend.position = "none") +
   scale_fill_manual(values=group.colors) +
   labs(x="ASV Group", y="No. of Modules per Land Use", title = "(C)")
@@ -651,8 +796,6 @@ hosts <- modules_table_three_groups %>% distinct(host_ID, asv_core, host_group) 
 betaNTI_final <- betaNTI_three_groups %>% 
   mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) 
 
-
-
 # Raup-Crick same module?
 raupc_final <- raupc_three_groups %>% 
   mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
@@ -692,8 +835,9 @@ g <- assembly_summary %>%
   geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
             position = position_stack(vjust = 0.5), size = 3)+
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
-        panel.grid = element_blank(), panel.border = element_rect(colour = "black", size=1)) +
+  theme(axis.text = element_text(size = 11, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
   labs(x="", y="Percentage")
 print(g)
@@ -888,7 +1032,8 @@ g <- final_data_three_groups %>%
   geom_text(data = mantel_result_three_groups, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
             hjust = 1.1, vjust = 3, size = 4, color = "black") +
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12),
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1),
         panel.grid = element_blank(), legend.position = "none", panel.border = element_rect(color = "black")) +
   scale_color_manual(values=group.colors) +
   labs(x = "Distance Between Land Uses [m]", y = "Modules Similarity [Bray-Curtis]")
@@ -898,7 +1043,7 @@ cat('\n','\n')
 
 # Link prediction {.tabset}
 
-```{r, eval=TRUE, include=TRUE}
+```{r, eval=FALSE, include=FALSE}
 library(caret)
 library(yardstick)
 
@@ -974,168 +1119,6 @@ print(feature_imp_g)
 cat('\n','\n')
 ```
 
-# Taxonomy {.tabset}
-
-## Genus
-
-```{r, taxonomy_genus}
-# taking only ASVs with known Genus
-data_tax <- data_asv_tax %>% 
-  distinct(host_ID, asv_core, Genus) %>% 
-  filter(!is.na(Genus))
-
-# known ASVs
-asv_genus <- data_asv_tax %>% 
-  distinct(asv_ID, Genus) %>%
-  mutate(name = is.na(Genus)) 
-  print(paste("Percentege of known ASVs:", round(table(asv_genus$name)[1]/nrow(asv_genus)*100, 2)))
-  cat('\n')
-# how many Genus?
-print(paste("Number of genera:", length(unique(data_tax$Genus))))
-cat('\n')
-
-# making unique samples (host_ID+asv_core)
-data_tax_meta <- data_tax %>% 
-  arrange(host_ID) %>% 
-  unite(col="sample", host_ID:asv_core, remove = FALSE)
-  
-data_tax_meta2 <- data_tax_meta %>% distinct(sample, asv_core) 
-
-data_tax_summary <- data_tax %>% 
-  count(asv_core, Genus) %>% 
-  spread(Genus, n, fill = 0)
-
-# transforming to matrix
-data_tax_mat <- data_tax_meta %>% 
-  select(sample, Genus) %>% 
-  mutate(n=1) %>% 
-  spread(Genus, n, fill = 0) %>% 
-  column_to_rownames("sample") %>% 
-  as.matrix()
-
-# Perform PERMANOVA
-permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, method = "jaccard", permutations = 999)
-print(paste("F =", permanova_result$F[1]))
-cat('\n')
-print(paste("p-value =", permanova_result$`Pr(>F)`[1]))
-cat('\n')
-
-# PCA
-tax_pca <- prcomp(data_tax_mat)
-
-# explained variance
-ex_var <- tax_pca$sdev ^2 
-prop_ex_var <- ex_var/sum(ex_var)*100
-
-loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Genus") %>% 
-  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
-
-tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>% 
-  left_join(data_tax_meta2, by="sample") 
-
-loading_top <- loadings %>% 
-  slice_max(n = 5, order_by = PC1_abs) %>% 
-  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
-
-g1 <- tax_scores %>% 
-  ggplot(aes(PC1, PC2, color=asv_core)) +
-  geom_point() +
-  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
-                 arrow = arrow(length = unit(0.15, "cm"))) +
-  annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
-     label = loading_top$Genus, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
-  theme_bw() +
-  theme(panel.border = element_rect(colour = "black", size=1))+
-  scale_fill_manual(values=group.colors) +
-  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
-       title = "(A) Genus", color = "ASV Group")
-```
-
-## Family
-
-```{r, taxonomy_family}
-# taking only ASVs with known Family
-data_tax <- data_asv_tax %>% 
-  distinct(host_ID, asv_core, Family) %>% 
-  filter(!is.na(Family))
-
-# known ASVs
-asv_genus <- data_asv_tax %>% 
-  distinct(asv_ID, Family) %>%
-  mutate(name = is.na(Family)) 
-  print(paste("Percentege of known ASVs:", round(table(asv_genus$name)[1]/nrow(asv_genus)*100, 2)))
-  cat('\n')
-# how many Family?
-print(paste("Number of families:", length(unique(data_tax$Family))))
-cat('\n')
-
-# making unique samples (host_ID+asv_core)
-data_tax_meta <- data_tax %>% 
-  arrange(host_ID) %>% 
-  unite(col="sample", host_ID:asv_core, remove = FALSE)
-  
-data_tax_meta2 <- data_tax_meta %>% distinct(sample, asv_core) 
-
-data_tax_summary <- data_tax %>% 
-  count(asv_core, Family) %>% 
-  spread(Family, n, fill = 0)
-
-# transforming to matrix
-data_tax_mat <- data_tax_meta %>% 
-  select(sample, Family) %>% 
-  mutate(n=1) %>% 
-  spread(Family, n, fill = 0) %>% 
-  column_to_rownames("sample") %>% 
-  as.matrix()
-
-# Perform PERMANOVA
-permanova_result <- adonis2(data_tax_mat ~ asv_core, data = data_tax_meta2, method = "jaccard", permutations = 999)
-print(paste("F =", permanova_result$F[1]))
-cat('\n')
-print(paste("p-value =", permanova_result$`Pr(>F)`[1]))
-cat('\n')
-
-# PCA
-tax_pca <- prcomp(data_tax_mat)
-
-# explained variance
-ex_var <- tax_pca$sdev ^2 
-prop_ex_var <- ex_var/sum(ex_var)*100
-
-loadings <- as.data.frame(tax_pca$rotation[, 1:2]) %>% rownames_to_column("Family") %>% 
-  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
-
-tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>% 
-  left_join(data_tax_meta2, by="sample") 
-
-loading_top <- loadings %>% 
-  slice_max(n = 5, order_by = PC1_abs) %>% 
-  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
-
-g2 <- tax_scores %>% 
-  ggplot(aes(PC1, PC2, color=asv_core)) +
-  geom_point() +
-  geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*4, yend = PC2*4), 
-                 arrow = arrow(length = unit(0.15, "cm"))) +
-  annotate("label", x = (loading_top$PC1*4), y = (loading_top$PC2*4),
-     label = loading_top$Family, size=3, label.size=0.1, label.padding=unit(0.05, "lines")) +
-  scale_x_continuous(limits = c(-2, 2.7)) +
-  theme_bw() +
-  theme(panel.border = element_rect(colour = "black", size=1))+
-  scale_fill_manual(values=group.colors) +
-  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
-       title = "(B) Family", color = "ASV Group")
-```
-## Figure
-
-```{r, taxonomy}
-# plotting
-g1 + g2 + plot_layout(guides='collect') &
-  theme(legend.position='bottom')
-cat('\n','\n')
-```
-
-
 ```{r, asv_associations, eval=FALSE, include=FALSE}
 
 # taking only ASVs with known Genus
@@ -1195,7 +1178,7 @@ summary_z <- data_tax_pre_obs %>%
 }
 ```
 
-```{r, prediction}
+```{r, prediction eval=FALSE, include=FALSE}
 library(caret)
 library(yardstick)
 library(randomForest)
@@ -1213,51 +1196,4 @@ data_tax_mat <- data_tax %>%
   as.matrix()
 ```
 
-```{r}
-data_asv_mat <- data_asv %>% 
-  filter(asv_core == "Non_core") %>% 
-  select(host_ID, asv_ID, reads) %>% 
-  spread(asv_ID, reads, fill = 0) %>% 
-  column_to_rownames("host_ID") %>% 
-  as.matrix()
-
-hosts <- small_mammals %>% 
-  filter(host_ID %in% rownames(data_asv_mat)) %>% 
-  select(host_ID,grid,season,month,mass, sex,age_repro,age_dental,elevation.obs) %>% 
-  mutate(grid=as.factor(grid), season=as.factor(season),month=as.factor(month), sex=as.factor(sex), age_dental=as.factor(age_dental))
-
-distance_matrix <- vegdist(data_asv_mat, method = "bray")
-
-# Perform PERMANOVA
-permanova_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
-permanova_result
-
-# PERMANOVA post-hoc
-perm_post_grid <- RVAideMemoire::pairwise.perm.manova(distance_matrix, fact = hosts$grid, 
-    test = "bonferroni", nperm = 999, progress = FALSE)$p.value %>% as.data.frame()
-print(knitr::kable(perm_post_grid))
-cat('\n')
-
-#NMDS
-nmds_result <- metaMDS(distance_matrix, distance = "bray", k = 2, trace = F)
-
-
-# plotting
-nmds_plot <- nmds_result$points %>% 
-  as.data.frame() %>%  
-  rownames_to_column("host_ID") %>% 
-  mutate(host_ID = as.double(host_ID)) %>% 
-  left_join(hosts, by="host_ID")
-
-# plotting
-g <- nmds_plot %>% 
-  ggplot( aes(MDS1, MDS2, color=grid)) +
-  geom_point(position=position_jitter(.01)) +
-  #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
-  theme_bw() +
-  annotate("text", x=0, y=max(abs(nmds_plot$MDS2)), label=paste('Stress =',round(nmds_result$stress,3))) # adding stress
-print(g)
-cat('\n')
-
-```
 
