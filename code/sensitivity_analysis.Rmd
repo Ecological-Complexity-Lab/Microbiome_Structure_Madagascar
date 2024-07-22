@@ -54,20 +54,12 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 
 # setting thresholds for core
 core_th <- c(0.02, 0.2)
-data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
-                                          host_p>core_th[2] ~ "Core",
-                                          .default = "Non-core"))
+n_phylo_shuff <- 2
 
 group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
-#group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
-core_names <- unique(data_asv$asv_core)
-nmi_observed_three_groups <- NULL
+core_names <- c("Core", "Non-core", "Rare")
 modules_similarity_three_groups <- NULL
-asv_degree_distribution_three_groups <- NULL
-modules_three_groups <- NULL
-modules_size_three_groups <- NULL
-modules_grid_three_groups <- NULL
 modules_table_three_groups <- NULL
 betaNTI_three_groups <- NULL
 raupc_three_groups <- NULL
@@ -78,10 +70,17 @@ phylo_tree <- best_tree$tree
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
+for (i in seq(0,0.3,by=0.05)) {
+  
+  data_asv_p <- data_asv %>% 
+    mutate(asv_core = case_when(host_p<core_th[1]+i ~ "Rare",
+                                          host_p>core_th[2]+i ~ "Core",
+                                          .default = "Non-core"))
+  
 # loop for three groups
 for (v in core_names) {
   
-  data_asv_group <- data_asv %>% 
+  data_asv_group <- data_asv_p %>% 
     filter(asv_core == v)
   
   # calculating ASVs degree
@@ -93,7 +92,8 @@ for (v in core_names) {
   
   ##### observed network
   # finding modules
-  modules_observed <- fun_modularity_analysis(data_asv_group)
+  modules_observed <- fun_modularity_analysis(data_asv_group) %>% 
+    mutate(i=i)
   modules_table_three_groups <- rbind(modules_table_three_groups, modules_observed)
   #write_csv(modules_table_three_groups, "../results/modules_table_sarahandrano.csv")
   
@@ -101,27 +101,6 @@ for (v in core_names) {
   modules_similarity <- fun_modules_similarity(modules_observed)
   # saving results in one table
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
-  
-  # ASVs degree distribution
-  asv_degree_distribution <- fun_asv_degree_distribution(data_asv_group)
-  asv_degree_distribution_three_groups <- append(asv_degree_distribution_three_groups, asv_degree_distribution)
-  
-  # figure of modules 
-  modules <- fun_modules(modules_observed)
-  modules_three_groups <- append(modules_three_groups, modules)
-  
-  # modules size
-  modules_size <- fun_module_size(modules_observed)
-  modules_size_three_groups <- append(modules_size_three_groups, modules_size)
-  
-  # Number of land uses per module
-  modules_grid <- fun_module_grid(modules_observed)
-  modules_grid_three_groups <- append(modules_grid_three_groups, modules_grid)
-  
-  # calculating NMI
-  nmi_observed <- fun_nmi_calc(modules_observed, TRUE)
-  # saving results in one list
-  nmi_observed_three_groups <- append(nmi_observed_three_groups, nmi_observed)
   
   
   ##### phylogenetic analysis
@@ -138,10 +117,10 @@ for (v in core_names) {
     column_to_rownames("host_ID") %>% 
     as.matrix()
   
-  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
+  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, n_phylo_shuff) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-    mutate(asv_core = v)
+    mutate(asv_core = v, i=i)
   betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
   
   # raup-crick
@@ -154,8 +133,9 @@ for (v in core_names) {
     dplyr::rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-    mutate(asv_core = v)
+    mutate(asv_core = v, i=i)
   raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
+}
 }
 ```
 
@@ -180,9 +160,8 @@ raupc_final <- raupc_three_groups %>%
 ```{r, assembly_processes}
 # combining final results
 assembly_final <- betaNTI_final %>% 
-  full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core), by=c("host1","host2","asv_core"))
-
-#a=assembly_final %>% filter(is.na(betaNTI))
+  full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core,i), by=c("host1","host2","asv_core","i")) %>% 
+  mutate(i = as.factor(i))
 
 # calculating the process
 assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
@@ -193,28 +172,28 @@ assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Select
 
 # summary
 assembly_summary <- assembly_final %>% 
-  count(asv_core, same_module, process)
+  count(i, asv_core, same_module, process)
 
 assembly_summary_total <- assembly_summary %>% 
-  group_by(asv_core, same_module) %>% 
+  group_by(i, asv_core, same_module) %>% 
   summarise(n_total = sum(n))
 
 #plotting
 g <- assembly_summary %>% 
-  left_join(assembly_summary_total, by=c("asv_core","same_module")) %>% 
+  left_join(assembly_summary_total, by=c("asv_core","same_module","i")) %>% 
   mutate(n_p = n/n_total) %>% 
-  ggplot(aes(fill=process, x=same_module, y=n_p)) +
+  ggplot(aes(fill=process, x=i, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
-  facet_wrap(~asv_core) +
+  facet_grid(same_module ~ asv_core) +
   scale_y_continuous(labels = scales::percent) +
   geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
-            position = position_stack(vjust = 0.5), size = 3)+
+            position = position_stack(vjust = 0.5), size = 2)+
   theme_bw() +
-  theme(axis.text = element_text(size = 11, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), legend.position='bottom') +
   scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
-  labs(x="", y="Percentage")
+  labs(x="Cutoff Change [+]", y="Percentage")
 print(g)
 
 ```

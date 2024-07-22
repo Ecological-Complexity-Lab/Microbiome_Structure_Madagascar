@@ -54,6 +54,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 
 # setting thresholds for core
 core_th <- c(0.02, 0.2)
+n_phylo_shuff <- 10
 data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                           host_p>core_th[2] ~ "Core",
                                           .default = "Non-core"))
@@ -138,7 +139,7 @@ for (v in core_names) {
     column_to_rownames("host_ID") %>% 
     as.matrix()
   
-  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool) %>% 
+  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, n_phylo_shuff) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
     mutate(asv_core = v)
