@@ -2,7 +2,7 @@
 title: "Land use and microbe prevalence jointly determine host-microbe network structure"
 subtitle: "Sensitivity analysis"
 author: "Matan Markfeld"
-date: "Last edit: 2024-07-22"
+date: "Last edit: 2024-07-23"
 output: 
   html_document:
     toc: true
@@ -54,7 +54,7 @@ data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_
 
 # setting thresholds for core
 core_th <- c(0.02, 0.2)
-n_phylo_shuff <- 2
+n_phylo_shuff <- 10
 
 group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
 
@@ -70,7 +70,7 @@ phylo_tree <- best_tree$tree
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
-ths <- seq(0,0.2,by=0.1)
+ths <- seq(0,0.1,by=0.01)
 for (i in ths) {
   
   data_asv_p <- data_asv %>% 
@@ -183,8 +183,7 @@ g <- assembly_summary %>%
   geom_bar(position="fill", stat="identity") +
   facet_grid(same_module ~ asv_core) +
   scale_y_continuous(labels = scales::percent) +
-  geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
-            position = position_stack(vjust = 0.5), size = 2)+
+  #geom_text(aes(label = paste0(round(n_p*100,1),"%")), position = position_stack(vjust = 0.5), size = 2)+
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
@@ -221,7 +220,7 @@ grid_distance <- grid_distance_three_villages[[vil]]
 mantel_result_three_groups <- NULL
 final_data_three_groups <- NULL
 
-for (i in seq(0,(length(ths)*2),by=3)) {
+for (i in seq(0,(length(ths)*3-1),by=3)) {
   
 # loop for three asv groups
 for (j in 1:3) {
