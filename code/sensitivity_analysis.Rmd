@@ -70,7 +70,8 @@ phylo_tree <- best_tree$tree
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
 
-for (i in seq(0,0.3,by=0.05)) {
+ths <- seq(0,0.2,by=0.1)
+for (i in ths) {
   
   data_asv_p <- data_asv %>% 
     mutate(asv_core = case_when(host_p<core_th[1]+i ~ "Rare",
@@ -139,10 +140,6 @@ for (v in core_names) {
 }
 ```
 
-
-
-
-
 # Phylogenetic analysis
 
 ```{r}
@@ -202,7 +199,6 @@ print(g)
 
 # Modules similarity across land use change gradient
 
-
 ## Correlations between variables
 
 Distance is a proxy for habitat degradation.
@@ -210,12 +206,6 @@ Distance is a proxy for habitat degradation.
 ```{r, variables_correlation}
 # reading grid similarity results
 grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
-
-# correlations between variables
-# loop for three villages
-library(psych)
-print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
-cat('\n','\n')
 ```
 
 ## Mantel test
@@ -231,10 +221,12 @@ grid_distance <- grid_distance_three_villages[[vil]]
 mantel_result_three_groups <- NULL
 final_data_three_groups <- NULL
 
-# loop for three asv groups
-for (i in 1:3) {
+for (i in seq(0,(length(ths)*2),by=3)) {
   
-  modules_similarity <- modules_similarity_three_groups[[i]]
+# loop for three asv groups
+for (j in 1:3) {
+  
+  modules_similarity <- modules_similarity_three_groups[[i+j]]
   grid_names <- rownames(modules_similarity)
   # filtering the distance matrix to the existing grids
   grid_distance <- grid_distance[grid_names, grid_names]
@@ -243,42 +235,28 @@ for (i in 1:3) {
   mantel_result <- vegan::mantel(modules_similarity, grid_distance)
   mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
                                  pvalue = round(1-mantel_result$signif,4),
-                                 asv_core = core_names[i])
+                                 asv_core = core_names[j],
+                                 i = ths[ceiling((i+j)/3)])
   mantel_result_three_groups <- rbind(mantel_result_three_groups, mantel_result_df)
   
-  
-  # transforming to long format
-  modules_similarity_m <- modules_similarity
-  modules_similarity_m[lower.tri(modules_similarity_m)] <- NA
-  diag(modules_similarity_m) <- NA
-  final_data <- melt(modules_similarity_m) %>% 
-    filter(!is.na(value)) %>% 
-    mutate(asv_core = core_names[i]) %>% 
-    dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) %>% 
-    left_join(grids_similarity_attr %>% filter(village == vil), by=c("grid1","grid2"))
-  
-  final_data_three_groups <- rbind(final_data_three_groups, final_data)
-  
+}  
 }
 
-# plotting
-g <- final_data_three_groups %>% 
-  ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
-  geom_point(alpha = 0.8) +
-  facet_wrap(~asv_core, scales="free")+
-  scale_y_continuous(limits = c(0.0, 0.9)) +
-  geom_smooth(method = "glm", se=T, method.args = list(family = "gaussian")) +
-  geom_text(data = mantel_result_three_groups, aes(label = paste("r =", r), x = Inf, y = Inf),
-            hjust = 1.3, vjust = 1.5, size = 4, color = "black") +
-  geom_text(data = mantel_result_three_groups, aes(label = paste("p-value =", pvalue), x = Inf, y = Inf),
-            hjust = 1.1, vjust = 3, size = 4, color = "black") +
+# plotting r
+g1 <- mantel_result_three_groups %>% 
+  mutate(sig = ifelse(pvalue<=0.05,1,0)) %>% 
+  ggplot(aes(y=r, x=i, color = asv_core)) +
+  geom_point(aes(shape = as.factor(sig), size = 3)) +
+  geom_line()+
+  scale_size(guide="none") +
+  scale_shape_manual(values = c(1, 16), guide="none") +
+  #scale_y_continuous(limits = c(0.0, 0.9)) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
-        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1),
-        panel.grid = element_blank(), legend.position = "none", panel.border = element_rect(color = "black")) +
+        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
   scale_color_manual(values=group.colors) +
-  labs(x = "Distance Between Land Uses [m]", y = "Modules Similarity [Bray-Curtis]")
-print(g)
+  labs(x = "Cutoff Change [+]", y = "r (Mantel)", color = "ASV Group")
+print(g1)
 cat('\n','\n')
 ```
 
