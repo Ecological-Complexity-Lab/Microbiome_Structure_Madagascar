@@ -1045,7 +1045,7 @@ cat('\n','\n')
 
 # Link prediction 
 
-```{r, eval=FALSE, include=FALSE}
+```{r, eval=FALSE, include=TRUE}
 library(caret)
 library(yardstick)
 
@@ -1180,22 +1180,120 @@ summary_z <- data_tax_pre_obs %>%
 }
 ```
 
-```{r, prediction, eval=FALSE, include=FALSE}
+```{r, prediction, eval=FALSE, include=TRUE}
 library(caret)
 library(yardstick)
 library(randomForest)
+library(ROSE)
 
-# taking only ASVs with known Genus
-data_tax <- data_asv_tax %>% 
-  distinct(host_ID, Genus) %>% 
-  filter(!is.na(Genus))
+# Assume df is your dataframe and "group" is the binary target column
+df <- read_csv("../data/data_processed/ML_module/ML_rattus_three_villages_non_core.csv") %>% 
+  select(-host_ID.x,-host_ID.y) %>% 
+  mutate(module=as.factor(module), grid=as.factor(grid), sex=as.factor(sex), season=as.factor(season))
 
-# transforming to matrix
-data_tax_mat <- data_tax %>% 
-  mutate(n=1) %>% 
-  spread(Genus, n, fill = 0) %>% 
-  column_to_rownames("host_ID") %>% 
-  as.matrix()
+# Set seed for reproducibility
+set.seed(123)
+
+# Define the control for cross-validation
+control <- trainControl(method = "cv", number = 5)
+
+# Create a function for under-sampling
+undersample <- function(df) {
+  # Separate features and target
+  features <- df[, -which(names(df) == "module")]
+  target <- df$module
+  
+  # Combine into a new dataframe
+  data <- cbind(features, module = target)
+  
+  # Perform under-sampling using ROSE package
+  balanced_data <- ovun.sample(module ~ ., data = data, method = "over", seed = 1)$data
+  
+  return(balanced_data)
+}
+
+# Apply under-sampling to the dataframe
+balanced_df <- df
+
+# Separate features and target for the balanced dataset
+X <- balanced_df[, -which(names(balanced_df) == "module")]
+y <- as.factor(balanced_df$module)
+
+# Define the training model using random forest
+rf_model <- caret::train(X, y,
+                  method = "rf",
+                  trControl = control,
+                  metric = "Accuracy")
+
+# Print the model details
+print(rf_model)
+
+# Evaluate the model
+predictions_prob <- predict(rf_model, X, type = "prob")[,2]
+predictions_class <- predict(rf_model, X)
+
+# Convert predictions to a data frame for yardstick
+results <- data.frame(
+  truth = y,
+  predicted_prob = predictions_prob,
+  predicted_class = predictions_class
+)
+
+# Calculate precision
+precision_val <- precision(results, truth = truth, estimate = predicted_class)
+print(paste("Precision_val:", precision_val$.estimate))
+
+# Calculate recall
+recall_val <- recall(results, truth = truth, estimate = predicted_class)
+print(paste("Recall:", recall_val$.estimate))
+
+# Calculate F1 score
+f1_val <- f_meas(results, truth = truth, estimate = predicted_class)
+print(paste("F1 Score:", f1_val$.estimate))
+
+# Plot ROC Curve
+auc_roc_score <- yardstick::roc_auc(results, truth, predicted_prob)
+roc_obj <- yardstick::roc_curve(results, truth, predicted_prob) %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+  geom_path(color = "blue") +
+  geom_abline(lty = 3) +
+  coord_equal() +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "ROC Curve", subtitle = paste("AUC = ", round(auc_roc_score$.estimate,3)))
+print(roc_obj)
+cat('\n','\n')
+
+
+# Plot Precision-Recall Curve
+auc_pr_score <- yardstick::pr_auc(results, truth = truth, predicted_prob)
+pr_obj <- yardstick::pr_curve(results, truth = truth, predicted_prob) %>% 
+  ggplot(aes(x = recall, y = precision)) +
+  geom_path(color = "blue") +
+  coord_equal() +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "Precision-Recall curve", subtitle = paste("AUC = ", round(auc_pr_score$.estimate,3)))
+print(pr_obj)
+cat('\n','\n')
+
+# Feature importance analysis
+# Extract the final random forest model
+final_rf <- rf_model$finalModel
+
+# Calculate feature importance
+importance <- importance(final_rf)
+var_importance <- data.frame(Variables = rownames(importance), 
+                             Importance = importance[, 1])
+
+# Plot feature importance
+ggplot(var_importance, aes(x = reorder(Variables, Importance), y = Importance)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  ggtitle("Feature Importance") +
+  xlab("Variables") +
+  ylab("Importance (Mean Decrease in Gini)") +
+  theme_minimal()
 ```
 
 
