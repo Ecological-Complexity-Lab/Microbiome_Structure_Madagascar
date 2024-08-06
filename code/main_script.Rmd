@@ -1187,12 +1187,17 @@ library(randomForest)
 library(ROSE)
 
 # Assume df is your dataframe and "group" is the binary target column
-df <- read_csv("../data/data_processed/ML_module/ML_rattus_three_villages_non_core.csv") %>% 
+df <- read_csv("../data/data_processed/ML_module/ML_rattus_three_villages_core.csv") %>% 
   select(-host_ID.x,-host_ID.y) %>% 
   mutate(module=as.factor(module), grid=as.factor(grid), sex=as.factor(sex), season=as.factor(season))
 
 # Set seed for reproducibility
 set.seed(123)
+
+# Split the data into training and test sets
+train_index <- createDataPartition(df$module, p = 0.8, list = FALSE)
+train_df <- df[train_index, ]
+test_df <- df[-train_index, ]
 
 # Define the control for cross-validation
 control <- trainControl(method = "cv", number = 5)
@@ -1207,48 +1212,50 @@ undersample <- function(df) {
   data <- cbind(features, module = target)
   
   # Perform under-sampling using ROSE package
-  balanced_data <- ovun.sample(module ~ ., data = data, method = "over", seed = 1)$data
+  balanced_data <- ovun.sample(module ~ ., data = data, method = "under", seed = 1)$data
   
   return(balanced_data)
 }
 
-# Apply under-sampling to the dataframe
-balanced_df <- df
+# Apply under-sampling to the training dataframe
+balanced_train_df <- undersample(train_df)
 
-# Separate features and target for the balanced dataset
-X <- balanced_df[, -which(names(balanced_df) == "module")]
-y <- as.factor(balanced_df$module)
+# Separate features and target for the balanced training dataset
+X_train <- balanced_train_df[, -which(names(balanced_train_df) == "module")]
+y_train <- as.factor(balanced_train_df$module)
 
 # Define the training model using random forest
-rf_model <- caret::train(X, y,
+rf_model <- train(X_train, y_train,
                   method = "rf",
                   trControl = control,
                   metric = "Accuracy")
 
 # Print the model details
-print(rf_model)
+print(rf_model$finalModel)
 
-# Evaluate the model
-predictions_prob <- predict(rf_model, X, type = "prob")[,2]
-predictions_class <- predict(rf_model, X)
+# Evaluate the model on the test set
+X_test <- test_df[, -which(names(test_df) == "module")]
+y_test <- as.factor(test_df$module)
+predictions_prob <- predict(rf_model$finalModel, X_test, type = "prob")[,2]
+predictions_class <- predict(rf_model$finalModel, X_test)
 
 # Convert predictions to a data frame for yardstick
 results <- data.frame(
-  truth = y,
+  truth = y_test,
   predicted_prob = predictions_prob,
   predicted_class = predictions_class
 )
 
 # Calculate precision
-precision_val <- precision(results, truth = truth, estimate = predicted_class)
-print(paste("Precision_val:", precision_val$.estimate))
+precision_val <- yardstick::precision(results, truth = truth, estimate = predicted_class)
+print(paste("Precision:", precision_val$.estimate))
 
 # Calculate recall
-recall_val <- recall(results, truth = truth, estimate = predicted_class)
+recall_val <- yardstick::recall(results, truth = truth, estimate = predicted_class)
 print(paste("Recall:", recall_val$.estimate))
 
 # Calculate F1 score
-f1_val <- f_meas(results, truth = truth, estimate = predicted_class)
+f1_val <- yardstick::f_meas(results, truth = truth, estimate = predicted_class)
 print(paste("F1 Score:", f1_val$.estimate))
 
 # Plot ROC Curve
