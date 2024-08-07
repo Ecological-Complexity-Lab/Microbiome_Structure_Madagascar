@@ -29,7 +29,7 @@ habitat <- dat %>%
                                grid_name=="Rice field" ~ "flooded_rice",
                                grid_name=="Vanilla" ~ "agroforest",
                                grid_name=="Village" ~ "village")) %>% 
-  select(village, grid_name, plot, square, dead_logs, tree_dbh, tree_height, #omiting crown distance
+  select(village, grid_name, season, plot, square, dead_logs, tree_dbh, tree_height, #omiting crown distance
          liana_number, herbaceous_height, herbaceous_cover, canopy_cover) #omitting observations and season
 ## deal with multitrunk trees by taking sqrt of sum of square DBH of each stem
 habitat <- habitat %>% 
@@ -67,27 +67,27 @@ habitat <- habitat %>%
 
 ## make a trees df
 trees <- habitat %>% 
-  select(village, grid_name, pitfall, plot, square, tree_height, tree_dbh) %>% 
-  group_by(village, grid_name, plot, square) %>%
+  select(village, grid_name, season, pitfall, plot, square, tree_height, tree_dbh) %>% 
+  group_by(village, grid_name,season, plot, square) %>%
   summarise(tree_height = mean(tree_height, na.rm=T),
           tree_dbh = mean(tree_dbh, na.rm=T))
 
 ## create a new df individual tree measurements
 squares <- habitat %>% 
   mutate(tree = ifelse(is.na(tree_dbh), 0, 1)) %>% ## count the number of trees in each square
-  group_by(village, grid_name, plot, square) %>% 
+  group_by(village, grid_name, season, plot, square) %>% 
   mutate(n_trees = sum(tree)) %>% 
   ungroup() %>% 
   select(-tree_height, -tree_dbh, -tree) %>% # remove tree info from habitat
   distinct() %>% 
-  left_join(trees, by=c("village","grid_name","plot","square"))
+  left_join(trees, by=c("village","grid_name","season","plot","square"))
 
 # summarizing for plots
 plot_sum <- squares %>% 
   mutate(across(c(n_trees, tree_height, tree_dbh, dead_logs, 
                   liana_number, herbaceous_height, 
                   herbaceous_cover, canopy_cover))) %>% 
-  group_by(pitfall, pitfall_line, village, grid_name, plot) %>% 
+  group_by(pitfall, pitfall_line, village, grid_name, season, plot) %>% 
   summarise(n_trees = sum(n_trees, na.rm=T),
             tree_height = mean(tree_height, na.rm=T),
             tree_dbh = mean(tree_dbh, na.rm=T),
@@ -102,7 +102,7 @@ plot_sum <- squares %>%
 # summarizing for grids
 grid_sum <- plot_sum %>% 
   filter(pitfall == "Grid") %>% 
-  group_by(grid_name, village) %>% 
+  group_by(grid_name, season, village) %>% 
   summarise_at(vars(4:11), ~mean(., na.rm=TRUE)) %>% 
   ungroup() %>% 
   arrange(grid_name) %>% 
@@ -110,9 +110,9 @@ grid_sum <- plot_sum %>%
 
 # transforming to matrix
 grid_sum_mat <- grid_sum %>% 
-  column_to_rownames("grid_name") %>%
+  unite(col="grid_season", grid_name:village, remove = TRUE) %>%
+  column_to_rownames("grid_season") %>%
   ungroup() %>% 
-  select(-village) %>%
   as.matrix() %>% 
   decostand(method = "range")
 
@@ -122,12 +122,20 @@ grid_sum_mat <- grid_sum %>%
 distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray"))
 
 # long format
+# name index
+grid_season_name <- grid_sum %>% 
+  select(grid_name, season, village) %>% 
+  unite(col="grid_season", grid_name:village, remove = FALSE)
+
 # removing duplicated values
 distmat_grid2 <- distmat_grid
 distmat_grid2[upper.tri(distmat_grid2)] <- NA
 diag(distmat_grid2) <- NA
 grid_disimilarity <- melt(distmat_grid2) %>% 
-  rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
+  left_join(grid_season_name, by=c("Var1"="grid_season")) %>% 
+  rename(grid1=grid_name, season1=season, grid_attr=value) %>% 
+  left_join(select(grid_season_name,-village), by=c("Var2"="grid_season")) %>% 
+  rename(grid2=grid_name, season2=season) %>% 
   filter(!(is.na(grid_attr))) %>% 
   arrange(grid1, grid2)
 
