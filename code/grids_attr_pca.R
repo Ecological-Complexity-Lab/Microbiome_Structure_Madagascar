@@ -125,6 +125,41 @@ prop_ex_var
 
 write_csv(vegetation_pca, "data/data_processed/pca_vegetation_3_villages_by_grid_season.csv")
 
+# plot
+library(factoextra)
+library(ggfortify)
+
+pca_data <- data.frame(pca_veg$x[, 1:2],  # Select the first two principal components
+                       village = as.factor(grid_sum$village),  # Replace with your actual village factor
+                       season = as.factor(grid_sum$season),    # Replace with your actual season factor
+                       land_use = as.factor(grid_sum$grid_name)) # Replace with your actual land use factor
+
+loadings <- data.frame(pca_veg$rotation[, 1:2], variable = rownames(pca_veg$rotation))
+
+scaling_factor <- 7
+
+plot<-ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
+  geom_text(data = loadings, aes(x = PC1 * scaling_factor* 1.2, y = PC2 * scaling_factor * 1.2, label = variable),
+            color = "black", size = 4) +  # Variable names near the arrows
+  labs(title = "PCA vegetation (per land use, village and season)",
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2: % variance explained",round(prop_ex_var[2],2))) +
+  scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "grey")) +  # Customize colors as needed
+  scale_shape_manual(values = c(21, 22, 23)) +              # Customize shapes as needed
+  scale_fill_manual(values = c("white", "black", "grey"))  +  # Customize fills as needed
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  stat_ellipse(geom = "polygon",
+               aes(color = land_use),
+               alpha=0.1) + # Add ellipses by land_use
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+  
+saveRDS(plot, "pca_veg_plot.Rds")
 
 
 #####
@@ -166,3 +201,36 @@ prop_ex_var <- ex_var/sum(ex_var)*100
 prop_ex_var
 
 write_csv(sm_community_pca, "data/data_processed/pca_sm_community_3_villages_by_grid_season.csv")
+
+# plot
+pca_data <- data.frame(pca_sm$x[, 1:2],  # Select the first two principal components
+                       village = as.factor(dat_mat$village),  # Replace with your actual village factor
+                       season = as.factor(dat_mat$season),    # Replace with your actual season factor
+                       land_use = as.factor(dat_mat$grid)) # Replace with your actual land use factor
+
+loadings <- data.frame(pca_sm$rotation[, 1:2], variable = rownames(pca_sm$rotation))
+
+scaling_factor <- 10
+
+plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
+  geom_text(data = loadings, aes(x = PC1 * scaling_factor* 1.2, y = PC2 * scaling_factor * 1.2, label = variable),
+            color = "black", size = 3) +  # Variable names near the arrows
+  labs(title = "PCA vegetation (per land use, village and season)",
+       x = paste("PC1: variance explained",prop_ex_var[1]),
+       y = paste("PC2: variance explained",prop_ex_var[2])) +
+  scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "cyan")) +  # Customize colors as needed
+  scale_shape_manual(values = c(21, 22, 23)) +              # Customize shapes as needed
+  scale_fill_manual(values = c("white", "black", "grey"))  +  # Customize fills as needed
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  stat_ellipse(geom = "polygon",
+               aes(color = land_use),
+               alpha=0.1) + # Add ellipses by land_use
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+saveRDS(plot, "pca_sm_plot.Rds")
