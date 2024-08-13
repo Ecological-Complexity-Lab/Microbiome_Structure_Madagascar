@@ -126,8 +126,7 @@ prop_ex_var
 write_csv(vegetation_pca, "data/data_processed/pca_vegetation_3_villages_by_grid_season.csv")
 
 # plot
-library(factoextra)
-library(ggfortify)
+library(ggplot2)
 
 pca_data <- data.frame(pca_veg$x[, 1:2],  # Select the first two principal components
                        village = as.factor(grid_sum$village),  # Replace with your actual village factor
@@ -138,7 +137,7 @@ loadings <- data.frame(pca_veg$rotation[, 1:2], variable = rownames(pca_veg$rota
 
 scaling_factor <- 7
 
-plot<-ggplot(pca_data, aes(x = PC1, y = PC2)) +
+veg_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
   geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
@@ -148,18 +147,19 @@ plot<-ggplot(pca_data, aes(x = PC1, y = PC2)) +
             color = "black", size = 4) +  # Variable names near the arrows
   labs(title = "PCA vegetation (per land use, village and season)",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
-       y = paste("PC2: % variance explained",round(prop_ex_var[2],2))) +
-  scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "grey")) +  # Customize colors as needed
-  scale_shape_manual(values = c(21, 22, 23)) +              # Customize shapes as needed
-  scale_fill_manual(values = c("white", "black", "grey"))  +  # Customize fills as needed
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
+  scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "grey")) +
+  scale_shape_manual(values = c(21, 22, 23)) +
+  scale_fill_manual(values = c("white", "black", "grey"))  +
   guides(fill = guide_legend(override.aes = list(shape=21))) +
   stat_ellipse(geom = "polygon",
-               aes(color = land_use),
+               aes(color = land_use), # use inherit.aes=F if needed
                alpha=0.1) + # Add ellipses by land_use
+  theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
   
-saveRDS(plot, "pca_veg_plot.Rds")
+saveRDS(veg_plot, "pca_veg_plot.Rds")
 
 
 #####
@@ -212,7 +212,7 @@ loadings <- data.frame(pca_sm$rotation[, 1:2], variable = rownames(pca_sm$rotati
 
 scaling_factor <- 10
 
-plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
+sm_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
   geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
@@ -221,16 +221,17 @@ plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
   geom_text(data = loadings, aes(x = PC1 * scaling_factor* 1.2, y = PC2 * scaling_factor * 1.2, label = variable),
             color = "black", size = 3) +  # Variable names near the arrows
   labs(title = "PCA vegetation (per land use, village and season)",
-       x = paste("PC1: variance explained",prop_ex_var[1]),
-       y = paste("PC2: variance explained",prop_ex_var[2])) +
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
   scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "cyan")) +  # Customize colors as needed
   scale_shape_manual(values = c(21, 22, 23)) +              # Customize shapes as needed
   scale_fill_manual(values = c("white", "black", "grey"))  +  # Customize fills as needed
   guides(fill = guide_legend(override.aes = list(shape=21))) +
   stat_ellipse(geom = "polygon",
-               aes(color = land_use),
+               aes(color = land_use),  # use inherit.aes=F if needed
                alpha=0.1) + # Add ellipses by land_use
+  theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
-saveRDS(plot, "pca_sm_plot.Rds")
+saveRDS(sm_plot, "pca_sm_plot.Rds")
