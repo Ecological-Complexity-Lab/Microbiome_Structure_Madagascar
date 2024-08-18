@@ -43,7 +43,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 
 # villages: Andatsakala, Mandena, Sarahandrano
 vil <- "Mandena"
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(village == vil)
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000_microgale.csv") %>% filter(village == vil)
 ```
 
 ```{r, main analysis, include=FALSE, results='hide'}
@@ -74,7 +74,7 @@ betaNTI_three_groups <- NULL
 raupc_three_groups <- NULL
 
 # reading the phylogenetic tree
-best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
+best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01_microgale.rds")
 phylo_tree <- best_tree$tree 
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
@@ -224,7 +224,7 @@ most_abu_family <- data_asv_tax %>%
   most_abu_family_8 <- most_abu_family %>% 
     filter(!is.na(Family)) %>% 
     ungroup() %>% 
-    slice_max(by = asv_core, order_by = n_p, n = 10) %>% 
+    slice_max(by = asv_core, order_by = n_p, n = 6) %>% 
     mutate(p = "top") %>% 
     select(asv_core, Family, p)
   
@@ -276,7 +276,7 @@ hosts <- small_mammals %>%
 distance_matrix <- vegdist(data_asv_mat, method = "bray")
 
 # Perform PERMANOVA
-permanova_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
+permanova_result <- adonis2(distance_matrix ~ grid+season+sex, data = hosts, permutations = 999)
 print(knitr::kable(permanova_result[,4:5]))
 cat('\n')
 
@@ -316,7 +316,7 @@ rooted_phylo_tree <- phangorn::midpoint(phylo_tree)
 distance_matrix <- GUniFrac(data_asv_mat, rooted_phylo_tree, verbose = F)$unifracs[, , "d_UW"]
 
 # Perform weighted UniFrac
-unifrac_result <- adonis2(distance_matrix ~ grid+season+sex+age_dental, data = hosts, permutations = 999)
+unifrac_result <- adonis2(distance_matrix ~ grid+season+sex, data = hosts, permutations = 999)
 print(knitr::kable(unifrac_result[,4:5]))
 cat('\n')
 

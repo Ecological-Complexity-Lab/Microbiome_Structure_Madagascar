@@ -48,7 +48,7 @@ dat <- left_join(data_sm, data_asv_f, by="host_ID")
 ##### filter 1
 # filtering non-rattus host species
 dat1 <- dat %>% 
-  filter(host_species == "Rattus rattus") %>% 
+  filter(host_species == "Microgale brevicaudata") %>% 
   select_if(~ any(. != 0))  # removing all ASVs not belonging to rattus (0 in all samples)
 # here I filtered 12357 ASVs
 
@@ -112,7 +112,7 @@ asv_occur_village %>%
 # finding the best filter
 asv_unique <- NULL
 for (i in seq(0,1, by=0.01)) {
-  asv_unique_i <- dat4 %>% 
+  asv_unique_i <- asv_occur_village %>% 
     filter(host_p>i) %>% 
     group_by(village) %>% 
     summarise(asv_n = n_distinct(asv_ID)) %>% 
@@ -237,7 +237,7 @@ dat5 <- dat4 %>%
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID))
 
 # saving the data
-write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv")
+write_csv(dat5, "data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000_microgale.csv")
 
 
 

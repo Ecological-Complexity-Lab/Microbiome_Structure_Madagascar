@@ -21,20 +21,20 @@ rm(list=ls())
 seq_fa <- read.FASTA(file="data/data_raw/data_microbiome/ASV_merged_full.fa")
 
 # filtering out ASVs by relative abundance of 1%
-data_asv_filtered <- read_csv("data/data_processed/microbiome/data_asv_rra0.01_th1000.csv") %>% 
+data_asv_filtered <- read_csv("data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000_microgale.csv") %>% 
   filter(host_species == "Rattus rattus")
 asv_names <- tibble(asv_ID = unique(data_asv_filtered$asv_ID))
 asv_names %<>% mutate(ID = as.numeric(gsub(".*?([0-9]+).*", "\\1", asv_ID))) %>% arrange(ID)
 seq_fa2 <- seq_fa[names(seq_fa) %in% asv_names$asv_ID]
 names(seq_fa2) <- asv_names$asv_ID
-#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_merged_full_0.01.fa") # writing the filtered fasta file
+#write.FASTA(seq_fa2, file = "data/data_raw/data_microbiome/ASV_merged_microgale_filtered.fa") # writing the filtered fasta file
 
 # how many ASVs in the tree?
 nrow(asv_names)
 
 # align the sequences
 # method 1
-seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_filtered_rra0.001_p0.01.fa")
+seq_aligned <- readDNAStringSet("data/data_raw/data_microbiome/ASV_merged_microgale_filtered.fa")
 aligned <- DECIPHER::AlignSeqs(seq_aligned)
 seq_aligned2 <- as.DNAbin(aligned)
 # method 2
@@ -58,7 +58,7 @@ mt2 <- modelTest(dnaphydatAll,
 best_tree <- pml_bb(mt2) 
 
 # save the optimized tree. this is a pml object. to get the tree call: fit$tree
-saveRDS(best_tree, file = "results/phylo_tree_rra0.001_p0.01.rds")
+saveRDS(best_tree, file = "results/phylo_tree_rra0.001_p0.01_microgale.rds")
 #best_tree <- readRDS(file = "output/phylogenetic_tree/phylo_tree_0.01.rds")
 
 # plot the tree
