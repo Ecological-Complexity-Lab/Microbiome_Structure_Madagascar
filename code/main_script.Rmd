@@ -25,10 +25,11 @@ library(vegan)
 library(igraph)
 library(reshape2)
 library(infomapecology)
-library(aricode)
+#library(aricode)
 library(ape)
 library(picante)
 library(patchwork)
+library(iCAMP)
 
 rm(list=ls())
 ```
@@ -43,7 +44,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 
 # villages: Andatsakala, Mandena, Sarahandrano
 vil <- "Mandena"
-data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000_microgale.csv") %>% filter(village == vil)
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(village == vil)
 ```
 
 ```{r, main analysis, include=FALSE, results='hide'}
@@ -129,7 +130,7 @@ for (v in core_names) {
   # ASVs pool
   asv_pool <- data_asv_group %>% 
     distinct(asv_ID, asv_degree) %>% 
-    mutate(p = asv_degree/length(unique(data_asv_group$asv_ID)))
+    mutate(p = asv_degree/length(unique(data_asv_group$host_ID)))
   
   # calculating betaNTI
   data_betaNTI <- data_asv_group %>% 
@@ -146,6 +147,13 @@ for (v in core_names) {
   betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
   
   # raup-crick
+  data_raupc <- data_asv_group %>% 
+    distinct(host_ID, asv_ID, reads) %>% 
+    spread(asv_ID, reads, fill = 0) %>% 
+    column_to_rownames("host_ID") %>% 
+    as.matrix()
+  raupc <- iCAMP::RC.pc(data_raupc, taxo.metric="bray", rand=100, weighted=TRUE, dirichlet=TRUE, nworker = 4)
+  
   raupc <- raupcrick(data_betaNTI)
   raupc2 <- as.matrix(raupc) 
   raupc2[upper.tri(raupc2)] <- NA
@@ -157,6 +165,8 @@ for (v in core_names) {
     left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
     mutate(asv_core = v)
   raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
+  
+  assembly <- iCAMP::qpen(data_raupc, pd = asv_distance, taxo.metric="bray", rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=TRUE, nworker = 4)
 }
 ```
 
