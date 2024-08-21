@@ -75,7 +75,7 @@ betaNTI_three_groups <- NULL
 raupc_three_groups <- NULL
 
 # reading the phylogenetic tree
-best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01_microgale.rds")
+best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
 phylo_tree <- best_tree$tree 
 # ASVs phylogenetic distance
 asv_distance <- ape::cophenetic.phylo(phylo_tree)
@@ -132,6 +132,25 @@ for (v in core_names) {
     distinct(asv_ID, asv_degree) %>% 
     mutate(p = asv_degree/length(unique(data_asv_group$host_ID)))
   
+  data_assembly <- data_asv_group %>% 
+    #mutate(reads=reads*total_reads) %>% 
+    distinct(host_ID, asv_ID, reads) %>% 
+    spread(asv_ID, reads, fill = 0) %>% 
+    column_to_rownames("host_ID") %>% 
+    as.matrix()
+  
+  sum_reads <- data_asv_group %>% distinct(host_ID,total_reads) %>% sum(sum_reads$total_reads)
+  rel_abu <- data_asv_group %>% 
+    mutate(reads=reads*total_reads) %>%
+    group_by(asv_ID) %>% 
+    summarise(reads_sum = sum(reads)) %>% 
+    mutate(rel_reads = reads_sum/sum_reads)
+  
+  asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, taxo.metric="jaccard", rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+    raupc <- iCAMP::RC.pc(data_assembly, taxo.metric="bray", rand=100, weighted=F,  nworker = 4, output.bray = T, meta.ab = rel_abu$rel_reads)
+raupc <- as.matrix(raupcrick(data_assembly))
+  
   # calculating betaNTI
   data_betaNTI <- data_asv_group %>% 
     distinct(host_ID, asv_ID) %>% 
@@ -147,12 +166,8 @@ for (v in core_names) {
   betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
   
   # raup-crick
-  data_raupc <- data_asv_group %>% 
-    distinct(host_ID, asv_ID, reads) %>% 
-    spread(asv_ID, reads, fill = 0) %>% 
-    column_to_rownames("host_ID") %>% 
-    as.matrix()
-  raupc <- iCAMP::RC.pc(data_raupc, taxo.metric="bray", rand=100, weighted=TRUE, dirichlet=TRUE, nworker = 4)
+  
+  raupc <- iCAMP::RC.pc(data_raupc, taxo.metric="bray", rand=100, weighted=TRUE, dirichlet=F, nworker = 4)
   
   raupc <- raupcrick(data_betaNTI)
   raupc2 <- as.matrix(raupc) 
@@ -166,7 +181,7 @@ for (v in core_names) {
     mutate(asv_core = v)
   raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
   
-  assembly <- iCAMP::qpen(data_raupc, pd = asv_distance, taxo.metric="bray", rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=TRUE, nworker = 4)
+  
 }
 ```
 
