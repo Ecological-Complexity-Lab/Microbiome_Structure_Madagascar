@@ -73,7 +73,7 @@ modules_grid_three_groups <- NULL
 modules_table_three_groups <- NULL
 betaNTI_three_groups <- NULL
 raupc_three_groups <- NULL
-assembl_three_groups <- NULL
+assembly_three_groups <- NULL
 
 # reading the phylogenetic tree
 best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
@@ -145,7 +145,14 @@ for (v in core_names) {
   
   raupc <- as.matrix(raupcrick(data_assembly))
   assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
-  assembl_three_groups <- rbind(assembl_three_groups, assembly$result %>% mutate(asv_core = v))
+  
+  assembly_result <- assembly$result %>% 
+    mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("sample1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("sample2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    mutate(asv_core = v)
+  
+  assembly_three_groups <- rbind(assembly_three_groups, assembly_result)
 
   
   # # calculating betaNTI
@@ -830,16 +837,15 @@ raupc_final <- raupc_three_groups %>%
 
 ```{r, assembly_processes}
 # combining final results
-assembly_final <- betaNTI_final %>% 
-  full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core), by=c("host1","host2","asv_core"))
+assembly_final <- assembly_three_groups %>% 
+  mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
 
-#a=assembly_final %>% filter(is.na(betaNTI))
 
-# calculating the process
-assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
-                                               betaNTI<(-2) ~ "Homogeneous Selection",
-                                               (betaNTI<=2 & betaNTI>=(-2) & raupc>0.95) ~ "Dispersal Limitation",
-                                               (betaNTI<=2 & betaNTI>=(-2) & raupc<(-0.95)) ~ "Homogenizing Dispersal",
+# renaming the process
+assembly_final %<>% mutate(process = case_when(process=="Heterogeneous.Selection" ~ "Heterogeneous Selection",
+                                               process=="Homogeneous.Selection" ~ "Homogeneous Selection",
+                                               process=="Dispersal.Limitation" ~ "Dispersal Limitation",
+                                               process=="Homogenizing.Dispersal" ~ "Homogenizing Dispersal",
                                                .default = "Drift"))
 
 # summary
@@ -847,12 +853,35 @@ assembly_summary <- assembly_final %>%
   count(asv_core, same_module, process)
 
 assembly_summary_total <- assembly_summary %>% 
+  group_by(asv_core) %>% 
+  summarise(n_total = sum(n))
+
+assembly_summary_total_module <- assembly_summary %>% 
   group_by(asv_core, same_module) %>% 
   summarise(n_total = sum(n))
 
-#plotting
-g <- assembly_summary %>% 
-  left_join(assembly_summary_total, by=c("asv_core","same_module")) %>% 
+#plotting process ratio between groups
+g1 <- assembly_summary %>% 
+  group_by(asv_core, process) %>% 
+  summarise(n = sum(n)) %>% 
+  left_join(assembly_summary_total, by=c("asv_core")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=process, x=asv_core, y=n_p)) +
+  geom_bar(position="fill", stat="identity") +
+  scale_y_continuous(labels = scales::percent) +
+  geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
+            position = position_stack(vjust = 0.5), size = 3)+
+  theme_bw() +
+  theme(axis.text = element_text(size = 11, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+  scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
+  labs(x="ASVs Groups", y="Percentage")
+print(g1)
+
+#plotting process ratio between modules
+g2 <- assembly_summary %>% 
+  left_join(assembly_summary_total_module, by=c("asv_core","same_module")) %>% 
   mutate(n_p = n/n_total) %>% 
   ggplot(aes(fill=process, x=same_module, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
@@ -866,8 +895,7 @@ g <- assembly_summary %>%
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
   labs(x="", y="Percentage")
-print(g)
-
+print(g2)
 ```
 
 
