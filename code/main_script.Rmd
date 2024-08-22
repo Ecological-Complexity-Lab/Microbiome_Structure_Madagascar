@@ -898,6 +898,21 @@ g2 <- assembly_summary %>%
 print(g2)
 ```
 
+```{r, assembly_groups}
+# checking differences between groups
+
+assembly_diff_group <- assembly_final %>% 
+  mutate(sample1 = paste(sample1,asv_core, sep = "_"), sample2 = paste(sample2,asv_core, sep = "_"))
+
+treat_group <- data.frame(sample_ID = union(unique(assembly_diff_group$sample1),unique(assembly_diff_group$sample2))) %>% 
+  separate(sample_ID, into=c("sample","asv_core"), sep = "_", remove = FALSE) %>% 
+  select(-sample) %>% 
+  column_to_rownames("sample_ID")
+
+qpen_test_groups <- qpen.test(assembly_diff_group[1:6], treat_group)
+```
+
+
 
 # Normalized Mutual Information (NMI) 
 
