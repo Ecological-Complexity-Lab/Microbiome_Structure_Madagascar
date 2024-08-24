@@ -262,6 +262,52 @@ length(unique(data_asv_tax$Family))
 # aggregating by Family level
 data_asv_family <- data_asv_tax %>% 
   group_by(host_ID, Family) %>% 
-  summarise(reads = sum(reads))
+  summarise(reads = sum(reads)) %>% 
+  filter(!is.na(Family))
 
+# matrix
+data_asv_family_mat <- data_asv_family %>% 
+  spread(Family, reads, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
 
+# PCA
+pca_microbiome <- prcomp(data_asv_family_mat, center = FALSE, scale. = FALSE)
+
+microbiome_community_pca <- as.data.frame(pca_microbiome$x) %>% 
+  rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
+  left_join(data_asv %>% distinct(host_ID,village,grid,season), by="host_ID")
+
+# explained variance
+ex_var <- pca_microbiome$sdev ^2 
+prop_ex_var <- ex_var/sum(ex_var)*100
+prop_ex_var
+
+loadings <- as.data.frame(pca_microbiome$rotation[, 1:2]) %>% rownames_to_column("Family") %>% 
+  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
+
+loading_top <- loadings %>% 
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs))
+
+write_csv(sm_community_pca, "data/data_processed/pca_microbiome_community_pca.csv")
+
+# plotting
+scaling_factor <- 1.5
+
+ggplot(microbiome_community_pca, aes(x = PC1, y = PC2, color = village)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loading_top, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  
+  geom_text(data = loadings, aes(x = PC1 * scaling_factor, y = PC2 * scaling_factor, label = Family),
+            color = "black", size = 3) +  
+  labs(title = "PCA host microbiome",
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
