@@ -291,7 +291,7 @@ loading_top <- loadings %>%
   slice_max(n = 5, order_by = PC1_abs) %>% 
   bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs))
 
-write_csv(sm_community_pca, "data/data_processed/pca_microbiome_community_pca.csv")
+write_csv(microbiome_community_pca, "data/data_processed/pca_microbiome_community_pca.csv")
 
 # plotting
 scaling_factor <- 1.5
@@ -311,3 +311,28 @@ ggplot(microbiome_community_pca, aes(x = PC1, y = PC2, color = village)) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
+
+
+#####
+# normalized rattus abundance
+# average number of individuals per trap per village*grid*season
+
+small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv") %>% 
+  filter(grepl("TMR", animal_id)) %>% 
+  dplyr::rename(host_species = field_identification, grid = habitat_type) 
+
+sampling_effort <- read_csv("data/data_raw/data_small_mammals/Trap_Grids.csv") %>% 
+  dplyr::rename(grid = habitat_type) %>%
+  select(village, grid, season, effort_cagetraps)
+
+# average captures per cagetrap
+# only 2 rattus individuals captured in pitfall traps
+rattus_vgs <- small_mammals %>% 
+  filter(host_species == "Rattus rattus") %>% 
+  filter(trap_type != "Pitfall") %>% 
+  count(village, grid, season) %>% 
+  full_join(sampling_effort) %>% 
+  mutate(avg_captures = ifelse(!is.na(n), n/effort_cagetraps, 0)) 
+
+write_csv(rattus_vgs, "data/data_processed/rattus_average_abundance.csv")
+
