@@ -235,3 +235,33 @@ sm_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
         panel.grid.minor = element_blank())
 
 saveRDS(sm_plot, "pca_sm_plot.Rds")
+
+
+#####
+# microbiome
+
+data_asv <- read_csv("data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv")
+
+# microbes taxonomy
+tax <- read_delim("data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+  dplyr::rename(asv_ID = ASV)
+
+data_asv_tax <- data_asv %>% 
+  left_join(tax, by="asv_ID")
+
+# how much classified families?
+families <- data_asv_tax %>% 
+  distinct(asv_ID, Family) %>% 
+  mutate(classified = !is.na(Family))
+table(families$classified)  # FALSE= unknown Family
+# 2518/2808 = 0.896
+
+# how many families?
+length(unique(data_asv_tax$Family))
+
+# aggregating by Family level
+data_asv_family <- data_asv_tax %>% 
+  group_by(host_ID, Family) %>% 
+  summarise(reads = sum(reads))
+
+
