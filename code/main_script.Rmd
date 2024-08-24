@@ -901,15 +901,67 @@ print(g2)
 ```{r, assembly_groups}
 # checking differences between groups
 
-assembly_diff_group <- assembly_final %>% 
-  mutate(sample1 = paste(sample1,asv_core, sep = "_"), sample2 = paste(sample2,asv_core, sep = "_"))
+# Number of incidents across the four processes
+assembly_summary_group <- assembly_summary %>% 
+  group_by(asv_core, process) %>% 
+  summarise(n = sum(n))
 
-treat_group <- data.frame(sample_ID = union(unique(assembly_diff_group$sample1),unique(assembly_diff_group$sample2))) %>% 
-  separate(sample_ID, into=c("sample","asv_core"), sep = "_", remove = FALSE) %>% 
-  select(-sample) %>% 
-  column_to_rownames("sample_ID")
+# Create a dataframe to store the results
+results_df <- data.frame(
+  Process = integer(), 
+  Comparison = character(), 
+  prop = numeric(),
+  chi = numeric(),
+  p_value = numeric(), 
+  p_value_adjusted = numeric(), 
+  stringsAsFactors = FALSE
+)
 
-qpen_test_groups <- qpen.test(assembly_diff_group[1:6], treat_group)
+# Define all pairs of core groups
+core_pairs <- list(c("Core", "Non-core"), c("Core", "Rare"), c("Non-core", "Rare"))
+# Define all processes
+process_names <- unique(assembly_summary_group$process)
+
+# Initialize a list to store all p-values for multiple testing correction
+all_p_values <- c()
+
+# Loop through each process group
+for (p in process_names) {
+  # Loop through each pair of core groups for pairwise comparisons
+  for (pair in core_pairs) {
+    
+    # getting the number incidents
+    successes <- assembly_summary_group %>% 
+      filter(asv_core %in% pair & process == p) %>% 
+      left_join(assembly_summary_total, by="asv_core")
+    
+    # Perform the two-sample proportion test
+    test_result <- prop.test(successes$n, successes$n_total)
+    
+    # Store the p-value
+    all_p_values <- c(all_p_values, test_result$p.value)
+    
+    # Add the result to the dataframe (without correction yet)
+    results_df <- rbind(results_df, data.frame(
+      Process = p,
+      Comparison = paste(pair[1], "vs", pair[2]),
+      prop = test_result$estimate[1] - test_result$estimate[2],
+      chi = test_result$statistic,
+      p_value = test_result$p.value,
+      p_value_adjusted = NA 
+    ))
+  }
+}
+
+# Apply Bonferroni correction for multiple testing across all tests
+adjusted_p_values <- p.adjust(all_p_values, method = "bonferroni")
+
+# Assign the adjusted p-values back to the dataframe
+results_df$p_value_adjusted <- adjusted_p_values
+
+# Output the results
+print(results_df)
+
 ```
 
 
