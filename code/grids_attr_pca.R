@@ -135,15 +135,13 @@ pca_data <- data.frame(pca_veg$x[, 1:2],  # Select the first two principal compo
 
 loadings <- data.frame(pca_veg$rotation[, 1:2], variable = rownames(pca_veg$rotation))
 
-scaling_factor <- 7
-
 veg_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
   geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*7, yend = PC2*7), 
                arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
-  geom_text(data = loadings, aes(x = PC1 * scaling_factor* 1.2, y = PC2 * scaling_factor * 1.2, label = variable),
+  geom_text(data = loadings, aes(x = PC1 * 7* 1.2, y = PC2 * 7 * 1.2, label = variable),
             color = "black", size = 4) +  # Variable names near the arrows
   labs(title = "PCA vegetation (per land use, village and season)",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
@@ -210,15 +208,13 @@ pca_data <- data.frame(pca_sm$x[, 1:2],  # Select the first two principal compon
 
 loadings <- data.frame(pca_sm$rotation[, 1:2], variable = rownames(pca_sm$rotation))
 
-scaling_factor <- 10
-
 sm_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
   geom_point(size = 3, alpha = 0.7, aes(color = land_use, shape = village, fill = season)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*10, yend = PC2*10), 
                arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
-  geom_text(data = loadings, aes(x = PC1 * scaling_factor* 1.2, y = PC2 * scaling_factor * 1.2, label = variable),
+  geom_text(data = loadings, aes(x = PC1 * 10* 1.2, y = PC2 * 10 * 1.2, label = variable),
             color = "black", size = 3) +  # Variable names near the arrows
   labs(title = "PCA vegetation (per land use, village and season)",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
@@ -291,7 +287,29 @@ loading_top <- loadings %>%
   slice_max(n = 5, order_by = PC1_abs) %>% 
   bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs))
 
-write_csv(microbiome_community_pca, "data/data_processed/pca_microbiome_community_pca.csv")
+pca_data <- data.frame(pca_veg$x[, 1:2])  # Select the first two principal components
+
+
+mb_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*2, yend = PC2*2), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
+  geom_text(data = loading_top, aes(x = PC1 * 2* 1.2, y = PC2 * 2 * 1.2, label = Family),
+            color = "black", size = 3) +  # Variable names near the arrows
+  labs(title = "PCA Microbiome",
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+saveRDS(mb_plot, "pca_mb_plot.Rds")
+
+
+write_csv(microbiome_community_pca, "data/data_processed/pca_microbiome_community.csv")
 
 # plotting
 scaling_factor <- 1.5
@@ -344,7 +362,6 @@ data_nematode_otu_mat <- data_nematode_otu %>%
 
 # PCA
 pca_nematode <- prcomp(data_nematode_otu_mat)
-
 nematode_community_pca <- as.data.frame(pca_nematode$x) %>% 
   rownames_to_column("host_ID") %>% 
   mutate(host_ID = as.double(host_ID)) %>% 
@@ -365,6 +382,29 @@ loading_top <- loadings %>%
 write_csv(nematode_community_pca, "data/data_processed/pca_nematode_community.csv")
 
 # plotting
+
+pca_data <- data.frame(pca_nematode$x[, 1:2])  # Select the first two principal components
+
+
+nc_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*2, yend = PC2*2), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
+  geom_text(data = loading_top, aes(x = PC1 * 2* 1.2, y = PC2 * 2 * 1.2, label = OTU_ID),
+            color = "black", size = 3) +  # Variable names near the arrows
+  labs(title = "PCA Microbiome",
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+saveRDS(nc_plot, "pca_nc_plot.Rds")
+
+
 scaling_factor <- 1.5
 
 ggplot(nematode_community_pca, aes(x = PC1, y = PC2, color = village)) +
