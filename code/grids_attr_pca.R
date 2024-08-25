@@ -323,16 +323,30 @@ small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.
 
 sampling_effort <- read_csv("data/data_raw/data_small_mammals/Trap_Grids.csv") %>% 
   dplyr::rename(grid = habitat_type) %>%
-  select(village, grid, season, effort_cagetraps)
+  select(village, grid, season, effort_cagetraps, effort_total)
 
+# rattus
 # average captures per cagetrap
-# only 2 rattus individuals captured in pitfall traps
+# taking only cagetraps
+# only 2 rattus individuals captured in pitfall traps (and filtered out)
 rattus_vgs <- small_mammals %>% 
   filter(host_species == "Rattus rattus") %>% 
   filter(trap_type != "Pitfall") %>% 
   count(village, grid, season) %>% 
-  full_join(sampling_effort) %>% 
-  mutate(avg_captures = ifelse(!is.na(n), n/effort_cagetraps, 0)) 
+  dplyr::rename(n_rattus = n)
 
-write_csv(rattus_vgs, "data/data_processed/rattus_average_abundance.csv")
+# sm (no rattus)
+# taking all traps including pitfalls
+sm_vgs <- small_mammals %>% 
+  filter(host_species != "Rattus rattus") %>% 
+  count(village, grid, season) %>% 
+  dplyr::rename(n_sm = n)
+
+all_vgs <- sampling_effort %>% 
+  left_join(rattus_vgs) %>% 
+  left_join(sm_vgs) %>% 
+  mutate(avg_rattus = ifelse(!is.na(n_rattus), n_rattus/effort_cagetraps, 0)) %>% 
+  mutate(avg_sm = ifelse(!is.na(n_sm), n_sm/effort_total, 0))
+
+write_csv(all_vgs, "data/data_processed/sm_average_abundance.csv")
 
