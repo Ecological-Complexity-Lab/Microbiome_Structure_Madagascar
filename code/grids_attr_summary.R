@@ -29,7 +29,7 @@ habitat <- dat %>%
                                grid_name=="Rice field" ~ "flooded_rice",
                                grid_name=="Vanilla" ~ "agroforest",
                                grid_name=="Village" ~ "village")) %>% 
-  select(village, grid_name, season, plot, square, dead_logs, tree_dbh, tree_height, #omiting crown distance
+  select(village, grid_name, plot, square, dead_logs, tree_dbh, tree_height, #omiting crown distance
          liana_number, herbaceous_height, herbaceous_cover, canopy_cover) #omitting observations and season
 ## deal with multitrunk trees by taking sqrt of sum of square DBH of each stem
 habitat <- habitat %>% 
@@ -67,27 +67,27 @@ habitat <- habitat %>%
 
 ## make a trees df
 trees <- habitat %>% 
-  select(village, grid_name, season, pitfall, plot, square, tree_height, tree_dbh) %>% 
-  group_by(village, grid_name,season, plot, square) %>%
+  select(village, grid_name, pitfall, plot, square, tree_height, tree_dbh) %>% 
+  group_by(village, grid_name, plot, square) %>%
   summarise(tree_height = mean(tree_height, na.rm=T),
           tree_dbh = mean(tree_dbh, na.rm=T))
 
 ## create a new df individual tree measurements
 squares <- habitat %>% 
   mutate(tree = ifelse(is.na(tree_dbh), 0, 1)) %>% ## count the number of trees in each square
-  group_by(village, grid_name, season, plot, square) %>% 
+  group_by(village, grid_name, plot, square) %>% 
   mutate(n_trees = sum(tree)) %>% 
   ungroup() %>% 
   select(-tree_height, -tree_dbh, -tree) %>% # remove tree info from habitat
   distinct() %>% 
-  left_join(trees, by=c("village","grid_name","season","plot","square"))
+  left_join(trees, by=c("village","grid_name","plot","square"))
 
 # summarizing for plots
 plot_sum <- squares %>% 
   mutate(across(c(n_trees, tree_height, tree_dbh, dead_logs, 
                   liana_number, herbaceous_height, 
                   herbaceous_cover, canopy_cover))) %>% 
-  group_by(pitfall, pitfall_line, village, grid_name, season, plot) %>% 
+  group_by(pitfall, pitfall_line, village, grid_name, plot) %>% 
   summarise(n_trees = sum(n_trees, na.rm=T),
             tree_height = mean(tree_height, na.rm=T),
             tree_dbh = mean(tree_dbh, na.rm=T),
@@ -102,7 +102,7 @@ plot_sum <- squares %>%
 # summarizing for grids
 grid_sum <- plot_sum %>% 
   filter(pitfall == "Grid") %>% 
-  group_by(grid_name, season, village) %>% 
+  group_by(grid_name, village) %>% 
   summarise_at(vars(4:11), ~mean(., na.rm=TRUE)) %>% 
   ungroup() %>% 
   arrange(grid_name) %>% 
@@ -110,63 +110,55 @@ grid_sum <- plot_sum %>%
 
 # transforming to matrix
 grid_sum_mat <- grid_sum %>% 
-  unite(col="grid_season", grid_name:village, remove = TRUE) %>%
-  column_to_rownames("grid_season") %>%
+  column_to_rownames("grid_name") %>%
   ungroup() %>% 
   as.matrix() %>% 
-  decostand(method = "range")
+  decostand(method = "standardize")
 
 #write_csv(grid_sum, "data/data_processed/village_attributes.csv")
 
 ## calculating *dis-similarity* between grids
-distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "bray"))
+distmat_grid <- as.matrix(vegdist(grid_sum_mat, method = "euclidean"))
 
 # long format
-# name index
-grid_season_name <- grid_sum %>% 
-  select(grid_name, season, village) %>% 
-  unite(col="grid_season", grid_name:village, remove = FALSE)
-
 # removing duplicated values
 distmat_grid2 <- distmat_grid
 distmat_grid2[upper.tri(distmat_grid2)] <- NA
 diag(distmat_grid2) <- NA
 grid_disimilarity <- melt(distmat_grid2) %>% 
-  left_join(grid_season_name, by=c("Var1"="grid_season")) %>% 
-  rename(grid1=grid_name, season1=season, grid_attr=value) %>% 
-  left_join(select(grid_season_name,-village), by=c("Var2"="grid_season")) %>% 
-  rename(grid2=grid_name, season2=season) %>% 
-  filter(!(is.na(grid_attr))) %>% 
+  rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
+  filter(!(is.na(value))) %>% 
   arrange(grid1, grid2)
 
 return(grid_disimilarity)
 }
 
 
-##### grid distance #######################################################################
+##### grid distance from village #######################################################################
 
-# fun_grid_distance <- function(dat) {
-#   # calculating the difference between grids in the distance to village
-#   
-#   dat %<>% arrange(grid)
-#   vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
-#   dist_village_grids <- as.data.frame(geosphere::distm(dat[3:4], vil , fun = distHaversine))
-#   rownames(dist_village_grids) <- dat$grid
-#   colnames(dist_village_grids) <- "dist_to_village"
-#   dist_village_grids <- rownames_to_column(dist_village_grids, "grid")
-#   
-#   grid_dist <- expand_grid(grid1=dist_village_grids$grid, grid2=dist_village_grids$grid) %>% 
-#     left_join(dist_village_grids, by=c("grid1"="grid")) %>% dplyr::rename(dist1=dist_to_village) %>% 
-#     left_join(dist_village_grids, by=c("grid2"="grid")) %>% dplyr::rename(dist2=dist_to_village) %>%
-#     mutate(distance = abs(dist1-dist2)) %>% 
-#     select(grid1,grid2,distance) %>% 
-#     spread(grid2, distance) %>% 
-#     column_to_rownames("grid1") %>% 
-#     as.matrix() 
-#   
-#   return(list(grid_dist))
-# }
+fun_distance_village <- function(dat) {
+  # calculating the difference between grids in the distance to village
 
+  dat %<>% arrange(grid)
+  vil = dat %>% filter(grid=="village") %>% select(longitude, latitude)
+  dist_village_grids <- as.data.frame(geosphere::distm(dat[3:4], vil , fun = distHaversine))
+  rownames(dist_village_grids) <- dat$grid
+  colnames(dist_village_grids) <- "dist_to_village"
+  dist_village_grids <- rownames_to_column(dist_village_grids, "grid")
+
+  grid_dist <- expand_grid(grid1=dist_village_grids$grid, grid2=dist_village_grids$grid) %>%
+    left_join(dist_village_grids, by=c("grid1"="grid")) %>% dplyr::rename(dist1=dist_to_village) %>%
+    left_join(dist_village_grids, by=c("grid2"="grid")) %>% dplyr::rename(dist2=dist_to_village) %>%
+    mutate(dist_vil = abs(dist1-dist2)) %>%
+    select(grid1,grid2,dist_vil) 
+    # spread(grid2, distance) %>%
+    # column_to_rownames("grid1") %>%
+    # as.matrix()
+
+  return(grid_dist)
+}
+
+##### distance between grids #######################################################################
 
 fun_grid_distance <- function(dat) {
 
@@ -174,22 +166,19 @@ fun_grid_distance <- function(dat) {
   grid_dist <- geosphere::distm(dat[3:4] , fun = distHaversine)
     rownames(grid_dist) <- dat$grid
     colnames(grid_dist) <- dat$grid
-    
-    return(list(grid_dist))
+
+  # long format
+  # removing duplicated values
+  grid_dist2 <- grid_dist
+  grid_dist2[upper.tri(grid_dist2)] <- NA
+  diag(grid_dist2) <- NA
+  grid_distance <- melt(grid_dist2) %>%
+    rename(grid1=Var1, grid2=Var2, grid_dist=value) %>%
+    filter(!(is.na(grid_dist))) %>%
+    arrange(grid1, grid2)
+
+  return(grid_dist)
 }
-#   
-#   # long format
-#   # removing duplicated values
-#   grid_dist2 <- grid_dist
-#   grid_dist2[upper.tri(grid_dist2)] <- NA
-#   diag(grid_dist2) <- NA
-#   grid_distance <- melt(grid_dist2) %>% 
-#     rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
-#     filter(!(is.na(grid_dist))) %>% 
-#     arrange(grid1, grid2)
-#   
-#   return(grid_distance)
-# }
 
 
 ##### grid small mammals community #######################################################################
@@ -222,6 +211,27 @@ fun_grid_mammals <- function(dat) {
     arrange(grid1, grid2)
   
   return(grid_mammals)
+}
+
+##### grid elevation #######################################################################
+
+fun_grid_elevation <- function(dat) {
+  
+  # finding elevation for each grid (average value of captured animals)
+  grid_elevation <- dat %>% 
+    filter(grepl("TMR", animal_id)) %>% 
+    dplyr::rename(host_species = field_identification, grid = habitat_type) %>% 
+    group_by(grid) %>% 
+    summarise(elevation = mean(elevation.obs))
+    
+  grid_elevation_list <- expand_grid(grid1=grid_elevation$grid, grid2=grid_elevation$grid) %>%
+    left_join(grid_elevation, by=c("grid1"="grid")) %>% dplyr::rename(elevation1=elevation) %>%
+    left_join(grid_elevation, by=c("grid2"="grid")) %>% dplyr::rename(elevation2=elevation) %>%
+    mutate(elevation = abs(elevation1-elevation2)) %>%
+    filter(grid1 != grid2) %>% 
+    select(grid1,grid2,elevation)
+  
+  return(grid_elevation_list)
 }
 
 
