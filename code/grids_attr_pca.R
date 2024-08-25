@@ -272,7 +272,7 @@ data_asv_family_mat <- data_asv_family %>%
   as.matrix()
 
 # PCA
-pca_microbiome <- prcomp(data_asv_family_mat, center = FALSE, scale. = FALSE)
+pca_microbiome <- prcomp(data_asv_family_mat)
 
 microbiome_community_pca <- as.data.frame(pca_microbiome$x) %>% 
   rownames_to_column("host_ID") %>% 
@@ -305,6 +305,77 @@ ggplot(microbiome_community_pca, aes(x = PC1, y = PC2, color = village)) +
   geom_text(data = loadings, aes(x = PC1 * scaling_factor, y = PC2 * scaling_factor, label = Family),
             color = "black", size = 3) +  
   labs(title = "PCA host microbiome",
+       x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+
+#####
+# nematodes
+
+
+nematodes <- read_csv("data/data_processed/pathogen_long.csv") %>% 
+  filter(pathogen_type == "Nematoda")
+
+# how much classified families?
+families <- nematodes %>% 
+  distinct(OTU_ID, otu_Family) %>% 
+  mutate(classified = !is.na(otu_Family))
+table(families$classified)  # FALSE= unknown Family
+# 41/75 = 0.546
+
+# how many families?
+length(unique(nematodes$otu_Family))
+
+
+data_nematode_otu <- nematodes %>% 
+  group_by(host_ID, OTU_ID) %>% 
+  summarise(reads = 1) 
+
+# matrix
+data_nematode_otu_mat <- data_nematode_otu %>% 
+  spread(OTU_ID, reads, fill = 0) %>% 
+  column_to_rownames("host_ID") %>% 
+  as.matrix()
+
+# PCA
+pca_nematode <- prcomp(data_nematode_otu_mat)
+
+nematode_community_pca <- as.data.frame(pca_nematode$x) %>% 
+  rownames_to_column("host_ID") %>% 
+  mutate(host_ID = as.double(host_ID)) %>% 
+  left_join(nematodes %>% distinct(host_ID,village,grid,season), by="host_ID")
+
+# explained variance
+ex_var <- pca_nematode$sdev ^2 
+prop_ex_var <- ex_var/sum(ex_var)*100
+prop_ex_var
+
+loadings <- as.data.frame(pca_nematode$rotation[, 1:2]) %>% rownames_to_column("OTU_ID") %>% 
+  mutate(PC1_abs = abs(PC1), PC2_abs = abs(PC2))
+
+loading_top <- loadings %>% 
+  slice_max(n = 5, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs))
+
+write_csv(nematode_community_pca, "data/data_processed/pca_nematode_community.csv")
+
+# plotting
+scaling_factor <- 1.5
+
+ggplot(nematode_community_pca, aes(x = PC1, y = PC2, color = village)) +
+  geom_point(size = 2, alpha = 0.7, position=position_jitter(.2,.2)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_segment(data = loading_top, aes(x = 0, y = 0, xend = PC1*scaling_factor, yend = PC2*scaling_factor), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  
+  geom_text(data = loadings, aes(x = PC1 * scaling_factor, y = PC2 * scaling_factor, label = OTU_ID),
+            color = "black", size = 3) +  
+  labs(title = "PCA host nematode",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
        y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
   guides(fill = guide_legend(override.aes = list(shape=21))) +
