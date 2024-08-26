@@ -110,6 +110,7 @@ grid_sum <- plot_sum %>%
 
 # transforming to matrix
 grid_sum_mat <- grid_sum %>% 
+  select(-village) %>% 
   column_to_rownames("grid_name") %>%
   ungroup() %>% 
   as.matrix() %>% 
@@ -127,7 +128,7 @@ distmat_grid2[upper.tri(distmat_grid2)] <- NA
 diag(distmat_grid2) <- NA
 grid_disimilarity <- melt(distmat_grid2) %>% 
   rename(grid1=Var1, grid2=Var2, grid_attr=value) %>% 
-  filter(!(is.na(value))) %>% 
+  filter(!(is.na(grid_attr))) %>% 
   arrange(grid1, grid2)
 
 return(grid_disimilarity)
@@ -177,7 +178,7 @@ fun_grid_distance <- function(dat) {
     filter(!(is.na(grid_dist))) %>%
     arrange(grid1, grid2)
 
-  return(grid_dist)
+  return(grid_distance)
 }
 
 
@@ -246,48 +247,40 @@ small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.
 
 village_names <- sort(unique(plots_location$village))
 village_summary <- NULL
-grid_distance_three_villages <- NULL
 
 # for loop for three villages
 for (v in village_names) {
   
   # grid attributes
   grid_attributes <- fun_grid_attributes(habitat.raw %>% filter(village == v))
-  # grid distance
+  # distance between grids
   grid_distance <- fun_grid_distance(plots_location %>% filter(village == v))
-  grid_distance_three_villages <- append(grid_distance_three_villages, grid_distance)
+  # distance from village
+  village_distance <- fun_distance_village(plots_location %>% filter(village == v))
   # grid community similarity
   grid_mammals <- fun_grid_mammals(small_mammals %>% filter(village == v))
+  # grid elevation
+  grid_elevation <- fun_grid_elevation(small_mammals %>% filter(village == v))
   
   # combining all variables into one table
-  
-  # transforming distance to long format
-  grid_dist2 <- grid_distance[[1]]
-  grid_dist2[upper.tri(grid_dist2)] <- NA
-  diag(grid_dist2) <- NA
-  grid_distance_m <- melt(grid_dist2) %>% 
-  rename(grid1=Var1, grid2=Var2, grid_dist=value) %>% 
-  filter(!(is.na(grid_dist))) %>% 
-  arrange(grid1, grid2)
-  
-  grid_summary <- full_join(grid_attributes, grid_distance_m, by=c("grid1","grid2")) %>% 
-    full_join(grid_mammals, by=c("grid1","grid2")) %>% 
+  grid_summary <- full_join(grid_attributes, grid_distance, by=c("grid1","grid2")) %>% 
+    left_join(village_distance, by=c("grid1","grid2")) %>%
+    left_join(grid_mammals, by=c("grid1","grid2")) %>% 
+    left_join(grid_elevation, by=c("grid1","grid2")) %>%
     mutate(village = v) # adding village col
   
   # summary table of three villages together
   village_summary <- rbind(village_summary, grid_summary)
 }
 
-# log transform distance for a better correlation
-#village_summary %<>% mutate(grid_dist = log(grid_dist))
-
 # saving the results
 write_csv(village_summary, "data/data_processed/village_summary.csv")
-save(grid_distance_three_villages, file = "data/data_processed/distance_three_villages.RData")
+
+
 
 #####
 village_summary <- read_csv("data/data_processed/village_summary.csv")
 # correlations between variables
-psych::pairs.panels(village_summary %>% filter(village=="Mandena") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
+psych::pairs.panels(village_summary %>% filter(village=="Sarahandrano") %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T)
 
 
