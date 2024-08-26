@@ -1093,7 +1093,8 @@ Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
 # reading grid similarity results
-grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv") %>% 
+  filter(village == vil)
 
 # correlations between variables
 # loop for three villages
@@ -1108,9 +1109,9 @@ cat('\n','\n')
 # mantel test for: modules similarity ~ distance between grids
 
 # distance between grids matrices
-load("../data/data_processed/distance_three_villages.RData")
-names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
-grid_distance <- grid_distance_three_villages[[vil]]
+#load("../data/data_processed/distance_three_villages.RData")
+#names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
+grid_distance=grid_distance_three_villages[[vil]]
 
 mantel_result_three_groups <- NULL
 final_data_three_groups <- NULL
@@ -1147,7 +1148,7 @@ for (i in 1:3) {
 
 # plotting
 g <- final_data_three_groups %>% 
-  ggplot(aes(y=module_similarity, x=grid_dist, color = asv_core)) +
+  ggplot(aes(y=module_similarity, x=grid_attr, color = asv_core)) +
   geom_point(alpha = 0.8) +
   facet_wrap(~asv_core, scales="free")+
   scale_y_continuous(limits = c(0.0, 0.9)) +
