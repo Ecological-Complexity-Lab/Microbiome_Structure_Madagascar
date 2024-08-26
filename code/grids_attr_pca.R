@@ -290,8 +290,8 @@ loading_top <- loadings %>%
 pca_data <- data.frame(pca_veg$x[, 1:2])  # Select the first two principal components
 
 
-mb_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
-  geom_point(size = 3) +
+mb_plot <- ggplot(microbiome_community_pca, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3, alpha=0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
   geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*2, yend = PC2*2), 

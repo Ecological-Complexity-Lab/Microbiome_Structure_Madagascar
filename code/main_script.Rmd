@@ -43,7 +43,7 @@ source("modularity_analysis_functions.R", local = knitr::knit_global())
 # working only with Rattus from the three villages
 
 # villages: Andatsakala, Mandena, Sarahandrano
-vil <- "Mandena"
+vil <- "Sarahandrano"
 data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(village == vil)
 ```
 
@@ -66,6 +66,7 @@ group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
 core_names <- unique(data_asv$asv_core)
 nmi_observed_three_groups <- NULL
 modules_similarity_three_groups <- NULL
+modules_similarity2_three_groups <- NULL
 asv_degree_distribution_three_groups <- NULL
 modules_three_groups <- NULL
 modules_size_three_groups <- NULL
@@ -105,6 +106,11 @@ for (v in core_names) {
   # saving results in one table
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
+  # calculating similarity in modules between grids-seasons
+  modules_similarity2 <- fun_modules_similarity2(modules_observed)
+  # saving results in one table
+  modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
+  
   # ASVs degree distribution
   asv_degree_distribution <- fun_asv_degree_distribution(data_asv_group)
   asv_degree_distribution_three_groups <- append(asv_degree_distribution_three_groups, asv_degree_distribution)
@@ -143,7 +149,7 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly))
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
   assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
@@ -1087,12 +1093,13 @@ Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
 # reading grid similarity results
-grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv") %>% 
+  filter(village == vil)
 
 # correlations between variables
 # loop for three villages
 library(psych)
-print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = T))
+print(psych::pairs.panels(grids_similarity_attr %>% filter(village == vil) %>%  select(-village,-grid1,-grid2), ellipses = F, lm = F))
 cat('\n','\n')
 ```
 
@@ -1104,7 +1111,7 @@ cat('\n','\n')
 # distance between grids matrices
 load("../data/data_processed/distance_three_villages.RData")
 names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
-grid_distance <- grid_distance_three_villages[[vil]]
+grid_distance=grid_distance_three_villages[[vil]]
 
 mantel_result_three_groups <- NULL
 final_data_three_groups <- NULL
@@ -1158,6 +1165,49 @@ g <- final_data_three_groups %>%
   labs(x = "Distance Between Land Uses [m]", y = "Modules Similarity [Bray-Curtis]")
 print(g)
 cat('\n','\n')
+```
+
+```{r}
+# mantel test for vegetation attributes by grid-season
+
+# vegetation similarity
+habitat.raw <- read_csv("../data/data_raw/data_small_mammals/Trap_Plots.csv") %>% filter(village == vil)
+grid_attributes <- fun_grid_attributes(habitat.raw)
+
+mantel_result2_three_groups <- NULL
+final_data2_three_groups <- NULL
+
+# loop for three asv groups
+for (i in 1:3) {
+  
+  modules_similarity <- modules_similarity2_three_groups[[i]]
+  grid_names <- rownames(grid_attributes)
+  # filtering the modules matrix to the existing grids
+  modules_similarity <- modules_similarity[grid_names, grid_names]
+  
+  
+  
+  # calculating mantel test
+  mantel_result <- vegan::mantel(modules_similarity, grid_attributes)
+  mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
+                                 pvalue = round(1-mantel_result$signif,4),
+                                 asv_core = core_names[i])
+  mantel_result2_three_groups <- rbind(mantel_result2_three_groups, mantel_result_df)
+  
+  
+  # transforming to long format
+  modules_similarity_m <- modules_similarity
+  modules_similarity_m[lower.tri(modules_similarity_m)] <- NA
+  diag(modules_similarity_m) <- NA
+  final_data <- melt(modules_similarity_m) %>% 
+    filter(!is.na(value)) %>% 
+    mutate(asv_core = core_names[i]) %>% 
+    dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) 
+  
+  final_data2_three_groups <- rbind(final_data2_three_groups, final_data)
+  
+}
+
 ```
 
 # Link prediction 
