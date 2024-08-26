@@ -216,7 +216,7 @@ sm_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
                arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
   geom_text(data = loadings, aes(x = PC1 * 10* 1.2, y = PC2 * 10 * 1.2, label = variable),
             color = "black", size = 3) +  # Variable names near the arrows
-  labs(title = "PCA vegetation (per land use, village and season)",
+  labs(title = "PCA small-mammals community (per land use, village and season)",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
        y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
   scale_color_manual(values = c("red", "blue", "green", "orange", "purple", "black", "cyan")) +  # Customize colors as needed
@@ -394,7 +394,7 @@ nc_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
                arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
   geom_text(data = loading_top, aes(x = PC1 * 2* 1.2, y = PC2 * 2 * 1.2, label = OTU_ID),
             color = "black", size = 3) +  # Variable names near the arrows
-  labs(title = "PCA Microbiome",
+  labs(title = "PCA Nematode",
        x = paste("PC1 (",round(prop_ex_var[1],2),"% variance explained)", sep = ""),
        y = paste("PC2 (",round(prop_ex_var[2],2),"% variance explained)", sep = "")) +
   guides(fill = guide_legend(override.aes = list(shape=21))) +
