@@ -142,7 +142,7 @@ small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.
 # counting the abundance of each host species in every land use and transforming to matrix
 dat_mat <- small_mammals %>% 
   filter(grepl("TMR", animal_id)) %>% 
-  rename(host_species = field_identification, grid = habitat_type) %>% 
+  dplyr::rename(host_species = field_identification, grid = habitat_type) %>% 
   filter(host_species != "Rattus rattus") %>% 
   select(host_species,village, grid) %>% 
   count(village, grid, host_species) %>% 
@@ -228,7 +228,7 @@ village_summary <- vegetation_pca %>%
   full_join(grid_elevation, by="grid_village")
 
 # saving the results
-write_csv(village_summary, "data/data_processed/village_summary.csv")
+write_csv(village_summary, "data/data_processed/village_summary_new.csv")
 
 
 
