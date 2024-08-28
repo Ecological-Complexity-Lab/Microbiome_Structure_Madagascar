@@ -196,29 +196,29 @@ fun_modules_similarity <- function(dat) {
 fun_modules_similarity2 <- function(dat) {
   
   # how many host individuals in every grid
-  n_host_grid_season <- dat %>% 
-    distinct(host_ID, grid, season) %>% 
-    count(grid, season) %>% 
-    dplyr::rename(n_grid_season=n)
+  n_host_grid_village <- dat %>% 
+    distinct(host_ID, grid, village) %>% 
+    count(grid, village) %>% 
+    dplyr::rename(n_grid_village=n)
   
   # matrix of grid similarity in modules
   grid_modules <- dat %>% 
-    group_by(grid, season, host_group) %>% 
+    group_by(grid, village, host_group) %>% 
     summarise(host_n = n_distinct(host_ID)) %>% 
-    left_join(n_host_grid_season, by=c("grid","season")) %>% 
-    mutate(n = host_n/n_grid_season) %>% 
-    select(-host_n, -n_grid_season) %>% 
+    left_join(n_host_grid_village, by=c("grid","village")) %>% 
+    mutate(n = host_n/n_grid_village) %>% 
+    select(-host_n, -n_grid_village) %>% 
     spread(host_group, n, fill = 0) %>% 
     mutate(grid = as.character(grid)) %>%
-    arrange(grid, season) %>% 
-    unite("sample", grid:season, remove = TRUE) %>% 
+    arrange(grid, village) %>% 
+    unite("sample", grid:village, remove = TRUE) %>% 
     column_to_rownames("sample") %>% 
     as.matrix() 
   
   # calculating the *similarity* between grids
   grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
   
-  return(list(grid_modules_dist))
+  return(list(grid_modules))
 }
 
 # function for plotting ASVs degree distribution
