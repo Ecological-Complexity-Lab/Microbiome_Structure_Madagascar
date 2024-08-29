@@ -1093,7 +1093,7 @@ grids_similarity_attr <- read_csv("../../data/data_processed/village_summary_new
 rownames(grids_similarity_attr) <- grids_similarity_attr$grid_village
 
 # correlations between variables
-print(psych::pairs.panels(grids_similarity_attr %>%  select(-grid_village), ellipses = F, lm = F))
+print(psych::pairs.panels(grids_similarity_attr %>%  select(-grid_village,-village,-grid), ellipses = F, lm = F))
 cat('\n','\n')
 ```
 

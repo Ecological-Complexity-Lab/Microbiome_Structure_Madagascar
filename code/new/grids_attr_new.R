@@ -107,8 +107,8 @@ grid_sum <- plot_sum %>%
 
 # name index
 grid_village_name <- grid_sum %>% 
-  select(grid_name, village) %>% 
-  unite(col="grid_village", grid_name:village, remove = FALSE)
+  select(village, grid_name) %>% 
+  unite(col="grid_village", village:grid_name, remove = FALSE)
 
 # transforming to matrix
 grid_sum_mat <- grid_sum %>% 
@@ -124,7 +124,8 @@ pca_veg <- prcomp(grid_sum_mat, center = TRUE, scale. = TRUE)
 vegetation_pca <- as.data.frame(pca_veg$x) %>% 
   rownames_to_column("grid_village") %>% 
   left_join(grid_village_name, by="grid_village") %>% 
-  select(grid_village,PC1,PC2) %>% 
+  select(grid_village,village,grid_name,PC1,PC2) %>% 
+  dplyr::rename(grid=grid_name) %>% 
   rename_with(~paste("veg",.,sep="_"), .cols=starts_with("PC"))
 
 # explained variance
