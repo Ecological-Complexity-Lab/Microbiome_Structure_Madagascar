@@ -1109,11 +1109,30 @@ for (i in 1:3) {
   grids_similarity_attr2 <- grids_similarity_attr %>%  filter(grid_village %in% grid_names & !grepl("village", grid_village))
   modules_similarity2 <- modules_similarity2[rownames(grids_similarity_attr2),]
   
-  # db-RDA
-  rda_result <- dbrda(modules_similarity2 ~ veg_PC1+veg_PC2+dist_to_village+elevation, data=grids_similarity_attr2, distance="bray", na.action = na.omit)
+  # tb-RDA
+  
+  # hellinger transformation
+  modules_similarity2_hell <- decostand (modules_similarity2, 'hell')
+  
+  rda_result <- rda(modules_similarity2 ~ veg_PC1+veg_PC2+dist_to_village+elevation, data=grids_similarity_attr2, na.action = na.omit)
   rda_result
+  
+  # variation explained
+  constrained_eig <- rda_result$CCA$eig/rda_result$tot.chi*100
+unconstrained_eig <- rda_result$CA$eig/rda_result$tot.chi*100
+expl_var <- c(constrained_eig, unconstrained_eig)
+barplot (expl_var[1:20], col = c(rep ('red', length (constrained_eig)), rep ('black', length (unconstrained_eig))),
+         las = 2, ylab = '% variation')
+  
+R2.obs <- RsquareAdj (rda_result)$r.squared
+R2.obs
+
+# significance test
   anova(rda_result)
-  anova(rda_result, by = "margin", permutations = 999)
+  rda_anova <- anova(rda_result, by = "margin", permutations = 999)
+  rda_anova$`Pr(>F)` <- p.adjust (rda_anova$`Pr(>F)`, method = 'holm')
+  rda_anova
+  
   #coef(rda_result)
   sppscores(rda_result) <- modules_similarity2
   score_rda <- scores(rda_result)$species

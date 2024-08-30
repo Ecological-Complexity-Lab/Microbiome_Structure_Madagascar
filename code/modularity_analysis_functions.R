@@ -204,10 +204,10 @@ fun_modules_similarity2 <- function(dat) {
   # matrix of grid similarity in modules
   grid_modules <- dat %>% 
     group_by(grid, village, host_group) %>% 
-    summarise(host_n = n_distinct(host_ID)) %>% 
-    left_join(n_host_grid_village, by=c("grid","village")) %>% 
-    mutate(n = host_n/n_grid_village) %>% 
-    select(-host_n, -n_grid_village) %>% 
+    summarise(n = n_distinct(host_ID)) %>% 
+    # left_join(n_host_grid_village, by=c("grid","village")) %>% 
+    # mutate(n = host_n/n_grid_village) %>% 
+    # select(-host_n, -n_grid_village) %>% 
     spread(host_group, n, fill = 0) %>% 
     mutate(grid = as.character(grid)) %>%
     arrange(grid, village) %>% 
@@ -216,7 +216,7 @@ fun_modules_similarity2 <- function(dat) {
     as.matrix() 
   
   # calculating the *similarity* between grids
-  grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
+  #grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
   
   return(list(grid_modules))
 }
