@@ -1100,6 +1100,11 @@ cat('\n','\n')
 ```{r}
 # RDA for modules
 
+anova_model_all <- NULL
+anova_rda_all <- NULL
+score_modules_top_all <- NULL
+rda_figs <- list()
+
 # loop for three asv groups
 for (i in 1:3) {
   
@@ -1109,35 +1114,83 @@ for (i in 1:3) {
   grids_similarity_attr2 <- grids_similarity_attr %>%  filter(grid_village %in% grid_names & !grepl("village", grid_village))
   modules_similarity2 <- modules_similarity2[rownames(grids_similarity_attr2),]
   
+  a=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
+  grids_similarity_attr2 %<>% left_join(a, by=c("village","grid"))
+  
   # tb-RDA
   
   # hellinger transformation
   modules_similarity2_hell <- decostand (modules_similarity2, 'hell')
   
-  rda_result <- rda(modules_similarity2 ~ veg_PC1+veg_PC2+dist_to_village+elevation, data=grids_similarity_attr2, na.action = na.omit)
-  rda_result
+  
+  rda_result <- rda(modules_similarity2 ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  # **Condition(n) - control for the number of host in each village-grid.
   
   # variation explained
-  constrained_eig <- rda_result$CCA$eig/rda_result$tot.chi*100
-unconstrained_eig <- rda_result$CA$eig/rda_result$tot.chi*100
-expl_var <- c(constrained_eig, unconstrained_eig)
-barplot (expl_var[1:20], col = c(rep ('red', length (constrained_eig)), rep ('black', length (unconstrained_eig))),
-         las = 2, ylab = '% variation')
+  constrained_eig <- t(as.data.frame(rda_result$CCA$eig/rda_result$tot.chi*100))  # for RDAs
+# unconstrained_eig <- rda_result$CA$eig/rda_result$tot.chi*100
+# expl_var <- c(constrained_eig, unconstrained_eig)
+# barplot (expl_var[1:20], col = c(rep ('red', length (constrained_eig)), rep ('black', length (unconstrained_eig))),
+#          las = 2, ylab = '% variation')
   
-R2.obs <- RsquareAdj (rda_result)$r.squared
-R2.obs
+R2.obs <- RsquareAdj (rda_result)$adj.r.squared
 
-# significance test
-  anova(rda_result)
-  rda_anova <- anova(rda_result, by = "margin", permutations = 999)
-  rda_anova$`Pr(>F)` <- p.adjust (rda_anova$`Pr(>F)`, method = 'holm')
-  rda_anova
+# significance test for the whole model
+  anova_model <- anova(rda_result)[1,] %>% 
+    mutate(R2.adj = R2.obs, asv_core = core_names[i])
   
-  #coef(rda_result)
-  sppscores(rda_result) <- modules_similarity2
-  score_rda <- scores(rda_result)$species
-  plot(rda_result)
+  anova_model_all <- rbind(anova_model_all, anova_model)
+  
+  # significance test for all variables
+  anova_rda <- anova(rda_result, by = "margin", permutations = 999) %>% 
+    mutate(asv_core = core_names[i])
+  anova_rda$`Pr(>F)` <- p.adjust (anova_rda$`Pr(>F)`, method = 'holm')
+  
+  anova_rda_all <- rbind(anova_rda_all, anova_rda)
+  
+  # scores
+  score_modules <- as.data.frame(vegan::scores(rda_result)$species) %>% 
+    mutate(RDA1_abs = abs(RDA1), RDA2_abs = abs(RDA2))
+  score_modules_top <- score_modules %>% 
+  slice_max(n = 5, order_by = RDA1_abs) %>% 
+  bind_rows(score_modules %>% slice_max(n = 5, order_by = RDA2_abs)) %>% 
+    rownames_to_column("host_group") %>% 
+    mutate(asv_core = core_names[i])
+  
+  score_modules_top_all <- rbind(score_modules_top_all, score_modules_top)
+  
+  # plotting
+  # samples
+  rda_samples <- as.data.frame(rda_result$CCA$wa) %>% 
+    rownames_to_column("grid_village") %>% 
+    left_join(grids_similarity_attr2[c("grid_village","village","grid")], by="grid_village")
+  
+  # variables
+  rda_var <- as.data.frame(rda_result$CCA$biplot)
+  
+  # plot
+  g <- rda_samples %>% 
+    ggplot(aes(RDA1, RDA2, color=grid, shape=village)) +
+    geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
+  geom_point(size = 4) +
+  geom_segment(data = rda_var, inherit.aes = FALSE, aes(x = 0, y = 0, xend = (RDA1*0.85), yend = (RDA2*0.85)), 
+                 arrow = arrow(length = unit(0.15, "cm"))) +
+    geom_text(data = rda_var,inherit.aes = FALSE, aes(x = RDA1, y = RDA2, label=rownames(rda_var)))+
+  theme_bw() +
+  theme(panel.border = element_rect(colour = "black", size=1), panel.grid = element_blank())+
+  labs(x = paste("RDA1 (",round(constrained_eig[1],2),"%)", sep = ""), y = paste("RDA2 (",round(constrained_eig[2],2),"%)", sep = ""), 
+       title = paste(core_names[i]), color = "Land Use", shape = "Village")
+  rda_figs <- append(rda_figs, list(g))
 }
+
+print(anova_model_all)
+
+anova_rda_all
+
+rda_figs[[1]] + rda_figs[[2]] + rda_figs[[3]] + plot_layout(guides='collect') &
+  theme(legend.position='bottom')
+cat('\n','\n')
 ```
 
 
