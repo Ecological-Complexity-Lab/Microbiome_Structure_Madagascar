@@ -105,7 +105,7 @@ for (v in core_names) {
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
   # calculating similarity in modules between grids-seasons
-  modules_similarity2 <- fun_modules_similarity2(modules_observed %>% filter(host_group!=1))
+  modules_similarity2 <- fun_modules_similarity2(modules_observed)
   # saving results in one table
   modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
   
