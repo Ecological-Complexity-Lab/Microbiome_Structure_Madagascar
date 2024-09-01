@@ -105,7 +105,7 @@ for (v in core_names) {
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
   # calculating similarity in modules between grids-seasons
-  modules_similarity2 <- fun_modules_similarity2(modules_observed)
+  modules_similarity2 <- fun_modules_similarity2(modules_observed %>% filter(host_group!=1))
   # saving results in one table
   modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
   
@@ -295,7 +295,7 @@ cat('\n','\n')
 ```{r}
 set.seed(123)
 data_asv_mat <- data_asv %>% 
-  filter(asv_core == "Core") %>% 
+  #filter(asv_core == "Core") %>% 
   select(host_ID, asv_ID, reads) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
   column_to_rownames("host_ID") %>% 
@@ -349,7 +349,7 @@ rooted_phylo_tree <- phangorn::midpoint(phylo_tree)
 distance_matrix <- GUniFrac(data_asv_mat, rooted_phylo_tree, verbose = F)$unifracs[, , "d_UW"]
 
 # Perform weighted UniFrac
-unifrac_result <- adonis2(distance_matrix ~ grid+season+sex, data = hosts, permutations = 999)
+unifrac_result <- adonis2(distance_matrix ~ grid+season+village, data = hosts, permutations = 999)
 print(knitr::kable(unifrac_result[,4:5]))
 cat('\n')
 
@@ -1161,7 +1161,7 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   
   # plotting
   # samples
-  rda_samples <- as.data.frame(rda_result$CCA$wa) %>% 
+  rda_samples <- as.data.frame(scores(rda_result)$sites) %>% 
     rownames_to_column("grid_village") %>% 
     left_join(grids_similarity_attr2[c("grid_village","village","grid")], by="grid_village")
   
@@ -1173,7 +1173,7 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
     ggplot(aes(RDA1, RDA2, color=grid, shape=village)) +
     geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point(size = 4) +
+  geom_point(size = 4, alpha=0.6) +
   geom_segment(data = rda_var, inherit.aes = FALSE, aes(x = 0, y = 0, xend = (RDA1*0.85), yend = (RDA2*0.85)), 
                  arrow = arrow(length = unit(0.15, "cm"))) +
     geom_text(data = rda_var,inherit.aes = FALSE, aes(x = RDA1, y = RDA2, label=rownames(rda_var)))+
@@ -1184,9 +1184,12 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   rda_figs <- append(rda_figs, list(g))
 }
 
-print(anova_model_all)
+print(knitr::kable(anova_model_all))
+cat('\n','\n')
 
-anova_rda_all
+print(knitr::kable(anova_rda_all))
+cat('\n','\n')
+
 
 rda_figs[[1]] + rda_figs[[2]] + rda_figs[[3]] + plot_layout(guides='collect') &
   theme(legend.position='bottom')

@@ -242,16 +242,17 @@ fun_modules <- function(dat) {
   
   # how many host individuals in every grid
   n_host_grid <- dat %>% 
-    distinct(host_ID, grid) %>% 
-    count(grid) %>% 
+    distinct(host_ID, village, grid) %>% 
+    count(village, grid) %>% 
     dplyr::rename(n_grid=n)
   
   g <- dat %>% 
-    distinct(host_ID, grid, host_group) %>% 
-    count(grid, host_group) %>% 
-    left_join(n_host_grid, by="grid") %>% 
+    distinct(host_ID, village, grid, host_group) %>% 
+    count(village, grid, host_group) %>% 
+    left_join(n_host_grid, by=c("village", "grid")) %>% 
     mutate(n_rel = n/n_grid) %>% 
-    ggplot(aes(x = host_group, y = grid, fill=n_rel)) +
+    unite("sample", c("village","grid"), remove=F) %>% 
+    ggplot(aes(x = host_group, y = sample, fill=n_rel)) +
     geom_tile(color='white') +
     theme_classic() +
     scale_fill_viridis_c(limits = c(0, 1)) +
