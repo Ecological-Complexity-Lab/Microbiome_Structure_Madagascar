@@ -295,7 +295,7 @@ cat('\n','\n')
 ```{r}
 set.seed(123)
 data_asv_mat <- data_asv %>% 
-  #filter(asv_core == "Core") %>% 
+  filter(asv_core == "Non-core") %>% 
   select(host_ID, asv_ID, reads) %>% 
   spread(asv_ID, reads, fill = 0) %>% 
   column_to_rownames("host_ID") %>% 
@@ -304,7 +304,9 @@ data_asv_mat <- data_asv %>%
 hosts <- small_mammals %>% 
   filter(host_ID %in% rownames(data_asv_mat)) %>% 
   select(host_ID,village,grid,season,month,mass, sex,age_repro,age_dental,elevation.obs) %>% 
-  mutate(village=as.factor(village),grid=as.factor(grid), season=as.factor(season),month=as.factor(month), sex=as.factor(sex), age_dental=as.factor(age_dental))
+  mutate(village=as.factor(village),grid=as.factor(grid), season=as.factor(season),month=as.factor(month), sex=as.factor(sex), age_dental=as.factor(age_dental)) %>% 
+  left_join(modules_table_three_groups %>% filter(asv_core == "Non-core") %>% distinct(host_ID,host_group), by="host_ID") %>% 
+  mutate(module = factor(ifelse(host_group==1,1,0)))
 
 distance_matrix <- vegdist(data_asv_mat, method = "bray")
 
@@ -330,12 +332,12 @@ nmds_plot <- nmds_result$points %>%
   left_join(hosts, by="host_ID")
 
 # plotting
-g1 <- nmds_plot %>% 
-  ggplot( aes(MDS1, MDS2, color=grid, shape=village)) +
+g1 <- nmds_plot %>% filter(host_ID!=3357) %>% 
+  ggplot( aes(MDS1, MDS2, color=module, shape=village)) +
   geom_point(size = 2, position=position_jitter(.01)) +
   #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
   theme_bw() +
-  annotate("text", x=min(nmds_plot$MDS1)+0.04, size=3, y=max(nmds_plot$MDS2), label=paste('Stress =',round(nmds_result$stress,3))) +
+  #annotate("text", x=min(nmds_plot$MDS1)+0.04, size=3, y=max(nmds_plot$MDS2), label=paste('Stress =',round(nmds_result$stress,3))) +
   labs(x = "NMDS1", y = "NMDS2", title = "(A) Bray-Curtis")
 print(g1)
 ```
@@ -371,13 +373,13 @@ nmds_plot2 <- nmds_result2$points %>%
 
 # plotting
 g2 <- nmds_plot2 %>% 
-  ggplot( aes(MDS1, MDS2, color=grid, shape=season)) +
+  ggplot( aes(MDS1, MDS2, color=module, shape=season)) +
   geom_point(size = 2, position=position_jitter(.05)) +
   #stat_ellipse(aes(fill=grid), alpha=.1, type='norm',linetype =2, geom="polygon") + ##draws 95% confidence interval ellipses
   theme_bw() +
   annotate("text", x=min(nmds_plot2$MDS1)+0.15, size=3, y=max(nmds_plot2$MDS2), label=paste('Stress =',round(nmds_result2$stress,3))) +
   labs(x = "NMDS1", y = "NMDS2", title = "(B) Weighted UniFrac")
-
+print(g2)
 ```
 
 ## Figure 
