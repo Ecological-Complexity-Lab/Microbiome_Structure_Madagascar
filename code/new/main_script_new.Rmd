@@ -147,8 +147,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=10, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 100))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -827,7 +827,7 @@ hosts <- modules_table_three_groups %>% distinct(host_ID, asv_core, host_group) 
 
 # Phylogenetic analysis
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 
 # beta-NTI same module?
 betaNTI_final <- betaNTI_three_groups %>% 
@@ -902,7 +902,7 @@ g2 <- assembly_summary %>%
 print(g2)
 ```
 
-```{r, assembly_groups}
+```{r, assembly_groups, eval=FALSE, include=FALSE}
 # checking differences between groups
 
 # Number of incidents across the four processes
@@ -1045,7 +1045,7 @@ cat('\n','\n')
 ```
 
 
-```{r, nmi}
+```{r, nmi, eval=FALSE, include=FALSE}
 cat('## Observed NMI','\n')
 
 # making a data frame out of the shuffled results
@@ -1114,16 +1114,16 @@ for (i in 1:3) {
   grids_similarity_attr2 <- grids_similarity_attr %>%  filter(grid_village %in% grid_names & !grepl("village", grid_village))
   modules_similarity2 <- modules_similarity2[rownames(grids_similarity_attr2),]
   
-  a=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
-  grids_similarity_attr2 %<>% left_join(a, by=c("village","grid"))
+  n=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
+  grids_similarity_attr2 %<>% left_join(n, by=c("village","grid"))
   
   # tb-RDA
   
   # hellinger transformation
-  modules_similarity2_hell <- decostand (modules_similarity2, 'hell')
+  modules_similarity2_hell <- decostand(modules_similarity2, 'hell')
   
   
-  rda_result <- rda(modules_similarity2 ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
   # **Condition(n) - control for the number of host in each village-grid.
   
   # variation explained
@@ -1199,7 +1199,7 @@ cat('\n','\n')
 
 ## Mantel test
 
-```{r, mantel_test}
+```{r, mantel_test, eval=FALSE, include=FALSE}
 # mantel test for: modules similarity ~ distance between grids
 
 # distance between grids matrices
@@ -1261,7 +1261,7 @@ print(g)
 cat('\n','\n')
 ```
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 # mantel test for vegetation attributes by grid-season
 
 # vegetation similarity
@@ -1306,7 +1306,7 @@ for (i in 1:3) {
 
 # Link prediction 
 
-```{r, eval=FALSE, include=TRUE}
+```{r, eval=FALSE, include=FALSE}
 library(caret)
 library(yardstick)
 
