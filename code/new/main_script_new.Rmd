@@ -54,14 +54,17 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 
 # setting thresholds for core
 core_th <- c(0.02, 0.2)
-data_asv %<>% mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
+data_asv_p <- data_asv %>% 
+  mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                           host_p>core_th[2] ~ "Core",
                                           .default = "Non-core"))
 
-group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
+data_asv_all <- data_asv %>% mutate(asv_core = "All")
+data_asv_final <- rbind(data_asv_all, data_asv_p)
+group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
-core_names <- unique(data_asv$asv_core)
+core_names <- unique(data_asv_final$asv_core)
 nmi_observed_three_groups <- NULL
 modules_similarity_three_groups <- NULL
 modules_similarity2_three_groups <- NULL
@@ -83,7 +86,7 @@ asv_distance <- ape::cophenetic.phylo(phylo_tree)
 # loop for three groups
 for (v in core_names) {
   
-  data_asv_group <- data_asv %>% 
+  data_asv_group <- data_asv_final %>% 
     filter(asv_core == v)
   
   # calculating ASVs degree
@@ -105,7 +108,8 @@ for (v in core_names) {
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
   # calculating similarity in modules between grids-seasons
-  modules_similarity2 <- fun_modules_similarity2(modules_observed %>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare"))
+  modules_similarity2 <- fun_modules_similarity2(modules_observed )
+  #%>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare")
   # saving results in one table
   modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
   
