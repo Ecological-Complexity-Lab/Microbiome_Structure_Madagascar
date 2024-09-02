@@ -105,7 +105,7 @@ for (v in core_names) {
   modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
   
   # calculating similarity in modules between grids-seasons
-  modules_similarity2 <- fun_modules_similarity2(modules_observed)
+  modules_similarity2 <- fun_modules_similarity2(modules_observed %>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare"))
   # saving results in one table
   modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
   
@@ -257,13 +257,14 @@ most_abu_family <- data_asv_tax %>%
   most_abu_family_8 <- most_abu_family %>% 
     filter(!is.na(Family)) %>% 
     ungroup() %>% 
-    slice_max(by = asv_core, order_by = n_p, n = 6) %>% 
+    slice_max(by = asv_core, order_by = n_p, n = 8) %>% 
     mutate(p = "top") %>% 
     select(asv_core, Family, p)
   
-  most_abu_family_p <- data_asv_tax %>%
+  most_abu_family_p <- data_asv_tax %>% left_join(modules_table_three_groups %>% mutate(module = factor(ifelse(host_group==1,1,0))) %>%
+  distinct(host_ID,host_group,asv_core, module), by=c("host_ID","asv_core" )) %>% 
   mutate(reads_a = reads*total_reads) %>%
-  group_by(asv_core, Family, grid) %>%
+  group_by(asv_core, Family, module) %>%
   summarise(n= sum(reads_a)) %>%
   left_join(total_reads_groups, by="asv_core") %>%
   mutate(n_p = n/n_total) %>% 
@@ -274,9 +275,10 @@ most_abu_family <- data_asv_tax %>%
 library("RColorBrewer")
 colors <- c("grey40","grey80","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
   g <- most_abu_family_p %>% 
-    group_by(asv_core,grid,  p) %>% 
+    filter(asv_core != "Rare") %>% 
+    group_by(asv_core,module,  p) %>% 
     summarise(n_p = sum(n_p)) %>% 
-ggplot(aes(fill=p, x=grid, y=n_p)) +
+ggplot(aes(fill=p, x=module, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~asv_core) +
   theme_bw() +
@@ -287,6 +289,19 @@ ggplot(aes(fill=p, x=grid, y=n_p)) +
   labs(x="Land Use", y="Relative Abundance", fill = "Family")
 print(g)
 cat('\n','\n')
+
+a=modules_table_three_groups %>% filter(asv_core != "Rare") %>% mutate(module = factor(ifelse(host_group==1,1,0))) %>%
+  count(host_ID, asv_core, module) %>% 
+  group_by(asv_core, module) %>% 
+  summarise(avg_degree = mean(n), median_degree = median(n))
+   
+modules_table_three_groups %>% filter(asv_core != "Rare") %>% mutate(module = factor(ifelse(host_group==1,1,0))) %>%
+  count(host_ID, asv_core, module) %>% 
+ggplot(aes( x=module, y=n)) +
+  geom_boxplot()+
+  facet_wrap(~asv_core)+
+  theme_bw()
+
 ```
 
 # PERMANOVA {.tabset}
