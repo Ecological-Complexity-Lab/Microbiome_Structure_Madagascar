@@ -244,20 +244,22 @@ fun_modules <- function(dat) {
   n_host_grid <- dat %>% 
     distinct(host_ID, village, grid) %>% 
     count(village, grid) %>% 
-    dplyr::rename(n_grid=n)
+    dplyr::rename(n_grid=n) %>% 
+    mutate(site = paste0("Site", row_number())) %>% 
+    mutate(site = factor(site, levels = paste0("Site", row_number())))
   
   g <- dat %>% 
-    distinct(host_ID, village, grid, host_group) %>% 
-    count(village, grid, host_group) %>% 
+    distinct(host_ID, village, grid, host_group, asv_core) %>% 
+    count(village, grid, host_group, asv_core) %>% 
     left_join(n_host_grid, by=c("village", "grid")) %>% 
     mutate(n_rel = n/n_grid) %>% 
     unite("sample", c("village","grid"), remove=F) %>% 
-    ggplot(aes(x = host_group, y = sample, fill=n_rel)) +
+    ggplot(aes(x = host_group, y = site, fill=n_rel)) +
     geom_tile(color='white') +
     theme_classic() +
     scale_fill_viridis_c(limits = c(0, 1)) +
-    theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
-    labs(x='Module ID', y='Land Use', color = "Host Abundance [%]")
+    theme(axis.text = element_text(size = 6, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+    labs(title = paste(unique(dat$asv_core)), x='Module ID', y='Sites', fill = "Host Relative Abundance")
   
   return(list(g))
 }
