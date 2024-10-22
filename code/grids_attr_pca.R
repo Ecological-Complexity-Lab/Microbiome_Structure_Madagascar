@@ -267,6 +267,7 @@ data_asv_family_mat <- data_asv_family %>%
   column_to_rownames("host_ID") %>% 
   as.matrix()
 save(data_asv_family_mat,file="data_asv_family_mat.RData")
+
 # PCA
 pca_microbiome <- prcomp(data_asv_family_mat)
 
