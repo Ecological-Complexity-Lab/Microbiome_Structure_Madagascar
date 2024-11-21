@@ -486,14 +486,14 @@ tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>
   left_join(data_tax_meta2, by="sample") 
 
 loading_top <- loadings %>% 
-  slice_max(n = 5, order_by = PC1_abs) %>% 
-  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
+  slice_max(n = 2, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 2, order_by = PC2_abs)) 
 
 g1 <- tax_scores %>% 
   ggplot(aes(PC1, PC2, color=asv_core)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point() +
+  geom_point(color=group.colors[tax_scores$asv_core]) +
   geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
                  arrow = arrow(length = unit(0.15, "cm"))) +
   annotate("label", x = (loading_top$PC1*6), y = (loading_top$PC2*6),
@@ -503,6 +503,7 @@ g1 <- tax_scores %>%
   scale_fill_manual(values=group.colors) +
   labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""), y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""), 
        title = "(A) Genus", color = "ASV Group")
+
 ```
 
 ## Family
@@ -564,14 +565,14 @@ tax_scores <- as.data.frame(tax_pca$x[,1:2]) %>% rownames_to_column("sample") %>
   left_join(data_tax_meta2, by="sample") 
 
 loading_top <- loadings %>% 
-  slice_max(n = 5, order_by = PC1_abs) %>% 
-  bind_rows(loadings %>% slice_max(n = 5, order_by = PC2_abs)) 
+  slice_max(n = 2, order_by = PC1_abs) %>% 
+  bind_rows(loadings %>% slice_max(n = 2, order_by = PC2_abs)) 
 
 g2 <- tax_scores %>% 
   ggplot(aes(PC1, PC2, color=asv_core)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point() +
+  geom_point(color=group.colors[tax_scores$asv_core]) +
   geom_segment(data = loading_top, inherit.aes = FALSE, aes(x = 0, y = 0, xend = PC1*4, yend = PC2*4), 
                  arrow = arrow(length = unit(0.15, "cm"))) +
   annotate("label", x = (loading_top$PC1*4), y = (loading_top$PC2*4),
@@ -926,7 +927,7 @@ g1 <- assembly_summary %>%
   theme(axis.text = element_text(size = 11, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
-  scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
+  scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
   labs(x="ASVs Groups", y="Percentage")
 print(g1)
 
@@ -944,7 +945,7 @@ g2 <- assembly_summary %>%
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
-  scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
+  scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
   labs(x="", y="Percentage")
 print(g2)
 ```
@@ -1216,16 +1217,17 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   
   # variables
   rda_var <- as.data.frame(rda_result$CCA$biplot)
+  rownames(rda_var) <- c("Veg_1","Veg_2","Distance","Elevation")
   
   # plot
   g <- rda_samples %>% 
     ggplot(aes(RDA1, RDA2)) +
     geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point(size = 4, alpha=0.6, color=group.colors[core_names[i]]) +
+  geom_point(size = 4, alpha=0.9, color=group.colors[core_names[i]]) +
   geom_segment(data = rda_var, inherit.aes = FALSE, aes(x = 0, y = 0, xend = (RDA1*0.85), yend = (RDA2*0.85)), 
                  arrow = arrow(length = unit(0.15, "cm"))) +
-    geom_text(data = rda_var,inherit.aes = FALSE, aes(x = RDA1, y = RDA2, label=rownames(rda_var)))+
+    geom_label(data = rda_var,inherit.aes = FALSE, aes(x = RDA1, y = RDA2, label=rownames(rda_var)),size=3, alpha=0.5)+
   theme_bw() +
      coord_cartesian(xlim = range(rda_samples$RDA1) * c(1.4, 1.3),  
       ylim = range(rda_samples$RDA2) * c(1.4, 1.3),
