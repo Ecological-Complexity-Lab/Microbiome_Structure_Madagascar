@@ -48,7 +48,7 @@ dat <- left_join(data_sm, data_asv_f, by="host_ID")
 ##### filter 1
 # filtering non-rattus host species
 dat1 <- dat %>% 
-  filter(host_species == "Microgale brevicaudata") %>% 
+  filter(host_species == "Rattus rattus") %>% 
   select_if(~ any(. != 0))  # removing all ASVs not belonging to rattus (0 in all samples)
 # here I filtered 12357 ASVs
 
