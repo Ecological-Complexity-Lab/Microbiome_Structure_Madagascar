@@ -208,6 +208,19 @@ village_distance <- village_dist %>%
   unite(col="grid_village", c(village,grid), remove = TRUE)
 
 
+##### distance between grids #######################################################################
+
+# calculating pairwise distance between all grids from all villages
+dist_grids <- as.data.frame(geosphere::distm(plots_location[3:4], fun = distHaversine))
+site_names <- plots_location %>% unite(col="site", c(village,grid), remove = TRUE)
+rownames(dist_grids) <-  site_names$site
+mds_distance <- cmdscale(dist_grids, k = 1) %>% 
+  as.data.frame() %>% 
+  rename(distance = V1) %>% 
+  rownames_to_column("grid_village")
+
+
+
 ##### grid elevation #######################################################################
   
   # finding elevation for each grid (average value of captured animals)
@@ -226,7 +239,8 @@ village_distance <- village_dist %>%
 village_summary <- vegetation_pca %>% 
   full_join(sm_community_pca, by="grid_village") %>% 
   full_join(village_distance, by="grid_village") %>% 
-  full_join(grid_elevation, by="grid_village")
+  full_join(grid_elevation, by="grid_village") %>% 
+  full_join(mds_distance, by="grid_village")
 
 # saving the results
 write_csv(village_summary, "data/data_processed/village_summary_new.csv")
