@@ -64,7 +64,7 @@ data_asv_final <- rbind(data_asv_all, data_asv_p)
 group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
-core_names <- unique(data_asv_final$asv_core)
+core_names <- unique(data_asv_p$asv_core)
 nmi_observed_three_groups <- NULL
 modules_similarity_three_groups <- NULL
 modules_similarity2_three_groups <- NULL
@@ -86,7 +86,7 @@ asv_distance <- ape::cophenetic.phylo(phylo_tree)
 # loop for three groups
 for (v in core_names) {
   
-  data_asv_group <- data_asv_final %>% 
+  data_asv_group <- data_asv_p %>% 
     filter(asv_core == v)
   
   # calculating ASVs degree
@@ -151,8 +151,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 50))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=50, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=10, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -246,7 +246,7 @@ print(g)
 tax <- read_delim("../../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
   dplyr::rename(asv_ID = ASV)
 
-data_asv_tax <- data_asv_final %>% 
+data_asv_tax <- data_asv_p %>% 
   left_join(tax, by="asv_ID")
 
 cat("## Relative abundance Family", '\n','\n')
@@ -1155,7 +1155,7 @@ rda_figs <- list()
 set.seed(123)
 
 # loop for three asv groups
-for (i in 1:4) {
+for (i in 1:3) {
   
   modules_similarity2 <- modules_similarity2_three_groups[[i]]
   grid_names <- rownames(modules_similarity2)
@@ -1165,6 +1165,8 @@ for (i in 1:4) {
   
   n=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
   grids_similarity_attr2 %<>% left_join(n, by=c("village","grid"))
+  # standardizing variables to zero mean and unit variance
+  grids_similarity_attr2[4:11] <- decostand(grids_similarity_attr2[4:11], 'standardize')
   
   # tb-RDA
   
@@ -1172,7 +1174,7 @@ for (i in 1:4) {
   modules_similarity2_hell <- decostand(modules_similarity2, 'hell')
   
   
-  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+distance+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
   # **Condition(n) - control for the number of host in each village-grid.
   
   # variation explained
@@ -1217,7 +1219,7 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   
   # variables
   rda_var <- as.data.frame(rda_result$CCA$biplot)
-  rownames(rda_var) <- c("Veg_1","Veg_2","Distance","Elevation")
+  rownames(rda_var) <- c("Veg_1","Veg_2","Dist-to-Village","Elevation", "Distance")
   
   # plot
   library(ggrepel)
@@ -1269,7 +1271,7 @@ print(knitr::kable(anova_rda_all))
 cat('\n','\n')
 
 
-rda_figs[[1]] + rda_figs[[2]] + rda_figs[[3]] + rda_figs[[4]] + plot_layout(ncol=2, nrow=2) & theme(legend.position='none')
+rda_figs[[1]] + rda_figs[[2]] + rda_figs[[3]] + plot_layout(ncol=3, nrow=1) & theme(legend.position='none')
 cat('\n','\n')
 ```
 
