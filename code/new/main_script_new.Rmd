@@ -599,7 +599,7 @@ cat('\n','\n')
 ```{r, network_exploration}
 
 # loop for three groups
-for (i in 1:4) {
+for (i in 1:3) {
   
   cat('##',core_names[i],'{.tabset}','\n','\n')
   
@@ -633,7 +633,7 @@ for (i in 1:4) {
 }
 
 cat('## Modules','\n')
-  modules_three_groups[[1]]+modules_three_groups[[2]]+modules_three_groups[[3]]+modules_three_groups[[4]] + plot_layout(nrow=2,ncol=2,guides='collect',axes = "collect_y",axis_titles = "collect") &
+  modules_three_groups[[1]]+modules_three_groups[[2]]+modules_three_groups[[3]] + plot_layout(nrow=1,ncol=3,guides='collect',axes = "collect_y",axis_titles = "collect") &
   theme(legend.position='bottom')
   cat('\n','\n')
 ```
@@ -946,7 +946,7 @@ g2 <- assembly_summary %>%
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
-  labs(x="", y="Percentage")
+  labs(x="Hosts from the Same/Different Modules", y="Percentage", fill="Process")
 print(g2)
 ```
 
