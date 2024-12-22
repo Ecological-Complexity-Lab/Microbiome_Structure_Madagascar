@@ -30,6 +30,7 @@ library(ape)
 library(picante)
 library(patchwork)
 library(iCAMP)
+library(ggrepel)
 
 rm(list=ls())
 ```
@@ -59,8 +60,8 @@ data_asv_p <- data_asv %>%
                                           host_p>core_th[2] ~ "Core",
                                           .default = "Non-core"))
 
-data_asv_all <- data_asv %>% mutate(asv_core = "All")
-data_asv_final <- rbind(data_asv_all, data_asv_p)
+#data_asv_all <- data_asv %>% mutate(asv_core = "All")
+#data_asv_final <- rbind(data_asv_all, data_asv_p)
 group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
@@ -151,8 +152,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=10, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 500))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=500, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -1253,8 +1254,6 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   rownames(rda_var) <- c("Veg_1","Veg_2","Dist-to-Village","Elevation", "Distance")
   
   # plot
-  library(ggrepel)
-
 g <- rda_samples %>% 
   ggplot(aes(RDA1, RDA2)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
