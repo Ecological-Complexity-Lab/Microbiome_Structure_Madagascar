@@ -1,0 +1,263 @@
+---
+title: "Land use and microbe prevalence jointly determine host-microbe network structure"
+subtitle: "Sensitivity analysis"
+author: "Matan Markfeld"
+date: "Last edit: 2024-12-23"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    collapse: false
+    number_sections: true
+    code_folding: hide
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png'), out.width = '100%', out.height='60%')
+```
+
+
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(vegan)
+library(igraph)
+library(reshape2)
+library(infomapecology)
+library(aricode)
+library(ape)
+library(picante)
+library(patchwork)
+
+rm(list=ls())
+```
+
+```{r}
+source("modularity_analysis_functions.R", local = knitr::knit_global())
+```
+
+```{r, microbiome data}
+# reading the microbiome data
+# working only with Rattus from the three villages
+
+# villages: Andatsakala, Mandena, Sarahandrano
+vil <- "Mandena"
+data_asv <- read_csv("../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000.csv") %>% filter(village == vil)
+```
+
+```{r, main analysis, include=FALSE, results='hide'}
+# first of all, run this chunk of code.
+# this code does all the modularity analysis using the functions in "modularity_analysis_functions".
+# There is a loop runs for the three villages, and all the analysis is done separately for each village.
+# the output of the code is variables holding the final results tables and figures (the output of the functions used)
+
+# setting thresholds for core
+core_th <- c(0.02, 0.2)
+n_phylo_shuff <- 10
+
+group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6")
+
+core_names <- c("Core", "Non-core", "Rare")
+modules_similarity_three_groups <- NULL
+modules_table_three_groups <- NULL
+betaNTI_three_groups <- NULL
+raupc_three_groups <- NULL
+
+# reading the phylogenetic tree
+best_tree <- readRDS(file = "../results/phylo_tree_rra0.001_p0.01.rds")
+phylo_tree <- best_tree$tree 
+# ASVs phylogenetic distance
+asv_distance <- ape::cophenetic.phylo(phylo_tree)
+
+ths <- seq(0,0.1,by=0.01)
+for (i in ths) {
+  
+  data_asv_p <- data_asv %>% 
+    mutate(asv_core = case_when(host_p<core_th[1]+i ~ "Rare",
+                                          host_p>core_th[2]+i ~ "Core",
+                                          .default = "Non-core"))
+  
+# loop for three groups
+for (v in core_names) {
+  
+  data_asv_group <- data_asv_p %>% 
+    filter(asv_core == v)
+  
+  # calculating ASVs degree
+  asv_degree <- data_asv_group %>%
+    group_by(asv_ID) %>%
+    summarise(n = n_distinct(host_ID)) %>%
+    dplyr::rename(asv_degree = n)
+  data_asv_group %<>% left_join(asv_degree, by="asv_ID")
+  
+  ##### observed network
+  # finding modules
+  modules_observed <- fun_modularity_analysis(data_asv_group) %>% 
+    mutate(i=i)
+  modules_table_three_groups <- rbind(modules_table_three_groups, modules_observed)
+  #write_csv(modules_table_three_groups, "../results/modules_table_sarahandrano.csv")
+  
+  # calculating similarity in modules between grids
+  modules_similarity <- fun_modules_similarity(modules_observed)
+  # saving results in one table
+  modules_similarity_three_groups <- append(modules_similarity_three_groups, modules_similarity)
+  
+  
+  ##### phylogenetic analysis
+  # ASVs pool
+  asv_pool <- data_asv_group %>% 
+    distinct(asv_ID, asv_degree) %>% 
+    mutate(p = asv_degree/length(unique(data_asv_group$asv_ID)))
+  
+  # calculating betaNTI
+  data_betaNTI <- data_asv_group %>% 
+    distinct(host_ID, asv_ID) %>% 
+    mutate(reads = 1) %>% 
+    spread(asv_ID, reads, fill = 0) %>% 
+    column_to_rownames("host_ID") %>% 
+    as.matrix()
+  
+  betaNTI <- fun_calc_betaNTI(data_betaNTI, asv_distance, asv_pool, n_phylo_shuff) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    mutate(asv_core = v, i=i)
+  betaNTI_three_groups <- rbind(betaNTI_three_groups, betaNTI)
+  
+  # raup-crick
+  raupc <- raupcrick(data_betaNTI)
+  raupc2 <- as.matrix(raupc) 
+  raupc2[upper.tri(raupc2)] <- NA
+  diag(raupc2) <- NA
+  raupc2_m <- melt(raupc2) %>% 
+    filter(!(is.na(value)))%>% 
+    dplyr::rename(host1 = Var1, host2 = Var2, raupc = value) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("host2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    mutate(asv_core = v, i=i)
+  raupc_three_groups <- rbind(raupc_three_groups, raupc2_m)
+}
+}
+```
+
+# Phylogenetic analysis
+
+```{r}
+
+# beta-NTI same module?
+betaNTI_final <- betaNTI_three_groups %>% 
+  mutate(same_module = ifelse(host_group1==host_group2, "Same","Different")) 
+
+# Raup-Crick same module?
+raupc_final <- raupc_three_groups %>% 
+  mutate(same_module = ifelse(host_group1==host_group2, "Same","Different"))
+
+```
+
+```{r, assembly_processes}
+# combining final results
+assembly_final <- betaNTI_final %>% 
+  full_join(raupc_final %>% dplyr::select(host1,host2,raupc,asv_core,i), by=c("host1","host2","asv_core","i")) %>% 
+  mutate(i = as.factor(i))
+
+# calculating the process
+assembly_final %<>% mutate(process = case_when(betaNTI>2 ~ "Heterogeneous Selection",
+                                               betaNTI<(-2) ~ "Homogeneous Selection",
+                                               (betaNTI<=2 & betaNTI>=(-2) & raupc>0.95) ~ "Dispersal Limitation",
+                                               (betaNTI<=2 & betaNTI>=(-2) & raupc<(-0.95)) ~ "Homogenizing Dispersal",
+                                               .default = "Drift"))
+
+# summary
+assembly_summary <- assembly_final %>% 
+  count(i, asv_core, same_module, process)
+
+assembly_summary_total <- assembly_summary %>% 
+  group_by(i, asv_core, same_module) %>% 
+  summarise(n_total = sum(n))
+
+#plotting
+g <- assembly_summary %>% 
+  left_join(assembly_summary_total, by=c("asv_core","same_module","i")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=process, x=i, y=n_p)) +
+  geom_bar(position="fill", stat="identity") +
+  facet_grid(same_module ~ asv_core) +
+  scale_y_continuous(labels = scales::percent) +
+  #geom_text(aes(label = paste0(round(n_p*100,1),"%")), position = position_stack(vjust = 0.5), size = 2)+
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), legend.position='bottom') +
+  scale_fill_manual(values=c("#adc178","#d6ccc2","#f07167","#83c5be")) +
+  labs(x="Cutoff Change [+]", y="Percentage")
+print(g)
+
+```
+
+
+
+# Modules similarity across land use change gradient
+
+## Correlations between variables
+
+Distance is a proxy for habitat degradation.
+
+```{r, variables_correlation}
+# reading grid similarity results
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
+```
+
+## Mantel test
+
+```{r, mantel_test}
+# mantel test for: modules similarity ~ distance between grids
+
+# distance between grids matrices
+load("../data/data_processed/distance_three_villages.RData")
+names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
+grid_distance <- grid_distance_three_villages[[vil]]
+
+mantel_result_three_groups <- NULL
+final_data_three_groups <- NULL
+
+for (i in seq(0,(length(ths)*3-1),by=3)) {
+  
+# loop for three asv groups
+for (j in 1:3) {
+  
+  modules_similarity <- modules_similarity_three_groups[[i+j]]
+  grid_names <- rownames(modules_similarity)
+  # filtering the distance matrix to the existing grids
+  grid_distance <- grid_distance[grid_names, grid_names]
+  
+  # calculating mantel test
+  mantel_result <- vegan::mantel(modules_similarity, grid_distance)
+  mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
+                                 pvalue = round(1-mantel_result$signif,4),
+                                 asv_core = core_names[j],
+                                 i = ths[ceiling((i+j)/3)])
+  mantel_result_three_groups <- rbind(mantel_result_three_groups, mantel_result_df)
+  
+}  
+}
+
+# plotting r
+g1 <- mantel_result_three_groups %>% 
+  mutate(sig = ifelse(pvalue<=0.05,1,0)) %>% 
+  ggplot(aes(y=r, x=i, color = asv_core)) +
+  geom_point(aes(shape = as.factor(sig), size = 3)) +
+  geom_line()+
+  scale_size(guide="none") +
+  scale_shape_manual(values = c(1, 16), guide="none") +
+  #scale_y_continuous(limits = c(0.0, 0.9)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
+  scale_color_manual(values=group.colors) +
+  labs(x = "Cutoff Change [+]", y = "r (Mantel)", color = "ASV Group")
+print(g1)
+cat('\n','\n')
+```
+
+
+
