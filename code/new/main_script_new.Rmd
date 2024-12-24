@@ -54,7 +54,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_th <- c(0.02, 0.2)
+core_th <- c(0.01, 0.2)
 data_asv_p <- data_asv %>% 
   mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
                                           host_p>core_th[2] ~ "Core",
@@ -152,8 +152,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 500))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=500, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 20))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=20, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -609,7 +609,7 @@ cat('\n','\n')
 ```{r, network_exploration}
 
 # loop for three groups
-for (i in 1:3) {
+for (i in 1:2) {
   
   cat('##',core_names[i],'{.tabset}','\n','\n')
   
