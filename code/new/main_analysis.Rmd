@@ -52,7 +52,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # thresholds for core
 core_th <- seq(0.05, 0.5, by=0.05)
 
-group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
+group.colors <- c(Core = "#f4a261", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
 
 
 modules_similarity2_three_groups <- NULL
@@ -118,8 +118,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 20))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=20, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 50))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=50, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -171,12 +171,12 @@ g <- final_network_properties %>%
   mutate(measure = case_when(measure=="asv_n" ~ "No. of ASVs",
                                                measure=="connectance" ~ "Connectance",
                                                measure=="modules_n" ~ "No. of Modules",
-                                               measure=="modules_size" ~ "Mean Module Size",
+                                               measure=="modules_size" ~ "Avg. Module Size",
                              measure=="largest_module" ~ "Largest Module")) %>% 
-    mutate(measure = factor(measure, levels = c("No. of ASVs","Connectance","No. of Modules","Mean Module Size","Largest Module"))) %>%
+    mutate(measure = factor(measure, levels = c("No. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
   ggplot(aes(x=threshold, y=value, color=asv_core)) +
   geom_line() +
-  geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
+  geom_vline(xintercept = 0.3, linetype = "dotted", color = "grey")+
   facet_wrap(~measure, scales="free", nrow = 1) +
   theme_bw() +
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
@@ -226,6 +226,7 @@ g <- assembly_summary %>%
             position = position_stack(vjust = 0.5), size = 2.5)+
   theme_bw() +
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        legend.position = "bottom",
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
