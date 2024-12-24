@@ -50,7 +50,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # thresholds for core
-core_th <- seq(0.05, 0.3, by=0.05)
+core_th <- seq(0.05, 0.5, by=0.05)
 
 group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
 
@@ -118,8 +118,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=10, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 20))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=20, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -136,7 +136,56 @@ for (v in core_names) {
 
 # Network exploration
 
-```{r}
+```{r, network_exploration}
+# number of ASVs
+group_n <- modules_table_three_groups %>% 
+  group_by(threshold, asv_core) %>% 
+  summarise(asv_n = n_distinct(asv_ID), host_n = n_distinct(host_ID))
+
+# connectance
+interaction_n <- modules_table_three_groups %>% 
+  count(threshold, asv_core)
+group_n %<>% left_join(interaction_n, by=c("threshold","asv_core")) %>% 
+  mutate(connectance = n / (asv_n*host_n))
+
+# number of modules
+modules_n <- modules_table_three_groups %>% 
+  group_by(threshold, asv_core) %>% 
+  summarise(modules_n = n_distinct(host_group))
+
+# mean modules size
+modules_size <- modules_table_three_groups %>% 
+  distinct(threshold, asv_core, host_group, host_ID) %>% 
+  count(threshold, asv_core, host_group) %>% 
+  group_by(threshold, asv_core) %>% 
+  summarise(modules_size = mean(n), largest_module = max(n))
+modules_n %<>% left_join(modules_size, by=c("threshold","asv_core")) 
+
+final_network_properties <- group_n %>% 
+  left_join(modules_n, by=c("threshold","asv_core"))
+
+# plotting
+g <- final_network_properties %>% 
+  select(-n, -host_n) %>% 
+  pivot_longer(cols=asv_n:largest_module, names_to="measure", values_to="value") %>% 
+  mutate(measure = case_when(measure=="asv_n" ~ "No. of ASVs",
+                                               measure=="connectance" ~ "Connectance",
+                                               measure=="modules_n" ~ "No. of Modules",
+                                               measure=="modules_size" ~ "Mean Module Size",
+                             measure=="largest_module" ~ "Largest Module")) %>% 
+    mutate(measure = factor(measure, levels = c("No. of ASVs","Connectance","No. of Modules","Mean Module Size","Largest Module"))) %>%
+  ggplot(aes(x=threshold, y=value, color=asv_core)) +
+  geom_line() +
+  geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
+  facet_wrap(~measure, scales="free", nrow = 1) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
+        legend.position = "bottom",
+        strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+  scale_color_manual(values=group.colors) +
+  labs(x="Core Threshold", y="Value", color="Microbial Group")
+print(g)
 
 ```
 
