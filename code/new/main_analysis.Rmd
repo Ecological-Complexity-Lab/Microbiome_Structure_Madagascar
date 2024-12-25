@@ -220,7 +220,7 @@ g <- assembly_summary %>%
   mutate(n_p = n/n_total) %>% 
   ggplot(aes(fill=process, x=threshold, y=n_p)) +
   geom_area() +
-  facet_grid(cols = vars(same_module), rows = vars(asv_core)) +
+  facet_grid(cols = vars(asv_core), rows = vars(same_module)) +
   #geom_vline(xintercept = 0.3, linetype = "dotted", color = "grey")+
   geom_hline(yintercept = 0.5, linetype = "dotted", color = "black")+
   scale_y_continuous(labels = scales::percent) +
