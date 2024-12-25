@@ -219,6 +219,24 @@ g <- assembly_summary %>%
   left_join(assembly_summary_total_module, by=c("threshold","asv_core","same_module")) %>% 
   mutate(n_p = n/n_total) %>% 
   ggplot(aes(fill=process, x=threshold, y=n_p)) +
+  geom_area() +
+  facet_grid(cols = vars(same_module), rows = vars(asv_core)) +
+  #geom_vline(xintercept = 0.3, linetype = "dotted", color = "grey")+
+  geom_hline(yintercept = 0.5, linetype = "dotted", color = "black")+
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+  scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
+  labs(x="Core Threshold", y="Percentage", fill="Process")
+print(g)
+
+
+g <- assembly_summary %>% 
+  left_join(assembly_summary_total_module, by=c("threshold","asv_core","same_module")) %>% 
+  mutate(n_p = n/n_total) %>% 
+  ggplot(aes(fill=process, x=threshold, y=n_p)) +
   geom_bar(position="fill", stat="identity") +
   facet_grid(cols = vars(same_module), rows = vars(asv_core)) +
   scale_y_continuous(labels = scales::percent) +
