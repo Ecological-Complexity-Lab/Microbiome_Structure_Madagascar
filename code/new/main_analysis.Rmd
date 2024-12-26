@@ -41,7 +41,7 @@ source("../modularity_analysis_functions.R", local = knitr::knit_global())
 # reading the microbiome data
 # working only with Rattus from the three villages
 
-data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.02_th5000_all.csv")
+data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.01_th5000_all.csv")
 ```
 
 ```{r, main analysis, include=FALSE, results='hide'}
@@ -97,7 +97,8 @@ for (v in core_names) {
   
   
   # calculating similarity in modules
-  modules_similarity2 <- fun_modules_similarity2(modules_observed %>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare"))
+  modules_similarity2 <- fun_modules_similarity2(modules_observed) 
+  # %>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare")
   # saving results in one table
   modules_similarity2_three_groups <- append(modules_similarity2_three_groups, modules_similarity2)
   
@@ -118,13 +119,17 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 50))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=50, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 20))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=20, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
-    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("sample1"="host_ID")) %>% dplyr::rename(host_group1=host_group, grid1=grid) %>% 
-    left_join(modules_observed %>% distinct(host_ID, host_group, grid), by=c("sample2"="host_ID")) %>% dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+    left_join(modules_observed %>% 
+                distinct(host_ID, host_group, grid), by=c("sample1"="host_ID")) %>% 
+    dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+    left_join(modules_observed %>% 
+                distinct(host_ID, host_group, grid), by=c("sample2"="host_ID")) %>% 
+    dplyr::rename(host_group2=host_group, grid2=grid) %>% 
     mutate(threshold = th, asv_core = v)
   
   assembly_three_groups <- rbind(assembly_three_groups, assembly_result)
@@ -263,60 +268,77 @@ Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
 # reading grid similarity results
-grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
-```
+grids_similarity_attr <- read_csv("../../data/data_processed/village_summary_new.csv")
+rownames(grids_similarity_attr) <- grids_similarity_attr$grid_village
 
-## Mantel test
-
-```{r, mantel_test}
-# mantel test for: modules similarity ~ distance between grids
-
-# distance between grids matrices
-load("../data/data_processed/distance_three_villages.RData")
-names(grid_distance_three_villages) <- c("Mandena", "Sarahandrano", "Andatsakala")
-grid_distance <- grid_distance_three_villages[[vil]]
-
-mantel_result_three_groups <- NULL
-final_data_three_groups <- NULL
-
-for (i in seq(0,(length(ths)*3-1),by=3)) {
-  
-# loop for three asv groups
-for (j in 1:3) {
-  
-  modules_similarity <- modules_similarity_three_groups[[i+j]]
-  grid_names <- rownames(modules_similarity)
-  # filtering the distance matrix to the existing grids
-  grid_distance <- grid_distance[grid_names, grid_names]
-  
-  # calculating mantel test
-  mantel_result <- vegan::mantel(modules_similarity, grid_distance)
-  mantel_result_df <- data_frame(r = round(mantel_result$statistic,2),
-                                 pvalue = round(1-mantel_result$signif,4),
-                                 asv_core = core_names[j],
-                                 i = ths[ceiling((i+j)/3)])
-  mantel_result_three_groups <- rbind(mantel_result_three_groups, mantel_result_df)
-  
-}  
-}
-
-# plotting r
-g1 <- mantel_result_three_groups %>% 
-  mutate(sig = ifelse(pvalue<=0.05,1,0)) %>% 
-  ggplot(aes(y=r, x=i, color = asv_core)) +
-  geom_point(aes(shape = as.factor(sig), size = 3)) +
-  geom_line()+
-  scale_size(guide="none") +
-  scale_shape_manual(values = c(1, 16), guide="none") +
-  #scale_y_continuous(limits = c(0.0, 0.9)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
-        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
-  scale_color_manual(values=group.colors) +
-  labs(x = "Cutoff Change [+]", y = "r (Mantel)", color = "ASV Group")
-print(g1)
+# correlations between variables
+print(psych::pairs.panels(grids_similarity_attr %>%  select(-grid_village,-village,-grid), ellipses = F, lm = F))
 cat('\n','\n')
 ```
 
+```{r}
+# RDA for modules
 
+par_names <- expand_grid(core_th, core_names)
+anova_model_all <- NULL
+anova_rda_all <- NULL
+set.seed(123)
 
+# loop for three asv groups
+for (i in 1:nrow(par_names)) {
+  
+  modules_similarity2 <- modules_similarity2_three_groups[[i]]
+  # filtering the largest module
+  largest_module <- which.max(colSums(modules_similarity2))
+  modules_similarity2 <- modules_similarity2[,-largest_module]
+  
+  grid_names <- rownames(modules_similarity2)
+  # filtering matrix to the existing grids
+  grids_similarity_attr2 <- grids_similarity_attr %>%  filter(grid_village %in% grid_names & !grepl("village", grid_village))
+  modules_similarity2 <- modules_similarity2[rownames(grids_similarity_attr2),]
+  
+  
+  
+  n=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
+  grids_similarity_attr2 %<>% left_join(n, by=c("village","grid"))
+  # standardizing variables to zero mean and unit variance
+  grids_similarity_attr2[4:11] <- decostand(grids_similarity_attr2[4:11], 'standardize')
+  
+  # tb-RDA
+  
+  # hellinger transformation
+  modules_similarity2_hell <- decostand(modules_similarity2, 'hell')
+  
+  
+  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  # **Condition(n) - control for the number of host in each village-grid.
+  
+  # variation explained
+  constrained_eig <- t(as.data.frame(rda_result$CCA$eig/rda_result$tot.chi*100))  # for RDAs
+  
+R2.obs <- RsquareAdj (rda_result)$adj.r.squared
+
+# significance test for the whole model
+  anova_model <- anova(rda_result)[1,] %>% 
+    mutate(R2.adj = R2.obs, `Pr(>F)` = as.double(`Pr(>F)`), asv_core = par_names[[i,2]], core_th = par_names[[i,1]]) %>% 
+    mutate(sig = ifelse(`Pr(>F)` <= 0.05, 1, 0))
+  
+  anova_model_all <- rbind(anova_model_all, anova_model)
+  
+  # significance test for all variables
+  anova_rda <- anova(rda_result, by = "margin", permutations = 999) %>% 
+    mutate(asv_core = par_names[[i,2]], core_th = par_names[[i,1]]) 
+  anova_rda$`Pr(>F)` <- p.adjust (anova_rda$`Pr(>F)`, method = 'holm') 
+    anova_rda %<>% mutate(`Pr(>F)` = as.double(`Pr(>F)`), sig = ifelse(`Pr(>F)` <= 0.05, 1, 0)) 
+  
+  anova_rda_all <- rbind(anova_rda_all, anova_rda)
+  
+}
+
+print(knitr::kable(anova_model_all))
+cat('\n','\n')
+
+print(knitr::kable(anova_rda_all))
+cat('\n','\n')
+
+```
