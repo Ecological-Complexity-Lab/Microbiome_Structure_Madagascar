@@ -181,7 +181,7 @@ g <- final_network_properties %>%
     mutate(measure = factor(measure, levels = c("No. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
   ggplot(aes(x=threshold, y=value, color=asv_core)) +
   geom_line() +
-  geom_vline(xintercept = 0.3, linetype = "dotted", color = "grey")+
+  geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
   facet_wrap(~measure, scales="free", nrow = 1) +
   theme_bw() +
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
@@ -334,6 +334,81 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   anova_rda_all <- rbind(anova_rda_all, anova_rda)
   
 }
+
+# plotting
+
+# arranging the tables
+anova_model_all_plot <- anova_model_all %>% 
+   mutate(R2.adj = ifelse(R2.adj<0,0,R2.adj))
+
+anova_rda_all_plot <- anova_rda_all %>% 
+rownames_to_column("var") %>% 
+  left_join(anova_model_all_plot %>% select(core_th,asv_core,R2.adj), by=c("asv_core","core_th")) %>% 
+  filter(sig == 1) %>% 
+  group_by(core_th, asv_core, R2.adj) %>%
+  summarise(var_combined = paste(var, collapse = "\n"), .groups = "drop")
+
+ g <- anova_model_all_plot %>% 
+   ggplot(aes(y=R2.adj, x=core_th, color = asv_core)) +
+  geom_point(aes(shape = as.factor(sig), size = 3)) +
+  geom_line()+
+  scale_size(guide="none") +
+  scale_shape_manual(values = c(1, 16), guide="none") +
+  scale_y_continuous(limits = c(0, 0.19)) +
+     geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
+   geom_label(
+    data = anova_rda_all_plot,
+    aes(x = core_th, y = R2.adj, label = var_combined),
+    nudge_y = 0.02,  
+    size = 3, color = "black",
+    )+
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+         legend.position = "bottom",
+        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
+  scale_color_manual(values=group.colors) +
+  labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
+ print(g)
+cat('\n','\n')
+
+# plotting tiles
+library(ggnewscale)
+
+g <- anova_model_all %>% 
+   mutate(R2.adj = ifelse(R2.adj<0,0,R2.adj)) 
+  ggplot() +
+    # Core
+  geom_tile(data = filter(g, asv_core == "Core"), 
+            aes(x = asv_core, y = core_th, fill = R2.adj)) +
+  scale_fill_gradient(low = "white", high = group.colors[1], name = "R2 adj. - Core", limits = c(0, 0.2)) +
+    
+  # Non-core
+  new_scale_fill() +
+  geom_tile(data = filter(g, asv_core == "Non-core"), 
+            aes(x = asv_core, y = core_th, fill = R2.adj)) +
+  scale_fill_gradient(low = "white", high = group.colors[2], name = "R2 adj. - Non-core", limits = c(0, 0.2)) +
+geom_text(
+    data = anova_rda_all_plot,
+    aes(x = asv_core, y = core_th, label = var),
+    size = 3, color = "black")+  
+    theme_bw() +
+  labs(x = "", y = "Core Threshold") +
+  theme(legend.position = "right")
+  
+  
+   ggplot(data = aes(y=core_th, x=asv_core, fill = R2.adj)) +
+  geom_tile(color='white') +
+    theme_classic() +
+    scale_fill_viridis_c(limits = c(0, 0.2)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+         legend.position = "bottom",
+        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
+  scale_color_manual(values=group.colors) +
+  labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
+ print(g)
+cat('\n','\n')
+
 
 print(knitr::kable(anova_model_all))
 cat('\n','\n')
