@@ -364,7 +364,7 @@ rownames_to_column("var") %>%
     )+
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
-         legend.position = "bottom",
+         #legend.position = "bottom",
         panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
   scale_color_manual(values=group.colors) +
   labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
