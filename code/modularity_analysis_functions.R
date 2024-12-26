@@ -245,6 +245,7 @@ fun_modules <- function(dat) {
     distinct(host_ID, village, grid) %>% 
     count(village, grid) %>% 
     dplyr::rename(n_grid=n) %>% 
+    arrange(grid) %>% 
     mutate(site = paste0("Site", row_number())) %>% 
     mutate(site = factor(site, levels = paste0("Site", row_number())))
   
@@ -258,7 +259,8 @@ fun_modules <- function(dat) {
     geom_tile(color='white') +
     theme_classic() +
     scale_fill_viridis_c(limits = c(0, 1)) +
-    theme(axis.text = element_text(size = 6, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+    theme(axis.text = element_text(size = 6, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12),
+          axis.text.y = element_text(color = grid)) +
     labs(title = paste(unique(dat$asv_core)), x='Module ID', y='Sites', fill = "Host Relative Abundance")
   
   return(list(g))

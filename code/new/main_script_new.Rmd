@@ -54,15 +54,14 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # setting thresholds for core
-core_th <- c(0.01, 0.2)
+core_th <- c(0.2)
 data_asv_p <- data_asv %>% 
-  mutate(asv_core = case_when(host_p<core_th[1] ~ "Rare",
-                                          host_p>core_th[2] ~ "Core",
+  mutate(asv_core = case_when(host_p>core_th ~ "Core",
                                           .default = "Non-core"))
 
 #data_asv_all <- data_asv %>% mutate(asv_core = "All")
 #data_asv_final <- rbind(data_asv_all, data_asv_p)
-group.colors <- c(Core = "#f4a261", 'Non-core' = "#2b9348", Rare = "#0077b6", All = "black")
+group.colors <- c(Core = "#f4a261", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv_p$asv_core)
@@ -152,8 +151,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 20))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=20, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 5))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=5, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -665,7 +664,7 @@ for (i in 1:2) {
 }
 
 cat('## Modules','\n')
-  modules_three_groups[[1]]+modules_three_groups[[2]]+modules_three_groups[[3]] + plot_layout(nrow=1,ncol=3,guides='collect',axes = "collect_y",axis_titles = "collect") &
+  modules_three_groups[[1]]+modules_three_groups[[2]] + plot_layout(nrow=1,ncol=2,guides='collect',axes = "collect_y",axis_titles = "collect") &
   theme(legend.position='bottom')
   cat('\n','\n')
 ```
