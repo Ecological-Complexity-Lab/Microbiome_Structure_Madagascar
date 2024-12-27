@@ -61,7 +61,7 @@ data_asv_p <- data_asv %>%
 
 #data_asv_all <- data_asv %>% mutate(asv_core = "All")
 #data_asv_final <- rbind(data_asv_all, data_asv_p)
-group.colors <- c(Core = "#f4a261", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
+group.colors <- c(Core = "#e76f51", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv_p$asv_core)
@@ -669,6 +669,13 @@ cat('## Modules','\n')
   cat('\n','\n')
 ```
 
+## Modules
+
+```{r}
+
+```
+
+
 # Modular Structure Exploration {.tabset}
 
 ## Modules size
@@ -1186,7 +1193,7 @@ rda_figs <- list()
 set.seed(123)
 
 # loop for three asv groups
-for (i in 1:3) {
+for (i in 1:2) {
   
   modules_similarity2 <- modules_similarity2_three_groups[[i]]
   grid_names <- rownames(modules_similarity2)
@@ -1205,7 +1212,7 @@ for (i in 1:3) {
   modules_similarity2_hell <- decostand(modules_similarity2, 'hell')
   
   
-  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+distance+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
   # **Condition(n) - control for the number of host in each village-grid.
   
   # variation explained
@@ -1226,7 +1233,7 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   # significance test for all variables
   anova_rda <- anova(rda_result, by = "margin", permutations = 999) %>% 
     mutate(asv_core = core_names[i])
-  anova_rda$`Pr(>F)` <- p.adjust (anova_rda$`Pr(>F)`, method = 'holm')
+  anova_rda$`Pr(>F)` <- p.adjust (anova_rda$`Pr(>F)`, method = 'holm')  
   
   anova_rda_all <- rbind(anova_rda_all, anova_rda)
   
@@ -1250,17 +1257,18 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   
   # variables
   rda_var <- as.data.frame(rda_result$CCA$biplot)
-  rownames(rda_var) <- c("Veg_1","Veg_2","Dist-to-Village","Elevation", "Distance")
+  rownames(rda_var) <- c("Vegetation1","Vegetation2","Distance","Elevation")
   
   # plot
 g <- rda_samples %>% 
   ggplot(aes(RDA1, RDA2)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point(size = 4, alpha = 0.9, color = group.colors[core_names[i]]) +
+  geom_point(size = 4, alpha = 0.8, color = group.colors[core_names[i]]) +
   geom_segment(
     data = rda_var, 
     inherit.aes = FALSE, 
+    alpha = 0.8,
     aes(x = 0, y = 0, xend = (RDA1 * 0.85), yend = (RDA2 * 0.85)), 
     arrow = arrow(length = unit(0.15, "cm"))
   ) +
@@ -1281,7 +1289,7 @@ g <- rda_samples %>%
   ) +
   theme(
     panel.border = element_rect(colour = "black", size = 1), 
-    panel.grid = element_blank()
+    panel.grid = element_blank(), aspect.ratio = 1
   ) +
   labs(
     x = paste("RDA1 (", round(constrained_eig[1], 2), "%)", sep = ""), 
@@ -1300,7 +1308,7 @@ print(knitr::kable(anova_rda_all))
 cat('\n','\n')
 
 
-rda_figs[[1]] + rda_figs[[2]] + rda_figs[[3]] + plot_layout(ncol=3, nrow=1) & theme(legend.position='none')
+rda_figs[[1]] + rda_figs[[2]] + plot_layout(ncol=2, nrow=1) & theme(legend.position='none')
 cat('\n','\n')
 ```
 

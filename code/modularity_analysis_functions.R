@@ -238,16 +238,26 @@ fun_asv_degree_distribution <- function(dat) {
 }
 
 # function for plotting modules
-fun_modules <- function(dat) {
+fun_modules <- function(dat, v) {
   
   # how many host individuals in every grid
   n_host_grid <- dat %>% 
     distinct(host_ID, village, grid) %>% 
     count(village, grid) %>% 
-    dplyr::rename(n_grid=n) %>% 
+    dplyr::rename(n_grid=n) %>%
+    mutate(grid = factor(grid, levels = c("semi-intact_forest","secondary_forest","brushy_regrowth","agriculture","agroforest","flooded_rice","village"))) %>%
     arrange(grid) %>% 
     mutate(site = paste0("Site", row_number())) %>% 
-    mutate(site = factor(site, levels = paste0("Site", row_number())))
+    mutate(site = factor(site, levels = paste0("Site", row_number()))) 
+  
+  # color
+  if (v == "Core"){
+    asv_core_col1 <- "#e76f51"
+    asv_core_col2 <- "#f8c49a"
+  } else {
+    asv_core_col1 <- "#0077b6"
+    asv_core_col2 <- "#bbdefb"
+  }
   
   g <- dat %>% 
     distinct(host_ID, village, grid, host_group, asv_core) %>% 
@@ -258,11 +268,11 @@ fun_modules <- function(dat) {
     ggplot(aes(x = host_group, y = site, fill=n_rel)) +
     geom_tile(color='white') +
     theme_classic() +
-    scale_fill_viridis_c(limits = c(0, 1)) +
-    theme(axis.text = element_text(size = 6, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12),
-          axis.text.y = element_text(color = grid)) +
-    labs(title = paste(unique(dat$asv_core)), x='Module ID', y='Sites', fill = "Host Relative Abundance")
-  
+    scale_fill_gradient(low = asv_core_col2, high = asv_core_col1, name = v) +
+    theme(axis.text = element_text(size = 7, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12), 
+          aspect.ratio = 0.8) +
+    labs(title = paste(v), x='Module ID', y='', fill = "Host Relative Abundance")
+ 
   return(list(g))
 }
 
