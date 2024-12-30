@@ -1283,8 +1283,8 @@ g <- rda_samples %>%
   ) +
   theme_bw() +
   coord_cartesian(
-    xlim = range(rda_samples$RDA1) * c(1.4, 1.3), 
-    ylim = range(rda_samples$RDA2) * c(1.4, 1.3), 
+    xlim = range(rda_samples$RDA1) * c(1.3, 1.2), 
+    ylim = range(rda_samples$RDA2) * c(1.3, 1.2), 
     clip = 'off'
   ) +
   theme(

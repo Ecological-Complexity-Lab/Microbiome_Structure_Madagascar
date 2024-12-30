@@ -121,8 +121,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 5))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=5, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 100))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=100, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -189,7 +189,7 @@ g <- final_network_properties %>%
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
         legend.position = "none",
         strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.8) +
+        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.7) +
   scale_color_manual(values=group.colors) +
   labs(x="Core Threshold", y="Value", color="Microbial Group")
 print(g)
@@ -365,9 +365,9 @@ rownames_to_column("var") %>%
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
          #legend.position = "bottom",
-        panel.grid = element_blank(), panel.border = element_rect(color = "black"), aspect.ratio = 0.6) +
+        panel.grid = element_blank(), panel.border = element_rect(color = "black"), aspect.ratio = 0.5) +
   scale_color_manual(values=group.colors) +
-  labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
+  labs(x = "Core Threshold", y = bquote("tb-RDA " * R[Adjusted]^2 * ""), color = "Microbial Group")
  print(g)
 cat('\n','\n')
 
