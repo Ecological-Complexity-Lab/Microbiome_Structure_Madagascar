@@ -252,10 +252,10 @@ fun_modules <- function(dat, v) {
   
   # color
   if (v == "Core"){
-    asv_core_col1 <- "#e76f51"
+    asv_core_col1 <- "#d95f02"
     asv_core_col2 <- "#f8c49a"
   } else {
-    asv_core_col1 <- "#0077b6"
+    asv_core_col1 <- "#7570b3"
     asv_core_col2 <- "#bbdefb"
   }
   

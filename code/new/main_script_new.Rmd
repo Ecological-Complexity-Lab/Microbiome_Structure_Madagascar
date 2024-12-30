@@ -61,7 +61,7 @@ data_asv_p <- data_asv %>%
 
 #data_asv_all <- data_asv %>% mutate(asv_core = "All")
 #data_asv_final <- rbind(data_asv_all, data_asv_p)
-group.colors <- c(Core = "#e76f51", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
+group.colors <- c(Core = "#d95f02", 'Non-core' = "#7570b3", Rare = "#2b9348", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv_p$asv_core)
@@ -118,7 +118,7 @@ for (v in core_names) {
   asv_degree_distribution_three_groups <- append(asv_degree_distribution_three_groups, asv_degree_distribution)
   
   # figure of modules 
-  modules <- fun_modules(modules_observed)
+  modules <- fun_modules(modules_observed, v)
   modules_three_groups <- append(modules_three_groups, modules)
   
   # modules size

@@ -13,7 +13,7 @@ output:
     highlight: tango
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('pdf','png'), out.width = '100%', out.height='100%')
+knitr::opts_chunk$set(results = "asis", message=FALSE, warning=FALSE, cache=TRUE, eval = TRUE, dev = c('png','pdf'), out.width = '100%', out.height='100%')
 ```
 
 
@@ -54,7 +54,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # thresholds for core
 core_th <- seq(0.05, 0.5, by=0.05)
 
-group.colors <- c(Core = "#e76f51", 'Non-core' = "#0077b6", Rare = "#2b9348", All = "black")
+group.colors <- c(Core = "#d95f02", 'Non-core' = "#7570b3", Rare = "#2b9348", All = "black")
 
 
 modules_similarity2_three_groups <- NULL
@@ -121,8 +121,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 10))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=10, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 5))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=5, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -187,7 +187,7 @@ g <- final_network_properties %>%
   facet_wrap(~measure, scales="free", nrow = 1) +
   theme_bw() +
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
-        #legend.position = "bottom",
+        legend.position = "none",
         strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.8) +
   scale_color_manual(values=group.colors) +
@@ -347,10 +347,10 @@ anova_rda_all_plot <- anova_rda_all %>%
 rownames_to_column("var") %>% 
   left_join(anova_model_all_plot %>% filter(sig==1) %>% select(core_th,asv_core,R2.adj), by=c("asv_core","core_th")) %>% 
   filter(sig == 1 & !is.na(R2.adj)) %>% 
-  mutate(var = case_when(grep("veg_PC1",var) ~ "Vegetation1",
-                                               grep("veg_PC2",var) ~ "Vegetation2",
-                                               grep("elevation",var) ~ "Elevation",
-                                               grep("dist_to_village",var) ~ "Distance"))
+  # mutate(var = case_when(grep("veg_PC1",var) ~ "Vegetation1",
+  #                                              grep("veg_PC2",var) ~ "Vegetation2",
+  #                                              grep("elevation",var) ~ "Elevation",
+  #                                              grep("dist_to_village",var) ~ "Distance"))
   group_by(core_th, asv_core, R2.adj) %>%
   summarise(var_combined = paste(var, collapse = "\n"), .groups = "drop")
 
@@ -362,21 +362,6 @@ rownames_to_column("var") %>%
   scale_size(guide="none") +
   scale_shape_manual(values = c(1, 16), guide="none") +
   scale_y_continuous(limits = c(0, 0.2)) +
-     geom_label_repel(
-    data = anova_rda_all_plot, 
-    inherit.aes = FALSE, 
-    aes(x = core_th, y = R2.adj, label = var_combined), 
-    seed = 123,
-    size = 3, 
-    direction = "y",
-    box.padding = 0.4,
-    point.padding = 0.4,
-    nudge_y = 0.02,
-    nudge_x = 0.01,
-    min.segment.length = 0.01,
-    arrow = arrow(length = unit(0.01, "npc")),
-    segment.colour = "gray") +
-   
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
          #legend.position = "bottom",
@@ -387,42 +372,57 @@ rownames_to_column("var") %>%
 cat('\n','\n')
 
 # plotting tiles
-library(ggnewscale)
 
-g <- anova_model_all %>% 
-   mutate(R2.adj = ifelse(R2.adj<0,0,R2.adj)) 
-  ggplot() +
-    # Core
-  geom_tile(data = filter(g, asv_core == "Core"), 
-            aes(x = asv_core, y = core_th, fill = R2.adj)) +
-  scale_fill_gradient(low = "white", high = group.colors[1], name = "R2 adj. - Core", limits = c(0, 0.2)) +
-    
-  # Non-core
-  new_scale_fill() +
-  geom_tile(data = filter(g, asv_core == "Non-core"), 
-            aes(x = asv_core, y = core_th, fill = R2.adj)) +
-  scale_fill_gradient(low = "white", high = group.colors[2], name = "R2 adj. - Non-core", limits = c(0, 0.2)) +
-geom_text(
-    data = anova_rda_all_plot,
-    aes(x = asv_core, y = core_th, label = var),
-    size = 3, color = "black")+  
-    theme_bw() +
-  labs(x = "", y = "Core Threshold") +
-  theme(legend.position = "right")
-  
-  
-   ggplot(data = aes(y=core_th, x=asv_core, fill = R2.adj)) +
-  geom_tile(color='white') +
-    theme_classic() +
-    scale_fill_viridis_c(limits = c(0, 0.2)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
-         legend.position = "bottom",
-        panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
-  scale_color_manual(values=group.colors) +
-  labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
- print(g)
-cat('\n','\n')
+# geom_label_repel(
+#     data = anova_rda_all_plot, 
+#     inherit.aes = FALSE, 
+#     aes(x = core_th, y = R2.adj, label = var_combined), 
+#     seed = 123,
+#     size = 3, 
+#     direction = "y",
+#     box.padding = 0.4,
+#     point.padding = 0.4,
+#     nudge_y = 0.02,
+#     nudge_x = 0.01,
+#     min.segment.length = 0.01,
+#     arrow = arrow(length = unit(0.01, "npc")),
+#     segment.colour = "gray") +
+# library(ggnewscale)
+# 
+# g <- anova_model_all %>% 
+#    mutate(R2.adj = ifelse(R2.adj<0,0,R2.adj)) 
+#   ggplot() +
+#     # Core
+#   geom_tile(data = filter(g, asv_core == "Core"), 
+#             aes(x = asv_core, y = core_th, fill = R2.adj)) +
+#   scale_fill_gradient(low = "white", high = group.colors[1], name = "R2 adj. - Core", limits = c(0, 0.2)) +
+#     
+#   # Non-core
+#   new_scale_fill() +
+#   geom_tile(data = filter(g, asv_core == "Non-core"), 
+#             aes(x = asv_core, y = core_th, fill = R2.adj)) +
+#   scale_fill_gradient(low = "white", high = group.colors[2], name = "R2 adj. - Non-core", limits = c(0, 0.2)) +
+# geom_text(
+#     data = anova_rda_all_plot,
+#     aes(x = asv_core, y = core_th, label = var),
+#     size = 3, color = "black")+  
+#     theme_bw() +
+#   labs(x = "", y = "Core Threshold") +
+#   theme(legend.position = "right")
+#   
+#   
+#    ggplot(data = aes(y=core_th, x=asv_core, fill = R2.adj)) +
+#   geom_tile(color='white') +
+#     theme_classic() +
+#     scale_fill_viridis_c(limits = c(0, 0.2)) +
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+#          legend.position = "bottom",
+#         panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
+#   scale_color_manual(values=group.colors) +
+#   labs(x = "Core Threshold", y = "R2 adj.", color = "Microbial Group")
+#  print(g)
+# cat('\n','\n')
 
 
 print(knitr::kable(anova_model_all))
