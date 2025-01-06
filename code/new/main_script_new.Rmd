@@ -1261,10 +1261,10 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   
   # plot
 g <- rda_samples %>% 
-  ggplot(aes(RDA1, RDA2)) +
+  ggplot(aes(RDA1, RDA2, color=grid)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point(size = 4, alpha = 0.8, color = group.colors[core_names[i]]) +
+  geom_point(size = 4, alpha = 0.8) +
   geom_segment(
     data = rda_var, 
     inherit.aes = FALSE, 
@@ -1308,7 +1308,7 @@ print(knitr::kable(anova_rda_all))
 cat('\n','\n')
 
 
-rda_figs[[1]] + rda_figs[[2]] + plot_layout(ncol=2, nrow=1) & theme(legend.position='none')
+rda_figs[[1]] + rda_figs[[2]] + plot_layout(ncol=2, nrow=1, guides='collect') & theme(legend.position='right')
 cat('\n','\n')
 ```
 
