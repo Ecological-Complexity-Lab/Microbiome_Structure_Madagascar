@@ -111,7 +111,7 @@ asv_occur %>%
 
 # finding the best filter
 asv_unique <- NULL
-for (i in seq(0,1, by=0.005)) {
+for (i in seq(0.01,0.8, by=0.005)) {
   asv_unique_i <- asv_occur %>% 
     filter(host_p>i) %>% 
     summarise(asv_n = n_distinct(asv_ID)) %>% 
@@ -119,26 +119,27 @@ for (i in seq(0,1, by=0.005)) {
   
   asv_unique <- rbind(asv_unique, asv_unique_i)
 }
+#pdf(file = 'results/figure_S1.pdf')
 
 asv_unique %>% 
   ggplot(aes(x=i, y=asv_n)) + 
   geom_line() +
   geom_point() +
-  geom_vline(xintercept=c(0.02,0.2), linetype='dashed', color="black") +
+  geom_vline(xintercept=c(0.2), linetype='dashed', color="gray") +
   #scale_y_continuous(limits = c(0, 0.35)) +
   #scale_x_continuous(limits = c(0, 20)) +
   theme_bw() +
   theme(axis.text = element_text(size = 12, color = 'black'), title = element_text(size = 15), panel.grid = element_blank(), panel.border = element_rect(color = "black")) +
   labs(x="ASV Prevalence", y="No. of ASVs")
+#dev.off()
 
 # filtering the ASVs
-asv_occur_th <- 0.02
+asv_occur_th <- 0.01
 
 dat4 <- asv_occur %>% 
   filter(host_p > asv_occur_th) %>% 
   select(asv_ID, host_p) %>% 
   left_join(dat3_long, by=c("asv_ID"))
-
 
 
 ##### filter 5
