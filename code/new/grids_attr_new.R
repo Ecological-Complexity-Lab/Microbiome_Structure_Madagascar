@@ -7,6 +7,7 @@ library(vegan)
 library(geosphere)
 library(reshape2)
 library(psych)
+library(ggrepel)
 
 rm(list=ls())
 
@@ -133,6 +134,32 @@ ex_var <- pca_veg$sdev ^2
 prop_ex_var <- ex_var/sum(ex_var)*100
 prop_ex_var
 
+pca_data <- data.frame(pca_veg$x[, 1:2],  # Select the first two principal components
+                       village = as.factor(grid_sum$village), 
+                       land_use = as.factor(grid_sum$grid_name)) 
+
+loadings <- data.frame(pca_veg$rotation[, 1:2], variable = rownames(pca_veg$rotation))
+
+#pdf(file = 'results/figure_S3.pdf')
+veg_plot <- ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  geom_point(size = 5, alpha = 0.7, aes(fill = land_use, shape = village)) +
+  geom_segment(data = loadings, aes(x = 0, y = 0, xend = PC1*6, yend = PC2*6), 
+               arrow = arrow(length = unit(0.2, "cm")), color = "black") +  # Vectors as arrows
+  geom_text(data = loadings, aes(x = PC1 * 7, y = PC2 * 7, label = variable),
+            color = "black", size = 4) +
+  labs(x = paste("PC1 (",round(prop_ex_var[1],2),"%)", sep = ""),
+       y = paste("PC2 (",round(prop_ex_var[2],2),"%)", sep = ""),
+       fill = "Land-use", shape="Village") +
+  scale_fill_manual(values = c("red", "blue", "green", "orange", "purple","yellow", "black", "grey")) +
+  scale_shape_manual(values = c(21, 22, 23)) +
+  guides(fill = guide_legend(override.aes = list(shape=21))) +
+  theme_bw() + 
+  theme(panel.border = element_rect(colour = "black"), 
+        panel.grid = element_blank(), aspect.ratio = 1, title = element_text(size = 14))
+#dev.off()
+veg_plot
 
 
 #####
