@@ -426,8 +426,10 @@ ggplot(nematode_community_pca, aes(x = PC1, y = PC2, color = village)) +
 
 
 #####
-# normalized rattus abundance
+# normalized small mammals abundance
 # average number of individuals per trap per village*grid*season
+
+non_native_sp <- c("Mus musculus", "Suncus etruscus", "Suncus murinus")
 
 small_mammals <- read_csv("data/data_raw/data_small_mammals/Terrestrial_Mammals.csv") %>% 
   filter(grepl("TMR", animal_id)) %>% 
@@ -447,18 +449,34 @@ rattus_vgs <- small_mammals %>%
   count(village, grid, season) %>% 
   dplyr::rename(n_rattus = n)
 
-# sm (no rattus)
+# non-native sm (no rattus)
 # taking all traps including pitfalls
-sm_vgs <- small_mammals %>% 
-  filter(host_species != "Rattus rattus") %>% 
+sm_non_native <- small_mammals %>% 
+  filter(host_species != "Rattus rattus" & host_species %in% non_native_sp) %>% 
   count(village, grid, season) %>% 
-  dplyr::rename(n_sm = n)
+  dplyr::rename(n_non_native = n)
 
-all_vgs <- sampling_effort %>% 
+# native sm
+# taking all traps including pitfalls
+sm_native <- small_mammals %>% 
+  filter(host_species != "Rattus rattus" & !(host_species %in% non_native_sp)) %>% 
+  count(village, grid, season) %>% 
+  dplyr::rename(n_native = n)
+
+# sm richness
+sm_richness <- small_mammals %>% 
+  group_by(village, grid, season) %>% 
+  summarise(richness = n_distinct(host_species))
+
+# combining everything to the final table
+all_sm <- sampling_effort %>% 
   left_join(rattus_vgs) %>% 
-  left_join(sm_vgs) %>% 
+  left_join(sm_non_native) %>% 
+  left_join(sm_native) %>% 
+  left_join(sm_richness) %>%
   mutate(avg_rattus = ifelse(!is.na(n_rattus), n_rattus/effort_cagetraps, 0)) %>% 
-  mutate(avg_sm = ifelse(!is.na(n_sm), n_sm/effort_total, 0))
+  mutate(avg_non_native = ifelse(!is.na(n_non_native), n_non_native/effort_total, 0)) %>% 
+  mutate(avg_native = ifelse(!is.na(n_native), n_native/effort_total, 0))
 
-write_csv(all_vgs, "data/data_processed/sm_average_abundance.csv")
+write_csv(all_sm, "data/data_processed/sm_average_abundance.csv")
 
