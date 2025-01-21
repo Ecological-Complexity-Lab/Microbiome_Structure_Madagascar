@@ -145,9 +145,13 @@ for (v in core_names) {
 
 ```{r, network_exploration}
 # number of ASVs
+asv_total <- length(unique(modules_table_three_groups$asv_ID))
+host_total <- modules_table_three_groups %>% group_by(threshold, asv_core) %>% summarise(total_host = n_distinct(host_ID))
+
 group_n <- modules_table_three_groups %>% 
   group_by(threshold, asv_core) %>% 
-  summarise(asv_n = n_distinct(asv_ID), host_n = n_distinct(host_ID))
+  summarise(asv_n = n_distinct(asv_ID), host_n = n_distinct(host_ID)) %>% 
+  mutate(asv_prop = asv_n/asv_total)
 
 # connectance
 interaction_n <- modules_table_three_groups %>% 
@@ -165,7 +169,10 @@ modules_size <- modules_table_three_groups %>%
   distinct(threshold, asv_core, host_group, host_ID) %>% 
   count(threshold, asv_core, host_group) %>% 
   group_by(threshold, asv_core) %>% 
-  summarise(modules_size = mean(n), largest_module = max(n))
+  summarise(modules_size = mean(n), largest_module = max(n)) %>% 
+  left_join(host_total) %>% 
+  mutate(largest_module_prop = largest_module/total_host)
+
 modules_n %<>% left_join(modules_size, by=c("threshold","asv_core")) 
 
 final_network_properties <- group_n %>% 
@@ -173,14 +180,14 @@ final_network_properties <- group_n %>%
 
 # plotting
 g <- final_network_properties %>% 
-  select(-n, -host_n) %>% 
-  pivot_longer(cols=asv_n:largest_module, names_to="measure", values_to="value") %>% 
-  mutate(measure = case_when(measure=="asv_n" ~ "No. of ASVs",
+  select(-n, -host_n, -asv_n, -total_host, -largest_module) %>% 
+  pivot_longer(cols=asv_prop:largest_module_prop, names_to="measure", values_to="value") %>% 
+  mutate(measure = case_when(measure=="asv_prop" ~ "Prop. of ASVs",
                                                measure=="connectance" ~ "Connectance",
                                                measure=="modules_n" ~ "No. of Modules",
                                                measure=="modules_size" ~ "Avg. Module Size",
-                             measure=="largest_module" ~ "Largest Module")) %>% 
-    mutate(measure = factor(measure, levels = c("No. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
+                             measure=="largest_module_prop" ~ "Largest Module")) %>% 
+    mutate(measure = factor(measure, levels = c("Prop. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
   ggplot(aes(x=threshold, y=value, color=asv_core)) +
   geom_line() +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
@@ -191,7 +198,7 @@ g <- final_network_properties %>%
         strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.7) +
   scale_color_manual(values=group.colors) +
-  labs(x="Core Threshold", y="Value", color="Microbial Group")
+  labs(x="Core threshold", y="Value", color="Microbial Group")
 print(g)
 
 ```
