@@ -54,7 +54,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # thresholds for core
 core_th <- seq(0.05, 0.5, by=0.05)
 
-group.colors <- c(Core = "#d95f02", 'Non-core' = "#7570b3", Rare = "#2b9348", All = "black")
+group.colors <- c(Core = "#d95f02", 'Non-core' = "#034e7b", Rare = "#2b9348", All = "black")
 
 
 modules_similarity2_three_groups <- NULL
@@ -217,7 +217,7 @@ assembly_final %<>% mutate(process = case_when(process=="Heterogeneous.Selection
                                                process=="Homogeneous.Selection" ~ "Homogeneous Selection",
                                                process=="Dispersal.Limitation" ~ "Dispersal Limitation",
                                                process=="Homogenizing.Dispersal" ~ "Homogenizing Dispersal",
-                                               .default = "Drift"))
+                                               .default = "Ecological Drift"))
 
 # summary
 assembly_summary <- assembly_final %>% 
@@ -236,14 +236,14 @@ g <- assembly_summary %>%
   geom_area() +
   facet_grid(cols = vars(asv_core), rows = vars(same_module)) +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
-  geom_hline(yintercept = 0.5, linetype = "dotted", color = "black")+
+  #geom_hline(yintercept = 0.5, linetype = "dotted", color = "black")+
   scale_y_continuous(labels = scales::percent) +
   theme_bw() +
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
-  scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
-  labs(x="Core Threshold", y="Percentage", fill="Process")
+  scale_fill_manual(values=c("#e0ac69","#f2e8cf","#83c5be","#006666")) +
+  labs(x="Core threshold", y="Percentage", fill="Process")
 print(g)
 
 
@@ -370,7 +370,7 @@ rownames_to_column("var") %>%
          #legend.position = "bottom",
         panel.grid = element_blank(), panel.border = element_rect(color = "black"), aspect.ratio = 0.5) +
   scale_color_manual(values=group.colors) +
-  labs(x = "Core Threshold", y = bquote("tb-RDA " * R[Adjusted]^2 * ""), color = "Microbial Group")
+  labs(x = "Core threshold", y = bquote("tb-RDA " * R[Adjusted]^2 * ""), color = "Microbial Group")
  print(g)
 cat('\n','\n')
 
