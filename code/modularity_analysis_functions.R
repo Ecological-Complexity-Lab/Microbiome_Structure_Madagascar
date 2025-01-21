@@ -255,21 +255,26 @@ fun_modules <- function(dat, v) {
     asv_core_col1 <- "#d95f02"
     asv_core_col2 <- "#f8c49a"
   } else {
-    asv_core_col1 <- "#7570b3"
+    asv_core_col1 <- "#034e7b"
     asv_core_col2 <- "#bbdefb"
   }
+  
+  # number of modules
+  n_modules <- length(unique(dat$host_group))
   
   g <- dat %>% 
     distinct(host_ID, village, grid, host_group, asv_core) %>% 
     count(village, grid, host_group, asv_core) %>% 
     left_join(n_host_grid, by=c("village", "grid")) %>% 
     mutate(n_rel = n/n_grid) %>% 
+    #mutate(host_group = as.factor(host_group)) %>% 
     unite("sample", c("village","grid"), remove=F) %>% 
     ggplot(aes(x = host_group, y = site, fill=n_rel)) +
     geom_tile(color='white') +
     theme_classic() +
+    scale_x_continuous(breaks = seq(1,n_modules,length.out=5))+
     scale_fill_gradient(low = asv_core_col2, high = asv_core_col1, name = v) +
-    theme(axis.text = element_text(size = 7, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12), 
+    theme(axis.text = element_text(size = 7, color = 'black'), title = element_text(size = 12), strip.text.x = element_text(size=11), 
           aspect.ratio = 0.8) +
     labs(title = paste(v), x='Module ID', y='', fill = "Host Relative Abundance")
  

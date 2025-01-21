@@ -61,7 +61,7 @@ data_asv_p <- data_asv %>%
 
 #data_asv_all <- data_asv %>% mutate(asv_core = "All")
 #data_asv_final <- rbind(data_asv_all, data_asv_p)
-group.colors <- c(Core = "#d95f02", 'Non-core' = "#7570b3", Rare = "#2b9348", All = "black")
+group.colors <- c(Core = "#d95f02", 'Non-core' = "#034e7b", Rare = "#2b9348", All = "black")
 #group.colors <- c(Core = "#e76f51", Non_core = "#2b9348", Rare = "#0077b6")
 
 core_names <- unique(data_asv_p$asv_core)
@@ -1253,18 +1253,21 @@ R2.obs <- RsquareAdj (rda_result)$adj.r.squared
   rda_samples <- as.data.frame(scores(rda_result)$sites) %>% 
     rownames_to_column("grid_village") %>% 
     left_join(grids_similarity_attr2[c("grid_village","village","grid")], by="grid_village") %>% 
-    mutate(asv_core = core_names[i])
+    mutate(asv_core = core_names[i]) %>% 
+        mutate(grid = factor(grid, levels = c("semi-intact_forest","secondary_forest","brushy_regrowth","agriculture","agroforest","flooded_rice","village"))) 
+
   
   # variables
   rda_var <- as.data.frame(rda_result$CCA$biplot)
   rownames(rda_var) <- c("Vegetation1","Vegetation2","Distance","Elevation")
   
   # plot
+  lu.color <- c("#005824","#238b45","#41ae76","#66c2a4","#99d8c9","#ccece6")
 g <- rda_samples %>% 
   ggplot(aes(RDA1, RDA2, color=grid)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dotted", color = "grey") +
-  geom_point(size = 4, alpha = 0.8) +
+  geom_point(size = 4) +
   geom_segment(
     data = rda_var, 
     inherit.aes = FALSE, 
@@ -1291,6 +1294,7 @@ g <- rda_samples %>%
     panel.border = element_rect(colour = "black", size = 1), 
     panel.grid = element_blank(), aspect.ratio = 1
   ) +
+  scale_color_manual(values=lu.color) +
   labs(
     x = paste("RDA1 (", round(constrained_eig[1], 2), "%)", sep = ""), 
     y = paste("RDA2 (", round(constrained_eig[2], 2), "%)", sep = ""), 
