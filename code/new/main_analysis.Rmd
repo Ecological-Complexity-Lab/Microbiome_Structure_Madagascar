@@ -121,8 +121,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 500))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=500, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 5))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=5, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -242,10 +242,11 @@ g <- assembly_summary %>%
   theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
-  scale_fill_manual(values=c("#e0ac69","#f2e8cf","#83c5be","#006666")) +
+  scale_fill_manual(values=c("#e0ac69","#f2e8cf","#bcbddc","#807dba")) +
   labs(x="Core threshold", y="Percentage", fill="Process")
 print(g)
 
+  #scale_fill_manual(values=c("#e0ac69","#f2e8cf","#83c5be","#006666")) +
 
 g <- assembly_summary %>% 
   left_join(assembly_summary_total_module, by=c("threshold","asv_core","same_module")) %>% 
