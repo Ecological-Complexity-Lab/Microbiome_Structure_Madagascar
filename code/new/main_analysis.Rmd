@@ -121,8 +121,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 5))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=5, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 3))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=3, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -198,7 +198,7 @@ g <- final_network_properties %>%
         strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.7) +
   scale_color_manual(values=group.colors) +
-  labs(x="Core threshold", y="Value", color="Microbial Group")
+  labs(x="Threshold", y="Value", color="Microbial Group")
 print(g)
 
 ```
@@ -207,7 +207,7 @@ print(g)
 
 # assembly processes analysis
 
-```{r, assembly_processes}
+```{r, assembly_processes, eval=FALSE, include=FALSE}
 assembly_final <- assembly_three_groups %>% 
   mutate(same_module = ifelse(host_group1==host_group2, "Same Module","Different Module"))
 
@@ -243,7 +243,7 @@ g <- assembly_summary %>%
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#e0ac69","#f2e8cf","#bcbddc","#807dba")) +
-  labs(x="Core threshold", y="Percentage", fill="Process")
+  labs(x="Threshold", y="Percentage", fill="Process")
 print(g)
 
   #scale_fill_manual(values=c("#e0ac69","#f2e8cf","#83c5be","#006666")) +
@@ -263,7 +263,7 @@ g <- assembly_summary %>%
         strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
   scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
-  labs(x="Core Threshold", y="Percentage", fill="Process")
+  labs(x="Threshold", y="Percentage", fill="Process")
 print(g)
 
 ```
@@ -371,7 +371,7 @@ rownames_to_column("var") %>%
          #legend.position = "bottom",
         panel.grid = element_blank(), panel.border = element_rect(color = "black"), aspect.ratio = 0.5) +
   scale_color_manual(values=group.colors) +
-  labs(x = "Core threshold", y = bquote("tb-RDA " * R[Adjusted]^2 * ""), color = "Microbial Group")
+  labs(x = "Threshold", y = bquote("tb-RDA " * R[Adjusted]^2 * ""), color = "Microbial Group")
  print(g)
 cat('\n','\n')
 
@@ -429,7 +429,7 @@ for (t in core_th) {
 }
 
 # plotting bray-curtis dissimilarity
-results_bray %>% 
+g1 <- results_bray %>% 
   ggplot(aes(x=threshold, y=bray_curtis)) +
   geom_line() +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
@@ -439,13 +439,15 @@ results_bray %>%
         strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
         panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1) +
   labs(x="Threshold", y="Bray-Curtis Dissimilarity")
-
+print(g1)
+cat('\n','\n')
 
 # plotting family relative abundance for core/non-core at all thresholds
 
 library("RColorBrewer")
 colors <- c("black","grey40","grey80","#15616d","#fefae0","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
-  g <- data_asv_family %>% 
+
+  g2 <- data_asv_family %>% 
     filter(threshold %in% c(0.1,0.2,0.3,0.4,0.5)) %>%
     filter(relative_reads >= 0.01) %>% 
 ggplot(aes(fill=Family, x=asv_core, y=relative_reads)) +
@@ -457,7 +459,7 @@ ggplot(aes(fill=Family, x=asv_core, y=relative_reads)) +
         panel.grid = element_blank(), panel.background = element_rect(colour = "black"), legend.key.size = unit(0.5, "cm")) +
   scale_fill_manual(values=colors) +
   labs(x="Microbial Group", y="Relative Abundance", fill = "Family")
-g
-
+print(g2)
+cat('\n','\n')
 ```
 
