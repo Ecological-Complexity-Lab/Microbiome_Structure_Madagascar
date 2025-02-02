@@ -121,8 +121,8 @@ for (v in core_names) {
   
   asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
   
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 3))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=3, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+  raupc <- as.matrix(raupcrick(data_assembly, nsimul = 2))
+  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=2, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
   
   assembly_result <- assembly$result %>% 
     mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
@@ -448,11 +448,13 @@ library("RColorBrewer")
 colors <- c("black","grey40","grey80","#15616d","#fefae0","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
 
   g2 <- data_asv_family %>% 
-    filter(threshold %in% c(0.1,0.2,0.3,0.4,0.5)) %>%
+    #filter(threshold %in% c(0.1,0.2,0.3,0.4,0.5)) %>%
     filter(relative_reads >= 0.01) %>% 
+    mutate(asv_core = case_when(asv_core=="Core" ~ "C",
+                                               asv_core=="Non-core" ~ "N")) %>% 
 ggplot(aes(fill=Family, x=asv_core, y=relative_reads)) +
   geom_bar(position="fill", stat="identity") +
-  facet_wrap(~threshold, scales = "free_x") +
+  facet_wrap(~threshold, scales = "free_x", ncol = 5) +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), 
