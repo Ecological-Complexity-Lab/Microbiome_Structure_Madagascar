@@ -52,7 +52,7 @@ data_asv <- read_csv("../../data/data_processed/microbiome/data_asv_rra0.001_p0.
 # the output of the code is variables holding the final results tables and figures (the output of the functions used)
 
 # thresholds for core
-core_th <- seq(0.1, 0.5, by=0.1)
+core_th <- seq(0.05, 0.5, by=0.05)
 
 group.colors <- c(Core = "#d95f02", 'Non-core' = "#034e7b", Rare = "#2b9348", All = "black")
 
@@ -397,8 +397,8 @@ data_asv_tax <- modules_table_three_groups %>%
   left_join(tax, by="asv_ID")
 
 data_tax_final = NULL
-
-for (t in core_th) {
+core_th2 <- seq(0.1, 0.5, by=0.1)
+for (t in core_th2) {
   
 data_asv_tax_p <- data_asv_tax %>% 
   filter(threshold == t)
@@ -462,7 +462,7 @@ colors <- c("grey40","grey80","darkblue","#ffd60a",brewer.pal(n = 12, name = "Pa
     group_by(threshold, asv_core, module, p) %>% 
     summarise(n_p = sum(n_p)) %>% 
 ggplot(aes(fill=p, x=module, y=n_p)) +
-  geom_bar(position="fill", stat="identity") +
+  geom_bar(position="fill", stat="identity", width=0.8) +
  facet_grid(cols = vars(threshold), rows = vars(asv_core), scales = "free_x") +
   #facet_wrap(~asv_core + threshold, scales = "free_x")+
   theme_bw() +
