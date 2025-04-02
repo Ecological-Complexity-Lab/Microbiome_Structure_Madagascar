@@ -60,7 +60,7 @@ asv_distance <- ape::cophenetic.phylo(phylo_tree)
 # thresholds for core
 core_th <- seq(0.05, 0.5, by=0.05)
 # number of simulations to the assembly analysis
-n_sim <- 2
+n_sim <- 500
 
 # group colors
 group.colors <- c(Core = "#d95f02", 'Non-core' = "#034e7b")
@@ -87,13 +87,6 @@ for (th in core_th) {
     data_asv_group <- data_asv_p %>% 
       filter(asv_core == v)
     
-    # calculating ASVs degree
-    asv_degree <- data_asv_group %>%
-      group_by(asv_ID) %>%
-      summarise(n = n_distinct(host_ID)) %>%
-      dplyr::rename(asv_degree = n)
-    data_asv_group %<>% left_join(asv_degree, by="asv_ID")
-    
     ##### observed network
     # finding modules
     modules_observed <- fun_modularity_analysis(data_asv_group) %>% 
@@ -111,8 +104,7 @@ for (th in core_th) {
     
     # ASV pool - ASVs of core/non-core group in the specific threshold
     asv_pool <- data_asv_group %>% 
-      distinct(asv_ID, asv_degree) %>% 
-      mutate(p = asv_degree/length(unique(data_asv_group$host_ID)))
+      distinct(asv_ID)
     
     data_assembly <- data_asv_group %>% 
       mutate(reads=1) %>% 
@@ -408,24 +400,24 @@ core_th2 <- seq(0.1, 0.5, by=0.1)
 # loop for different thresholds
 for (t in core_th2) {
   
-data_asv_tax_p <- data_asv_tax %>% 
-  filter(threshold == t)
-
-# total number of reads of each core/non-core group
-total_reads_groups <- data_asv_tax_p %>% 
-  distinct(host_ID, asv_core, total_reads) %>% 
-  group_by(asv_core) %>% 
-  summarise(n_total = sum(total_reads))
-
-# relative abundance of each family
-most_abu_family <- data_asv_tax_p %>%
-  mutate(reads_a = reads*total_reads) %>%
-  group_by(asv_core, Family) %>%
-  summarise(n= sum(reads_a)) %>%
-  left_join(total_reads_groups, by="asv_core") %>%
-  mutate(n_p = n/n_total) 
-
-# selecting the 8 most abundant families
+  data_asv_tax_p <- data_asv_tax %>% 
+    filter(threshold == t)
+  
+  # total number of reads of each core/non-core group
+  total_reads_groups <- data_asv_tax_p %>% 
+    distinct(host_ID, asv_core, total_reads) %>% 
+    group_by(asv_core) %>% 
+    summarise(n_total = sum(total_reads))
+  
+  # relative abundance of each family
+  most_abu_family <- data_asv_tax_p %>%
+    mutate(reads_a = reads*total_reads) %>%
+    group_by(asv_core, Family) %>%
+    summarise(n= sum(reads_a)) %>%
+    left_join(total_reads_groups, by="asv_core") %>%
+    mutate(n_p = n/n_total) 
+  
+  # selecting the 8 most abundant families
   most_abu_family_8 <- most_abu_family %>% 
     filter(!is.na(Family)) %>% 
     ungroup() %>% 
@@ -443,26 +435,27 @@ most_abu_family <- data_asv_tax_p %>%
     mutate(host_group2 = rep(1:5,2), p = "top")
   
   # combining modules table with the list of largest modules
- modules_top <- modules_table_two_groups %>% 
-   filter(threshold == t) %>% 
-   left_join(largest_modules, by=c("asv_core","host_group")) %>% 
-  mutate(module = factor(ifelse(is.na(p),"Other",host_group2))) %>%
-  distinct(host_ID,host_group,host_group2,asv_core, module) 
- 
- # relative abundance of the 8 most abundant families in the 5 largest modules
- total_reads_modules <-  modules_table_two_groups %>% 
-   filter(threshold == t) %>% 
-   distinct(host_ID, asv_core, host_group, total_reads)  %>% 
-   left_join(modules_top %>% distinct(asv_core,host_group,module), by=c("asv_core","host_group")) %>% 
+  modules_top <- modules_table_two_groups %>% 
+    filter(threshold == t) %>% 
+    left_join(largest_modules, by=c("asv_core","host_group")) %>% 
+    mutate(module = factor(ifelse(is.na(p),"Other",host_group2))) %>%
+    distinct(host_ID,host_group,host_group2,asv_core, module) 
+  
+  # total reads in the 5 largest modules
+  total_reads_modules <-  modules_table_two_groups %>% 
+    filter(threshold == t) %>% 
+    distinct(host_ID, asv_core, host_group, total_reads)  %>% 
+    left_join(modules_top %>% distinct(asv_core,host_group,module), by=c("asv_core","host_group")) %>% 
     group_by(asv_core, module) %>% summarise(n_total = sum(total_reads))
   
+  # relative abundance of the 8 most abundant families in the 5 largest modules
   most_abu_family_p <- data_asv_tax_p %>% 
     left_join(modules_top, by=c("asv_core","host_ID")) %>% 
-  mutate(reads_a = reads*total_reads) %>%
-  group_by(asv_core, Family, module) %>%
-  summarise(n= sum(reads_a)) %>%
-  left_join(total_reads_modules, by=c("asv_core","module")) %>%
-  mutate(n_p = n/n_total) %>% 
+    mutate(reads_a = reads*total_reads) %>%
+    group_by(asv_core, Family, module) %>%
+    summarise(n= sum(reads_a)) %>%
+    left_join(total_reads_modules, by=c("asv_core","module")) %>%
+    mutate(n_p = n/n_total) %>% 
     left_join(most_abu_family_8, by=c("asv_core","Family")) %>% 
     mutate(p = case_when(p=="top" ~ Family,
                          is.na(Family) ~ ".NA",
@@ -471,16 +464,16 @@ most_abu_family <- data_asv_tax_p %>%
   
   data_tax_final <- rbind(data_tax_final, most_abu_family_p)
 }
-  
-  # plotting
+
+# plotting
 colors <- c("grey40","grey80","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
 
-  g <- data_tax_final %>% 
-    group_by(threshold, asv_core, module, p) %>% 
-    summarise(n_p = sum(n_p)) %>% 
-ggplot(aes(fill=p, x=module, y=n_p)) +
+g <- data_tax_final %>% 
+  group_by(threshold, asv_core, module, p) %>% 
+  summarise(n_p = sum(n_p)) %>% 
+  ggplot(aes(fill=p, x=module, y=n_p)) +
   geom_bar(position="fill", stat="identity", width=0.8) +
- facet_grid(cols = vars(threshold), rows = vars(asv_core), scales = "free_x") +
+  facet_grid(cols = vars(threshold), rows = vars(asv_core), scales = "free_x") +
   theme_bw() +
   theme(axis.text = element_text(size = 10, color = 'black'), 
         title = element_text(size = 14),
@@ -489,7 +482,7 @@ ggplot(aes(fill=p, x=module, y=n_p)) +
         panel.grid = element_blank(), 
         panel.background = element_rect(colour = "black"), 
         legend.key.size = unit(0.5, "cm")
-        ) +
+  ) +
   scale_fill_manual(values=colors) +
   labs(x="Modules", y="Relative Abundance", fill = "Family")
 
@@ -499,17 +492,20 @@ cat('\n','\n')
 ```
 
 ```{r, taxonomy}
-# microbes taxonomy
-tax <- read_delim("../../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
+# microbiome taxonomy across core thresholds
+
+tax <- read_delim("../data/data_raw/data_microbiome/ASVs_taxonomy_new.tsv") %>% 
   dplyr::rename(asv_ID = ASV)
 
-data_asv_unique <- modules_table_three_groups %>% 
+# calculating total reads for each ASV for core/non-core across all thresholds
+data_asv_unique <- modules_table_two_groups %>% 
   mutate(reads = reads*total_reads) %>% 
   group_by(asv_ID, asv_core, threshold) %>% 
   summarise(total_reads = sum(reads)) %>% 
   left_join(tax, by='asv_ID')
 
-# bray-curtis at the family level
+# aggregating to the family level
+# filtering ASVs with no identified family
 data_asv_family <- data_asv_unique %>% 
   filter(!is.na(Family)) %>% 
   group_by(Family, asv_core, threshold) %>% 
@@ -520,9 +516,11 @@ total_reads_group <- data_asv_family %>%
   group_by(asv_core, threshold) %>% 
   summarise(total_reads_core = sum(total_reads))
 
+# calculating family relative reads for every group and threshold 
 data_asv_family %<>% left_join(total_reads_group, by=c("asv_core","threshold")) %>% 
   mutate(relative_reads = total_reads/total_reads_core)
 
+# bray-curtis at the family level for all thresholds
 results_bray <- NULL
 for (t in core_th) {
   
@@ -537,7 +535,7 @@ for (t in core_th) {
   
   # calculating dis-similarity!
   results <- data_frame(threshold = t,
-                        bray_curtis = vegdist(dat_matrix, method = "bray"))
+                        bray_curtis = vegan::vegdist(dat_matrix, method = "bray"))
   results_bray <- rbind(results_bray, results)
 }
 
@@ -547,34 +545,44 @@ g1 <- results_bray %>%
   geom_line() +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), 
+  theme(axis.text = element_text(size = 10, color = 'black'), 
+        title = element_text(size = 14), 
         legend.position = "none",
-        strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1) +
+        strip.text = element_text(size=10, color = 'black'), 
+        strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), 
+        panel.background = element_rect(colour = "black"), 
+        aspect.ratio = 1
+  ) +
   labs(x="Threshold", y="Bray-Curtis Dissimilarity")
 print(g1)
 cat('\n','\n')
 
+
 # plotting family relative abundance for core/non-core at all thresholds
 
-library("RColorBrewer")
 colors <- c("black","grey40","grey80","#15616d","#fefae0","darkblue","#ffd60a",brewer.pal(n = 12, name = "Paired"))
 
-  g2 <- data_asv_family %>% 
-    #filter(threshold %in% c(0.1,0.2,0.3,0.4,0.5)) %>%
-    filter(relative_reads >= 0.01) %>% 
-    mutate(asv_core = case_when(asv_core=="Core" ~ "C",
-                                               asv_core=="Non-core" ~ "N")) %>% 
-ggplot(aes(fill=Family, x=asv_core, y=relative_reads)) +
+# plotting only families with relative abundance > 1%
+g2 <- data_asv_family %>% 
+  filter(relative_reads >= 0.01) %>% 
+  mutate(asv_core = case_when(asv_core=="Core" ~ "C",
+                              asv_core=="Non-core" ~ "N")) %>% 
+  ggplot(aes(fill=Family, x=asv_core, y=relative_reads)) +
   geom_bar(position="fill", stat="identity") +
   facet_wrap(~threshold, scales = "free_x", ncol = 5) +
   theme_bw() +
-  theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14),
+  theme(axis.text = element_text(size = 10, color = 'black'), 
+        title = element_text(size = 14),
         strip.text = element_text(size=12, color = 'black'), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), legend.key.size = unit(0.5, "cm")) +
+        panel.grid = element_blank(), 
+        panel.background = element_rect(colour = "black"), 
+        legend.key.size = unit(0.5, "cm")
+  ) +
   scale_fill_manual(values=colors) +
   labs(x="Microbial Group", y="Relative Abundance", fill = "Family")
 print(g2)
 cat('\n','\n')
+
 ```
 
