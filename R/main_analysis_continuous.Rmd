@@ -74,73 +74,75 @@ assembly_two_groups <- NULL
 # loop for core thresholds
 for (th in core_th) {
   
-# defining core/non-core ASVs based on the threshold (th)  
-data_asv_p <- data_asv %>% 
-  mutate(asv_core = case_when(host_p>th ~ "Core",
-                                          .default = "Non-core"))
-core_names <- unique(data_asv_p$asv_core)
-
-
-# loop for two groups
-for (v in core_names) {
-  
-  data_asv_group <- data_asv_p %>% 
-    filter(asv_core == v)
-  
-  # calculating ASVs degree
-  asv_degree <- data_asv_group %>%
-    group_by(asv_ID) %>%
-    summarise(n = n_distinct(host_ID)) %>%
-    dplyr::rename(asv_degree = n)
-  data_asv_group %<>% left_join(asv_degree, by="asv_ID")
-  
-  ##### observed network
-  # finding modules
-  modules_observed <- fun_modularity_analysis(data_asv_group) %>% 
-    mutate(threshold=th)
-  modules_table_two_groups <- rbind(modules_table_two_groups, modules_observed)
+  # defining core/non-core ASVs based on the threshold (th)  
+  data_asv_p <- data_asv %>% 
+    mutate(asv_core = case_when(host_p>th ~ "Core",
+                                .default = "Non-core"))
+  core_names <- unique(data_asv_p$asv_core)
   
   
-  # calculating similarity in modules
-  modules_similarity <- fun_modules_similarity(modules_observed) 
-  # %>% filter((host_group!=1 & asv_core!="Rare") | asv_core=="Rare")
-  # saving results in one table
-  modules_similarity_two_groups <- append(modules_similarity_two_groups, modules_similarity)
-  
-  
-  ##### phylogenetic analysis
-  # ASVs pool
-  asv_pool <- data_asv_group %>% 
-    distinct(asv_ID, asv_degree) %>% 
-    mutate(p = asv_degree/length(unique(data_asv_group$host_ID)))
-  
-  data_assembly <- data_asv_group %>% 
-    mutate(reads=1) %>% 
-    distinct(host_ID, asv_ID, reads) %>% 
-    spread(asv_ID, reads, fill = 0) %>% 
-    column_to_rownames("host_ID") %>% 
-    as.matrix()
-  
-  
-  asv_distance2 <- asv_distance[rownames(asv_distance)%in%asv_pool$asv_ID , colnames(asv_distance)%in%asv_pool$asv_ID]
-  
-  raupc <- as.matrix(raupcrick(data_assembly, nsimul = n_sim))
-  assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=n_sim, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
-  
-  assembly_result <- assembly$result %>% 
-    mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
-    left_join(modules_observed %>% 
-                distinct(host_ID, host_group, grid), by=c("sample1"="host_ID")) %>% 
-    dplyr::rename(host_group1=host_group, grid1=grid) %>% 
-    left_join(modules_observed %>% 
-                distinct(host_ID, host_group, grid), by=c("sample2"="host_ID")) %>% 
-    dplyr::rename(host_group2=host_group, grid2=grid) %>% 
-    mutate(threshold = th, asv_core = v)
-  
-  assembly_three_groups <- rbind(assembly_three_groups, assembly_result)
-
-  
-}  
+  # loop for two groups
+  for (v in core_names) {
+    
+    data_asv_group <- data_asv_p %>% 
+      filter(asv_core == v)
+    
+    # calculating ASVs degree
+    asv_degree <- data_asv_group %>%
+      group_by(asv_ID) %>%
+      summarise(n = n_distinct(host_ID)) %>%
+      dplyr::rename(asv_degree = n)
+    data_asv_group %<>% left_join(asv_degree, by="asv_ID")
+    
+    ##### observed network
+    # finding modules
+    modules_observed <- fun_modularity_analysis(data_asv_group) %>% 
+      mutate(threshold=th)
+    modules_table_two_groups <- rbind(modules_table_two_groups, modules_observed)
+    
+    
+    # calculating similarity in modules
+    modules_similarity <- fun_modules_similarity(modules_observed)
+    # saving results in one table
+    modules_similarity_two_groups <- append(modules_similarity_two_groups, modules_similarity)
+    
+    
+    ##### assembly analysis
+    
+    # ASV pool - ASVs of core/non-core group in the specific threshold
+    asv_pool <- data_asv_group %>% 
+      distinct(asv_ID, asv_degree) %>% 
+      mutate(p = asv_degree/length(unique(data_asv_group$host_ID)))
+    
+    data_assembly <- data_asv_group %>% 
+      mutate(reads=1) %>% 
+      distinct(host_ID, asv_ID, reads) %>% 
+      spread(asv_ID, reads, fill = 0) %>% 
+      column_to_rownames("host_ID") %>% 
+      as.matrix()
+    
+    # filtering phylogenetic distance of only the ASV pool
+    asv_distance2 <- asv_distance[rownames(asv_distance) %in% asv_pool$asv_ID , colnames(asv_distance) %in% asv_pool$asv_ID]
+    
+    # calculating raup-cric
+    raupc <- as.matrix(vegan::raupcrick(data_assembly, nsimul = n_sim))
+    # calculating betaNTI
+    assembly <- iCAMP::qpen(data_assembly, pd = asv_distance2, RC=raupc, rand=n_sim, sig.bNTI = 2, sig.rc = 0.95, ab.weight=F, nworker = 4)
+    
+    assembly_result <- assembly$result %>% 
+      mutate(sample1 = as.double(sample1), sample2 = as.double(sample2)) %>% 
+      left_join(modules_observed %>% 
+                  distinct(host_ID, host_group, grid), by=c("sample1"="host_ID")) %>% 
+      dplyr::rename(host_group1=host_group, grid1=grid) %>% 
+      left_join(modules_observed %>% 
+                  distinct(host_ID, host_group, grid), by=c("sample2"="host_ID")) %>% 
+      dplyr::rename(host_group2=host_group, grid2=grid) %>% 
+      mutate(threshold = th, asv_core = v)
+    
+    # saving the assembly results in the final table
+    assembly_two_groups <- rbind(assembly_two_groups, assembly_result)
+    
+  }  
 }
 ```
 
@@ -148,27 +150,27 @@ for (v in core_names) {
 
 ```{r, network_exploration}
 # number of ASVs
-asv_total <- length(unique(modules_table_three_groups$asv_ID))
-host_total <- modules_table_three_groups %>% group_by(threshold, asv_core) %>% summarise(total_host = n_distinct(host_ID))
+asv_total <- length(unique(modules_table_two_groups$asv_ID))
+host_total <- modules_table_two_groups %>% group_by(threshold, asv_core) %>% summarise(total_host = n_distinct(host_ID))
 
-group_n <- modules_table_three_groups %>% 
+group_n <- modules_table_two_groups %>% 
   group_by(threshold, asv_core) %>% 
   summarise(asv_n = n_distinct(asv_ID), host_n = n_distinct(host_ID)) %>% 
   mutate(asv_prop = asv_n/asv_total)
 
 # connectance
-interaction_n <- modules_table_three_groups %>% 
+interaction_n <- modules_table_two_groups %>% 
   count(threshold, asv_core)
 group_n %<>% left_join(interaction_n, by=c("threshold","asv_core")) %>% 
   mutate(connectance = n / (asv_n*host_n))
 
 # number of modules
-modules_n <- modules_table_three_groups %>% 
+modules_n <- modules_table_two_groups %>% 
   group_by(threshold, asv_core) %>% 
   summarise(modules_n = n_distinct(host_group))
 
 # mean modules size
-modules_size <- modules_table_three_groups %>% 
+modules_size <- modules_table_two_groups %>% 
   distinct(threshold, asv_core, host_group, host_ID) %>% 
   count(threshold, asv_core, host_group) %>% 
   group_by(threshold, asv_core) %>% 
@@ -178,6 +180,7 @@ modules_size <- modules_table_three_groups %>%
 
 modules_n %<>% left_join(modules_size, by=c("threshold","asv_core")) 
 
+# final table of network properties
 final_network_properties <- group_n %>% 
   left_join(modules_n, by=c("threshold","asv_core"))
 
@@ -186,20 +189,25 @@ g <- final_network_properties %>%
   select(-n, -host_n, -asv_n, -total_host, -largest_module) %>% 
   pivot_longer(cols=asv_prop:largest_module_prop, names_to="measure", values_to="value") %>% 
   mutate(measure = case_when(measure=="asv_prop" ~ "Prop. of ASVs",
-                                               measure=="connectance" ~ "Connectance",
-                                               measure=="modules_n" ~ "No. of Modules",
-                                               measure=="modules_size" ~ "Avg. Module Size",
+                             measure=="connectance" ~ "Connectance",
+                             measure=="modules_n" ~ "No. of Modules",
+                             measure=="modules_size" ~ "Avg. Module Size",
                              measure=="largest_module_prop" ~ "Largest Module")) %>% 
-    mutate(measure = factor(measure, levels = c("Prop. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
+  mutate(measure = factor(measure, levels = c("Prop. of ASVs","Connectance","No. of Modules","Avg. Module Size","Largest Module"))) %>%
   ggplot(aes(x=threshold, y=value, color=asv_core)) +
   geom_line() +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
   facet_wrap(~measure, scales="free", nrow = 1) +
   theme_bw() +
-  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14), 
+  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), 
+        title = element_text(size = 14), 
         legend.position = "none",
-        strip.text = element_text(size=10, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black"), aspect.ratio = 1.7) +
+        strip.text = element_text(size=10, color = 'black'), 
+        strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), 
+        panel.background = element_rect(colour = "black"), 
+        aspect.ratio = 1.7
+        ) +
   scale_color_manual(values=group.colors) +
   labs(x="Threshold", y="Value", color="Microbial Group")
 print(g)
@@ -211,9 +219,9 @@ print(g)
 # assembly processes analysis
 
 ```{r, assembly_processes, eval=FALSE, include=FALSE}
-assembly_final <- assembly_three_groups %>% 
+# whether two hosts from the same module?
+assembly_final <- assembly_two_groups %>% 
   mutate(same_module = ifelse(host_group1==host_group2, "Same Module","Different Module"))
-
 
 # renaming the process
 assembly_final %<>% mutate(process = case_when(process=="Heterogeneous.Selection" ~ "Heterogeneous Selection",
@@ -239,33 +247,16 @@ g <- assembly_summary %>%
   geom_area() +
   facet_grid(cols = vars(asv_core), rows = vars(same_module)) +
   geom_vline(xintercept = 0.2, linetype = "dotted", color = "grey")+
-  #geom_hline(yintercept = 0.5, linetype = "dotted", color = "black")+
   scale_y_continuous(labels = scales::percent) +
   theme_bw() +
-  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
-        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
+  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), 
+        title = element_text(size = 14),
+        strip.text = element_text(size=12, color = 'black'), 
+        strip.background = element_rect(color = "grey80", size = 1), 
+        panel.grid = element_blank(), 
+        panel.background = element_rect(colour = "black")
+  ) +
   scale_fill_manual(values=c("#e0ac69","#f2e8cf","#bcbddc","#807dba")) +
-  labs(x="Threshold", y="Percentage", fill="Process")
-print(g)
-
-  #scale_fill_manual(values=c("#e0ac69","#f2e8cf","#83c5be","#006666")) +
-
-g <- assembly_summary %>% 
-  left_join(assembly_summary_total_module, by=c("threshold","asv_core","same_module")) %>% 
-  mutate(n_p = n/n_total) %>% 
-  ggplot(aes(fill=process, x=threshold, y=n_p)) +
-  geom_bar(position="fill", stat="identity") +
-  facet_grid(cols = vars(same_module), rows = vars(asv_core)) +
-  scale_y_continuous(labels = scales::percent) +
-  geom_text(aes(label = paste0(round(n_p*100,1),"%")), 
-            position = position_stack(vjust = 0.5), size = 2.5)+
-  theme_bw() +
-  theme(axis.text = element_text(size = 9, color = 'black', angle = 90, vjust = 0.5, hjust=1), title = element_text(size = 14),
-        legend.position = "bottom",
-        strip.text = element_text(size=12, color = 'black'), strip.background = element_rect(color = "grey80", size = 1), 
-        panel.grid = element_blank(), panel.background = element_rect(colour = "black")) +
-  scale_fill_manual(values=c("#a7c957","#f2e8cf","#f07167","#83c5be")) +
   labs(x="Threshold", y="Percentage", fill="Process")
 print(g)
 
@@ -280,50 +271,55 @@ print(g)
 Distance is a proxy for habitat degradation.
 
 ```{r, variables_correlation}
-# reading grid similarity results
-grids_similarity_attr <- read_csv("../../data/data_processed/village_summary_new.csv")
+# reading grid attributes
+grids_similarity_attr <- read_csv("../data/data_processed/village_summary.csv")
 rownames(grids_similarity_attr) <- grids_similarity_attr$grid_village
 
 # correlations between variables
+library(psych)
 print(psych::pairs.panels(grids_similarity_attr %>%  select(-grid_village,-village,-grid), ellipses = F, lm = F))
 cat('\n','\n')
 ```
 
 ```{r}
 # RDA for modules
+# the analysis is done separately for each core/non-core group at specific threshold
 
 par_names <- expand_grid(core_th, core_names)
 anova_model_all <- NULL
 anova_rda_all <- NULL
 set.seed(123)
 
-# loop for three asv groups
+# loop for all combinations: core/non-core X thresholds
 for (i in 1:nrow(par_names)) {
   
-  modules_similarity2 <- modules_similarity2_three_groups[[i]]
+  modules_similarity <- modules_similarity_two_groups[[i]]
   # filtering the largest module
-  largest_module <- which.max(colSums(modules_similarity2))
-  modules_similarity2 <- modules_similarity2[,-largest_module]
+  largest_module <- which.max(colSums(modules_similarity))
+  modules_similarity2 <- modules_similarity[,-largest_module]
   
   grid_names <- rownames(modules_similarity2)
+  
   # filtering matrix to the existing grids
-  grids_similarity_attr2 <- grids_similarity_attr %>%  filter(grid_village %in% grid_names & !grepl("village", grid_village))
+  grids_similarity_attr2 <- grids_similarity_attr %>%  
+    filter(grid_village %in% grid_names & !grepl("village", grid_village))
   modules_similarity2 <- modules_similarity2[rownames(grids_similarity_attr2),]
   
-  
-  
+  # number of hosts in each site
   n=data_asv %>% group_by(village,grid) %>% summarise(n=n_distinct(host_ID))
   grids_similarity_attr2 %<>% left_join(n, by=c("village","grid"))
+  
   # standardizing variables to zero mean and unit variance
   grids_similarity_attr2[4:11] <- decostand(grids_similarity_attr2[4:11], 'standardize')
   
-  # tb-RDA
+  
+  ##### tb-RDA analysis
   
   # hellinger transformation
-  modules_similarity2_hell <- decostand(modules_similarity2, 'hell')
+  modules_similarity_hell <- decostand(modules_similarity2, 'hell')
   
-  
-  rda_result <- rda(modules_similarity2_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
+  # RDA analysis
+  rda_result <- rda(modules_similarity_hell ~ veg_PC1+veg_PC2+dist_to_village+elevation+Condition(n), data=grids_similarity_attr2, na.action = na.omit)
   # **Condition(n) - control for the number of host in each village-grid.
   
   # variation explained
