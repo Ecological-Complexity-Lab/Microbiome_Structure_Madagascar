@@ -1,0 +1,64 @@
+"grid_id","locality","village","season","grid_name","grid_number","habitat_type","year","effort_cagetraps","effort_pitfalltraps","effort_total"
+"A_2019_1_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Sugar cane",2,"agriculture","2019",732,132,864
+"A_2019_1_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Vanilla",6,"agroforest","2019",726,132,858
+"A_2019_1_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Savoka",1,"brushy_regrowth","2019",726,132,858
+"A_2019_1_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Rice field",5,"flooded_rice","2019",726,132,858
+"A_2019_1_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Secondary forest",3,"secondary_forest","2019",726,132,858
+"A_2019_1_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Primary forest",4,"semi-intact_forest","2019",726,132,858
+"A_2019_1_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",1,"Village",7,"village","2019",268,0,268
+"A_2020_2_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Sugar cane",2,"agriculture","2020",726,132,858
+"A_2020_2_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Vanilla",6,"agroforest","2020",726,132,858
+"A_2020_2_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Savoka",1,"brushy_regrowth","2020",726,132,858
+"A_2020_2_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Rice field",5,"flooded_rice","2020",726,132,858
+"A_2020_2_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Secondary forest",3,"secondary_forest","2020",726,132,858
+"A_2020_2_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Primary forest",4,"semi-intact_forest","2020",726,132,858
+"A_2020_2_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",2,"Village",7,"village","2020",300,0,300
+"A_2020_3_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Sugar cane",2,"agriculture","2020",726,132,858
+"A_2020_3_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Vanilla",6,"agroforest","2020",726,132,858
+"A_2020_3_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Savoka",1,"brushy_regrowth","2020",726,132,858
+"A_2020_3_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Rice field",5,"flooded_rice","2020",726,132,858
+"A_2020_3_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Secondary forest",3,"secondary_forest","2020",726,132,858
+"A_2020_3_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Primary forest",4,"semi-intact_forest","2020",726,132,858
+"A_2020_3_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Maroambihy, Fokontany Mandena","Mandena",3,"Village",7,"village","2020",300,0,300
+"D_2020_1_agriculture","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Mixed agricultural fields",2,"agriculture","2020",726,132,858
+"D_2020_1_agroforest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Vanilla",5,"agroforest","2020",726,132,858
+"D_2020_1_brushy_regrowth","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Savoka",1,"brushy_regrowth","2020",726,132,858
+"D_2020_1_flooded_rice","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Rice field",6,"flooded_rice","2020",726,132,858
+"D_2020_1_secondary_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Secondary forest",3,"secondary_forest","2020",726,132,858
+"D_2020_1_semi-intact_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Degraded forest",4,"semi-intact_forest","2020",726,132,858
+"D_2020_1_village","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",1,"Village",7,"village","2020",420,0,420
+"D_2021_2_agriculture","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Mixed agricultural fields",2,"agriculture","2021",726,132,858
+"D_2021_2_agroforest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Vanilla",5,"agroforest","2021",726,132,858
+"D_2021_2_brushy_regrowth","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Savoka",1,"brushy_regrowth","2021",726,132,858
+"D_2021_2_flooded_rice","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Rice field",6,"flooded_rice","2021",726,132,858
+"D_2021_2_secondary_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Secondary forest",3,"secondary_forest","2021",726,132,858
+"D_2021_2_semi-intact_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Degraded forest",4,"semi-intact_forest","2021",726,132,858
+"D_2021_2_village","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",2,"Village",7,"village","2021",420,0,420
+"D_2021_3_agriculture","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Mixed agricultural fields",2,"agriculture","2021",726,132,858
+"D_2021_3_agroforest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Vanilla",5,"agroforest","2021",726,132,858
+"D_2021_3_brushy_regrowth","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Savoka",1,"brushy_regrowth","2021",726,132,858
+"D_2021_3_flooded_rice","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Rice field",6,"flooded_rice","2021",726,132,858
+"D_2021_3_secondary_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Secondary forest",3,"secondary_forest","2021",726,132,858
+"D_2021_3_semi-intact_forest","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Degraded forest",4,"semi-intact_forest","2021",726,132,858
+"D_2021_3_village","Madagascar, Région SAVA, Distict Andapa, Commune Rurale Marovato, Fokontany Sarahandrano","Sarahandrano",3,"Village",7,"village","2021",450,0,450
+"E_2021_1_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Vanilla, coffee, banana fields",2,"agriculture","2021",726,132,858
+"E_2021_1_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Vanilla",5,"agroforest","2021",726,132,858
+"E_2021_1_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Savoka",1,"brushy_regrowth","2021",726,132,858
+"E_2021_1_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Rice field",6,"flooded_rice","2021",726,132,858
+"E_2021_1_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Secondary forest",3,"secondary_forest","2021",726,132,858
+"E_2021_1_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Degraded forest",4,"semi-intact_forest","2021",726,132,858
+"E_2021_1_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",1,"Village",7,"village","2021",360,0,360
+"E_2022_2_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Vanilla, coffee, banana fields",2,"agriculture","2022",726,132,858
+"E_2022_2_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Vanilla",5,"agroforest","2022",726,132,858
+"E_2022_2_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Savoka",1,"brushy_regrowth","2022",726,132,858
+"E_2022_2_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Rice field",6,"flooded_rice","2022",726,132,858
+"E_2022_2_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Secondary forest",3,"secondary_forest","2022",726,132,858
+"E_2022_2_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Degraded forest",4,"semi-intact_forest","2022",726,132,858
+"E_2022_2_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",2,"Village",7,"village","2022",360,0,360
+"E_2022_3_agriculture","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Vanilla, coffee, banana fields",2,"agriculture","2022",726,132,858
+"E_2022_3_agroforest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Vanilla",5,"agroforest","2022",726,132,858
+"E_2022_3_brushy_regrowth","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Savoka",1,"brushy_regrowth","2022",726,132,858
+"E_2022_3_flooded_rice","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Rice field",6,"flooded_rice","2022",726,132,858
+"E_2022_3_secondary_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Secondary forest",3,"secondary_forest","2022",726,132,858
+"E_2022_3_semi-intact_forest","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Degraded forest",4,"semi-intact_forest","2022",726,132,858
+"E_2022_3_village","Madagascar, Région SAVA, District Sambava, Commune Rurale Andratamarina, Fokontany Andatsakala","Andatsakala",3,"Village",7,"village","2022",604,0,604
