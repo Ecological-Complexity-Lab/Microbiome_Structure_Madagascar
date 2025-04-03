@@ -1,6 +1,6 @@
 # functions for the scripts:
-# main_analysis
-# main_script
+# main_analysis_continuous
+# main_analysis_threshold
 
 library(tidyverse)
 library(magrittr)
@@ -29,14 +29,14 @@ fun_modularity_analysis <- function(dat) {
     as.matrix()
   
   # building the network
-  network_object <- infomapecology::create_monolayer_network(data_asv_mat, directed = FALSE, bipartite = TRUE, group_names = c("ASV", "Host"))
+  network_object <- create_monolayer_network(data_asv_mat, directed = FALSE, bipartite = TRUE, group_names = c("ASV", "Host"))
   
   # modularity analysis
-  infomap_object <- infomapecology::run_infomap_monolayer(network_object,
-                                          infomap_executable='Infomap',
-                                          flow_model = 'undirected',
-                                          two_level = TRUE,
-                                          silent=TRUE, trials=100, seed=123)
+  infomap_object <- run_infomap_monolayer(network_object,
+                                                          infomap_executable='Infomap',
+                                                          flow_model = 'undirected',
+                                                          two_level = TRUE,
+                                                          silent=TRUE, trials=100, seed=123)
   
   # adding the modules classification to the data
   modules_asv <- infomap_object$modules %>% 
@@ -76,51 +76,7 @@ fun_modules_similarity <- function(dat) {
 }
 
 
-#####################################
-#####################################
-#####################################
-
-
-
-
-# function for calculating similarity in modules between grids
-fun_modules_similarity <- function(dat) {
-  
-  # how many host individuals in every grid
-  n_host_grid <- dat %>% 
-    distinct(host_ID, grid) %>% 
-    count(grid) %>% 
-    dplyr::rename(n_grid=n)
-  
-  # matrix of grid similarity in modules
-  grid_modules <- dat %>% 
-    group_by(grid, host_group) %>% 
-    summarise(host_n = n_distinct(host_ID)) %>% 
-    left_join(n_host_grid, by="grid") %>% 
-    mutate(n = host_n/n_grid) %>% 
-    select(-host_n, -n_grid) %>% 
-    spread(host_group, n, fill = 0) %>% 
-    mutate(grid = as.character(grid)) %>%
-    arrange(grid) %>% 
-    column_to_rownames("grid") %>% 
-    as.matrix() 
-  
-  # calculating the *similarity* between grids
-  grid_modules_dist <- as.matrix(1-vegdist(grid_modules, method = "bray"))
-  
-  # # transforming to long format
-  # grid_mudules_dist_m <- grid_modules_dist
-  # grid_mudules_dist_m[lower.tri(grid_mudules_dist_m)] <- NA
-  # diag(grid_mudules_dist_m) <- NA
-  # grid_mudules_dist_m <- melt(grid_mudules_dist_m) %>% 
-  #   filter(!is.na(value)) %>% 
-  #   dplyr::rename(grid1 = Var2, grid2 = Var1, module_similarity = value) 
-  
-  return(list(grid_modules_dist))
-}
-
-
-
+##### 3
 # function for plotting ASVs degree distribution
 fun_asv_degree_distribution <- function(dat) {
   
@@ -129,14 +85,18 @@ fun_asv_degree_distribution <- function(dat) {
     ggplot(aes(x=asv_degree)) +
     geom_histogram(binwidth = 1) +
     geom_vline(xintercept = c(10), linetype="dashed") +
-    xlim(0,100)+
     theme_bw() +
-    theme(axis.text = element_text(size = 10, color = 'black'), title = element_text(size = 14), strip.text.x = element_text(size=12)) +
+    theme(axis.text = element_text(size = 10, color = 'black'), 
+          title = element_text(size = 14), 
+          strip.text.x = element_text(size=12)
+    ) +
     labs(x="ASVs Degree", y="No. of ASVs")
   
   return(list(g))
 }
 
+
+##### 4
 # function for plotting modules
 fun_modules <- function(dat, v) {
   
@@ -150,7 +110,7 @@ fun_modules <- function(dat, v) {
     mutate(site = paste0("Site", row_number())) %>% 
     mutate(site = factor(site, levels = paste0("Site", row_number()))) 
   
-  # color
+  # colors
   if (v == "Core"){
     asv_core_col1 <- "#d95f02"
     asv_core_col2 <- "#f8c49a"
@@ -162,26 +122,30 @@ fun_modules <- function(dat, v) {
   # number of modules
   n_modules <- length(unique(dat$host_group))
   
+  # plotting
   g <- dat %>% 
     distinct(host_ID, village, grid, host_group, asv_core) %>% 
     count(village, grid, host_group, asv_core) %>% 
     left_join(n_host_grid, by=c("village", "grid")) %>% 
     mutate(n_rel = n/n_grid) %>% 
-    #mutate(host_group = as.factor(host_group)) %>% 
     unite("sample", c("village","grid"), remove=F) %>% 
     ggplot(aes(x = host_group, y = site, fill=n_rel)) +
     geom_tile(color='white') +
     theme_classic() +
     scale_x_continuous(breaks = seq(1,n_modules,length.out=5))+
     scale_fill_gradient(low = asv_core_col2, high = asv_core_col1, name = v) +
-    theme(axis.text = element_text(size = 7, color = 'black'), title = element_text(size = 12), strip.text.x = element_text(size=11), 
-          aspect.ratio = 0.8) +
+    theme(axis.text = element_text(size = 7, color = 'black'), 
+          title = element_text(size = 12), 
+          strip.text.x = element_text(size=11), 
+          aspect.ratio = 0.8
+    ) +
     labs(title = paste(v), x='Module ID', y='', fill = "Host Relative Abundance")
- 
+  
   return(list(g))
 }
 
 
+##### 5
 # function for plotting modules size
 fun_module_size <- function(dat) {
   
@@ -193,15 +157,19 @@ fun_module_size <- function(dat) {
     ggplot(aes(x=factor(host_group), y=n)) +
     geom_bar(stat = "identity", width = 1) +
     theme_bw() +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), axis.text.x=element_blank(), 
+    theme(axis.text = element_text(size = 14, color = 'black'), 
+          title = element_text(size = 20), 
+          axis.text.x=element_blank(), 
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()) +
+          panel.grid.minor = element_blank()
+    ) +
     labs(x="Modules", y="Module Size")
   
   return(list(g))
 }
 
 
+##### 6
 # function for plotting number of land uses per module
 fun_module_grid <- function(dat) {
   
@@ -213,54 +181,11 @@ fun_module_grid <- function(dat) {
     ggplot(aes(x=n)) +
     geom_histogram(binwidth = 1) +
     theme_bw() +
-    theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+    theme(axis.text = element_text(size = 14, color = 'black'), 
+          title = element_text(size = 20), 
+          strip.text.x = element_text(size=12)
+    ) +
     labs(x="No. of Land Uses", y="No. of Modules")
   
   return(list(g))
-}
-
-
-###########################################################################
-# function to calculate beta-NTI
-
-fun_calc_betaNTI <- function(dat_mat, phylo_dist, asv_pool, n_shuff) {
-  
-  n_modules <- nrow(dat_mat)
-  n_asv <- ncol(dat_mat)
-  seeds <- seq(1, n_shuff*100, length.out=n_shuff)
-  
-  # calculating observed MNTD
-  mntd_obs <- as.matrix(picante::comdistnt(dat_mat, phylo_dist))
-  
-  mntd_shuff <- array(NA,dim = c(n_modules,n_modules,n_shuff))
-  # loop for shuffling
-  for (i in 1:n_shuff) {
-    # randomly sampling ASVs from the ASV pool
-    set.seed(seeds[i])
-    shuff_asv_names <- sample(asv_pool$asv_ID, n_asv, replace = FALSE)
-    #prob = asv_pool$p,
-    # changing the cols names
-    dat_mat_shuff <- dat_mat
-    colnames(dat_mat_shuff) <- shuff_asv_names
-    # calculating MNTD
-    mntd_shuff[,,i] <- as.matrix(picante::comdistnt(dat_mat_shuff, phylo_dist))
-  }
-  
-  # taking the mean and sd of the shuffled matrices
-  mntd_shuff_mean <- apply(mntd_shuff,c(1,2),mean)
-  mntd_shuff_sd <- apply(mntd_shuff,c(1,2),sd)
-  
-  # calculating betaNTI
-  betaNTI_mat <- (mntd_obs - mntd_shuff_mean) / mntd_shuff_sd
-  
-  # transforming to long format
-  betaNTI_mat2 <- betaNTI_mat
-  betaNTI_mat2[is.na(betaNTI_mat2)] <- 0
-  betaNTI_mat2[upper.tri(betaNTI_mat2)] <- NA
-  diag(betaNTI_mat2) <- NA
-  betaNTI <- melt(betaNTI_mat2) %>% 
-    filter(!(is.na(value))) %>% 
-    dplyr::rename(host1 = Var1, host2 = Var2, betaNTI = value)
-  
-  return(betaNTI)
 }
