@@ -58,7 +58,7 @@ asv_distance <- ape::cophenetic.phylo(phylo_tree)
 # ------------------------------------------------------------------------------
 # thresholds for core
 core_th <- seq(0.05, 0.5, by=0.05)
-# number of simulations to the assembly analysis
+# number of simulations of the assembly analysis
 n_sim <- 2
 
 # group colors
@@ -80,7 +80,7 @@ for (th in core_th) {
   core_names <- unique(data_asv_p$asv_core)
   
   
-  # loop for two groups
+  # loop for core/non-core
   for (v in core_names) {
     
     data_asv_group <- data_asv_p %>% 
@@ -480,10 +480,14 @@ g <- data_tax_final %>%
         axis.text.x = element_text(angle = 60, vjust = 1.1, hjust=1),
         panel.grid = element_blank(), 
         panel.background = element_rect(colour = "black"), 
-        legend.key.size = unit(0.5, "cm")
+        legend.key.size = unit(0.5, "cm"),
+        aspect.ratio = 3,
+        plot.title = element_text(size = 14, hjust = 0.5),
+        plot.margin=grid::unit(c(0,0,0,0), "mm")
   ) +
   scale_fill_manual(values=colors) +
-  labs(x="Modules", y="Relative Abundance", fill = "Family")
+  
+  labs(title="Threshold", x="Modules", y="Relative Abundance", fill = "Family")
 
 print(g)
 cat('\n','\n')
