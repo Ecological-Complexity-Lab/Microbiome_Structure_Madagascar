@@ -1,5 +1,5 @@
 
-# This script analyses dna sequance of the ASVs to create 
+# This script analyses the DNA sequence of the ASVs to create 
 # a phylogenetic tree, and save it to be used in the future
 
 #------------------------------------------------------------
