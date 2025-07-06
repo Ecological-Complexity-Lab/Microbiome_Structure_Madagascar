@@ -149,6 +149,19 @@ dat4 %<>% left_join(host_total_reads, by="host_ID") %>%
   select(-unfiltered_reads) %>% 
   mutate(reads_p = reads/total_reads)
 
+# plotting total reads distribution
+dat4 %>% distinct(host_ID, total_reads) %>% summarise(mean = mean(total_reads))
+dat4 %>% distinct(host_ID, total_reads) %>% summarise(sd = sd(total_reads))
+
+#pdf(file = 'results/figure_reads.pdf')
+dat4 %>% 
+  distinct(host_ID, total_reads) %>% 
+  ggplot(aes(x=total_reads)) +
+  geom_histogram(binwidth = 1000) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
+  labs(x="Total Reads", y="Count")
+dev.off()
 
 # how many ASVs?
 length(unique(dat4$asv_ID)) # 1951 ASVs
@@ -161,21 +174,13 @@ hist(host_richness$n)
 ##### filter 5
 # removing samples (hosts) with low total reads
 
-# plotting total reads distribution
-dat4 %>% 
-  distinct(host_ID, total_reads) %>% 
-  ggplot(aes(x=total_reads)) +
-  geom_histogram(binwidth = 1000) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 14, color = 'black'), title = element_text(size = 20), strip.text.x = element_text(size=12)) +
-  labs(x="Total Reads", y="Count")
-
 # removing samples with less than 5000 total reads
 total_reads_th <- 5000
 dat5 <- dat4 %>% 
   filter(total_reads > total_reads_th) %>% 
   mutate(reads = reads_p) %>% 
   select(-reads_p)
+
 
 # how many hosts we lose?
 length(unique(dat4$host_ID)) - length(unique(dat5$host_ID)) # 17 hosts
@@ -199,5 +204,33 @@ dat5 %>%
 
 # saving the data
 write_csv(dat5, "data/data_processed/data_asv_rra0.001_p0.01_th5000_all.csv")
+
+
+#####
+# rarefaction curves for the raw data
+
+asv_table <- dat2 %>% 
+  select(-host_species,-village,-grid,-season,-unfiltered_reads) %>% 
+  column_to_rownames("host_ID")
+
+a= rowSums(asv_table) < mean(rowSums(asv_table))
+# Remove non-numeric columns (if any)
+asv_table <- asv_table[, sapply(asv_table, is.numeric)]
+
+# Remove rows with NA values
+asv_table <- asv_table[complete.cases(asv_table), ]
+asv_table <- round(asv_table)
+
+rarecurve_data <- rarecurve(asv_table[a,], step = 1000, 
+                            label = FALSE, col = "blue", lwd = 1)
+
+# # transforming into a matrix
+# dat5_mat <- dat5 %>% 
+#   mutate(reads = reads*total_reads) %>% 
+#   select(host_ID,asv_ID,reads) %>% 
+#   pivot_wider(names_from = asv_ID, values_from = reads, values_fill = 0) %>% 
+#   column_to_rownames("host_ID") %>% 
+#   as.matrix()
+# asv_table <- as.data.frame(dat5_mat)
 
 

@@ -226,6 +226,7 @@ cat('\n','\n')
 ```
 
 
+
 # assembly processes analysis
 
 ```{r, assembly_processes}
@@ -441,4 +442,146 @@ cat('\n','\n')
 # printing final figure
 rda_figs[[1]] + rda_figs[[2]] + plot_layout(ncol=2, nrow=1, guides='collect') & theme(legend.position='right')
 cat('\n','\n')
+```
+# Plotting the network
+
+```{r network_plot_noncore}
+library(ggraph)
+library(tidygraph)
+
+# arranging the data and removing low abundance links
+small_modules <- modules_table_two_groups %>% 
+  filter(asv_core == "Non-core") %>% 
+  distinct(host_ID, host_group) %>%  
+  count(host_group) %>% 
+  filter(n > 1)
+
+edgelist_noncore <- modules_table_two_groups %>% 
+  filter(asv_core == "Non-core", reads>0.005, host_group %in% small_modules$host_group) %>% 
+  select(host_ID, asv_ID, reads)
+
+host_noncore <- modules_table_two_groups %>% 
+  filter(asv_core == "Non-core", reads>0.005, host_group %in% small_modules$host_group) %>% 
+  distinct(host_ID, host_group) %>% 
+  mutate(host_group = as.factor(host_group))
+
+  
+# Create full list of nodes
+hosts <- unique(edgelist_noncore$host_ID)
+asvs <- unique(edgelist_noncore$asv_ID)
+
+nodes <- data.frame(
+  name = c(hosts, asvs),
+  type = c(rep(FALSE, length(hosts)), rep(TRUE, length(asvs)))
+)
+
+# Create igraph object
+g <- graph_from_data_frame(d=edgelist_noncore, vertices=nodes, directed=FALSE)
+
+# Annotate host group to vertices
+# Merge host group info
+V(g)$host_group <- NA
+host_meta <- host_noncore %>% filter(host_ID %in% V(g)$name)
+host_meta <- host_meta[match(V(g)$name[V(g)$type == FALSE], host_meta$host_ID), ]
+
+V(g)$host_group[!V(g)$type] <- as.factor(host_meta$host_group)
+
+# Set colors for host groups
+library(RColorBrewer)
+n_groups <- length(unique(na.omit(V(g)$host_group)))
+group_palette <- colorRampPalette(brewer.pal(12, "Paired"))(n_groups)
+
+V(g)$color <- ifelse(V(g)$type,
+                     "gray60",  # Parasite (ASV) nodes
+                     group_palette[as.numeric(V(g)$host_group)]
+)
+
+E(g)$weight <- edgelist_noncore$reads
+
+# Layout and Plot using ggraph 
+
+# Convert to tidygraph object
+g_tbl_noncore <- as_tbl_graph(g)
+g_tbl_noncore <- g_tbl_noncore %>%
+  mutate(host_group = as.factor(host_group))
+
+
+# plotting
+set.seed(123)
+g1 <- ggraph(g_tbl_noncore, layout = "fr") +
+  geom_edge_link(aes(alpha = log(weight + 1)), color = "gray90") +
+  geom_node_point(aes(color = host_group, shape = type, alpha = ifelse(type, 0.7, 0.9)), size = 1.5) +
+  scale_color_manual(values = group_palette, na.value = "grey60") +
+  scale_shape_manual(values = c(16, 17)) +  # 16: circle (host), 17: triangle (ASV)
+  theme_void() +
+  theme(legend.position = "none") +
+  ggtitle("Non-core")
+
+```
+
+```{r network_plot_core}
+
+# arranging the data and removing low abundance links
+edgelist_core <- modules_table_two_groups %>% 
+  filter(asv_core == "Core", reads>0.005) %>% 
+  select(host_ID, asv_ID, reads)
+
+host_core <- modules_table_two_groups %>% 
+  filter(asv_core == "Core", reads>0.005) %>% 
+  distinct(host_ID, host_group) %>% 
+  mutate(host_group = as.factor(host_group))
+
+# Create full list of nodes
+hosts <- unique(edgelist_core$host_ID)
+asvs <- unique(edgelist_core$asv_ID)
+
+nodes <- data.frame(
+  name = c(hosts, asvs),
+  type = c(rep(FALSE, length(hosts)), rep(TRUE, length(asvs)))
+)
+
+# Create igraph object
+g <- graph_from_data_frame(d=edgelist_core, vertices=nodes, directed=FALSE)
+
+# Annotate host group to vertices
+# Merge host group info
+V(g)$host_group <- NA
+host_meta <- host_core %>% filter(host_ID %in% V(g)$name)
+host_meta <- host_meta[match(V(g)$name[V(g)$type == FALSE], host_meta$host_ID), ]
+
+V(g)$host_group[!V(g)$type] <- as.factor(host_meta$host_group)
+
+# Set colors for host groups
+n_groups <- length(unique(na.omit(V(g)$host_group)))
+group_palette <- colorRampPalette(brewer.pal(12, "Paired"))(n_groups)
+
+V(g)$color <- ifelse(V(g)$type,
+                     "gray60",  # Parasite (ASV) nodes
+                     group_palette[as.numeric(V(g)$host_group)]
+)
+
+E(g)$weight <- edgelist_core$reads
+
+# Layout and Plot using ggraph
+# Convert to tidygraph object
+g_tbl_core <- as_tbl_graph(g)
+g_tbl_core <- g_tbl_core %>%
+  mutate(host_group = as.factor(host_group))
+
+# plotting
+set.seed(124)
+g2 <- ggraph(g_tbl_core, layout = "fr") +
+  geom_edge_link(aes(alpha = log(weight + 1)), color = "gray90") +
+  geom_node_point(aes(color = host_group, shape = type, alpha = ifelse(type, 0.7, 0.9)), size = 1.5) +
+  scale_color_manual(values = group_palette, na.value = "grey60") +
+  scale_shape_manual(values = c(16, 17)) +  # 16: circle (host), 17: triangle (ASV)
+  theme_void() +
+  theme(legend.position = "none") +
+  ggtitle("Core")
+
+# printing final figure
+#pdf(file = 'results/network.pdf')
+g2 + g1 + plot_layout(ncol=1, nrow=2)
+#dev.off()
+
 ```
