@@ -208,7 +208,7 @@ write_csv(dat5, "data/data_processed/data_asv_rra0.001_p0.01_th5000_all.csv")
 
 #####
 # rarefaction curves for the raw data
-
+library(vegan)
 asv_table <- dat2 %>% 
   select(-host_species,-village,-grid,-season,-unfiltered_reads) %>% 
   column_to_rownames("host_ID")
@@ -221,16 +221,10 @@ asv_table <- asv_table[, sapply(asv_table, is.numeric)]
 asv_table <- asv_table[complete.cases(asv_table), ]
 asv_table <- round(asv_table)
 
+#pdf(file = 'results/figure_rarecurve.pdf')
 rarecurve_data <- rarecurve(asv_table[a,], step = 1000, 
-                            label = FALSE, col = "blue", lwd = 1)
+                            label = FALSE, col = "blue", lwd = 1, xlab = "Total Reads", ylab = "No. of ASVs")
+dev.off()
 
-# # transforming into a matrix
-# dat5_mat <- dat5 %>% 
-#   mutate(reads = reads*total_reads) %>% 
-#   select(host_ID,asv_ID,reads) %>% 
-#   pivot_wider(names_from = asv_ID, values_from = reads, values_fill = 0) %>% 
-#   column_to_rownames("host_ID") %>% 
-#   as.matrix()
-# asv_table <- as.data.frame(dat5_mat)
 
 
